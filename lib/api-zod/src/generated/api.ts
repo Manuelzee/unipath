@@ -18,11 +18,10 @@ export const HealthCheckResponse = zod.object({
 
 
 /**
- * @summary Search United States colleges and universities
+ * @summary Search imported institutions worldwide
  */
-export const listUniversitiesQueryMaxTuitionMin = 0;
-
-export const listUniversitiesQueryTuitionResidencyDefault = `in_state`;
+export const listUniversitiesQueryCountryCodeRegExp = new RegExp('^[A-Z]{2}$');
+export const listUniversitiesQueryFundingOnlyDefault = false;
 export const listUniversitiesQueryPageDefault = 1;
 
 export const listUniversitiesQueryPageSizeDefault = 24;
@@ -31,14 +30,17 @@ export const listUniversitiesQueryPageSizeMax = 100;
 
 
 export const ListUniversitiesQueryParams = zod.object({
+  "countryCode": zod.coerce.string().regex(listUniversitiesQueryCountryCodeRegExp).optional(),
+  "city": zod.coerce.string().optional(),
+  "language": zod.coerce.string().optional(),
+  "applicantStatus": zod.enum(['Domestic', 'International']).optional(),
+  "fundingOnly": zod.coerce.boolean().default(listUniversitiesQueryFundingOnlyDefault),
   "search": zod.coerce.string().optional(),
   "state": zod.coerce.string().optional(),
   "institutionType": zod.coerce.string().optional(),
   "ownership": zod.coerce.string().optional(),
   "degreeLevel": zod.coerce.string().optional(),
   "major": zod.coerce.string().optional(),
-  "maxTuition": zod.coerce.number().int().min(listUniversitiesQueryMaxTuitionMin).optional(),
-  "tuitionResidency": zod.enum(['in_state', 'out_of_state']).default(listUniversitiesQueryTuitionResidencyDefault),
   "page": zod.coerce.number().int().min(1).default(listUniversitiesQueryPageDefault),
   "pageSize": zod.coerce.number().int().min(1).max(listUniversitiesQueryPageSizeMax).default(listUniversitiesQueryPageSizeDefault)
 })
@@ -48,6 +50,16 @@ export const ListUniversitiesResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "country": zod.string(),
+  "countryCode": zod.string(),
+  "sourceScope": zod.string().nullable(),
+  "sourceLicenseUrl": zod.string().nullable(),
+  "recognitionStatus": zod.string().nullable(),
+  "languages": zod.array(zod.string()),
+  "applicantStatuses": zod.array(zod.string()),
+  "dliNumber": zod.string().nullable(),
+  "dliSourceUrl": zod.string().nullable(),
+  "dliVerifiedAt": zod.coerce.date().nullable(),
+  "lastVerifiedAt": zod.coerce.date().nullable(),
   "city": zod.string(),
   "state": zod.string(),
   "institutionType": zod.string(),
@@ -59,10 +71,8 @@ export const ListUniversitiesResponse = zod.object({
   "majors": zod.array(zod.string()),
   "website": zod.string().nullable(),
   "admissionsWebsite": zod.string().nullable(),
-  "tuitionInStateUsd": zod.number().int().nullable(),
-  "tuitionInStateYear": zod.number().int().nullable(),
-  "tuitionOutOfStateUsd": zod.number().int().nullable(),
-  "tuitionOutOfStateYear": zod.number().int().nullable(),
+  "applicationWebsite": zod.string().nullable(),
+  "financialAidWebsite": zod.string().nullable(),
   "admissionRate": zod.number().nullable(),
   "admissionRateYear": zod.number().int().nullable(),
   "completionRate": zod.number().nullable(),
@@ -86,10 +96,244 @@ export const ListUniversitiesResponse = zod.object({
  * @summary Get directory filter values from the imported institution database
  */
 export const GetUniversityFilterOptionsResponse = zod.object({
+  "countries": zod.array(zod.object({
+  "code": zod.string(),
+  "name": zod.string(),
+  "count": zod.number().int()
+})),
+  "regions": zod.array(zod.object({
+  "countryCode": zod.string(),
+  "code": zod.string()
+})),
+  "languages": zod.array(zod.string()),
+  "applicantStatuses": zod.array(zod.string()),
   "institutionTypes": zod.array(zod.string()),
   "ownerships": zod.array(zod.string()),
   "degreeLevels": zod.array(zod.string()),
   "majors": zod.array(zod.string())
+})
+
+
+/**
+ * @summary Get tested country coverage and source access restrictions
+ */
+export const GetDirectoryCoverageResponse = zod.object({
+  "countries": zod.array(zod.object({
+  "countryCode": zod.string(),
+  "country": zod.string(),
+  "institutionCount": zod.number().int(),
+  "programCount": zod.number().int(),
+  "status": zod.string(),
+  "note": zod.string(),
+  "lastImportedAt": zod.coerce.date().nullable()
+})),
+  "worldwideNote": zod.string(),
+  "references": zod.array(zod.object({
+  "name": zod.string(),
+  "url": zod.string(),
+  "termsUrl": zod.string(),
+  "access": zod.string()
+}))
+})
+
+
+/**
+ * @summary Browse source-reported programs, admissions and funding
+ */
+export const listUniversityFactsQueryKindDefault = `program`;
+export const listUniversityFactsQueryPageDefault = 1;
+
+export const listUniversityFactsQueryPageSizeDefault = 50;
+export const listUniversityFactsQueryPageSizeMax = 100;
+
+
+
+export const ListUniversityFactsQueryParams = zod.object({
+  "institutionId": zod.coerce.string(),
+  "kind": zod.enum(['program', 'admissions', 'funding']).default(listUniversityFactsQueryKindDefault),
+  "page": zod.coerce.number().int().min(1).default(listUniversityFactsQueryPageDefault),
+  "pageSize": zod.coerce.number().int().min(1).max(listUniversityFactsQueryPageSizeMax).default(listUniversityFactsQueryPageSizeDefault)
+})
+
+export const listUniversityFactsResponseItemsItemAwardAmountMax = 240;
+
+export const listUniversityFactsResponseItemsItemMinimumGpaMin = 0;
+export const listUniversityFactsResponseItemsItemMinimumGpaMax = 4;
+
+
+
+export const ListUniversityFactsResponse = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.string(),
+  "institutionId": zod.string(),
+  "kind": zod.enum(['program', 'admissions', 'funding']),
+  "title": zod.string(),
+  "fieldsOfStudy": zod.array(zod.string()),
+  "degreeLevel": zod.string().nullable(),
+  "language": zod.string().nullable(),
+  "programType": zod.string().nullable(),
+  "applicantStatuses": zod.array(zod.string()),
+  "requirements": zod.array(zod.string()),
+  "eligibility": zod.string().nullable(),
+  "applicantGroup": zod.union([zod.literal('general'),zod.literal('first-year'),zod.literal('transfer'),zod.literal('international'),zod.literal('graduate'),zod.literal('program-specific'),zod.literal(null)]).nullable(),
+  "admissionScope": zod.union([zod.literal('school-general'),zod.literal('program-specific'),zod.literal(null)]).nullable(),
+  "fundingCategory": zod.union([zod.literal('merit'),zod.literal('need-based-grant'),zod.literal('institutional'),zod.literal('federal'),zod.literal('state'),zod.literal('international'),zod.literal('transfer'),zod.literal('graduate'),zod.literal('athletic'),zod.literal('talent-based'),zod.literal('work-study'),zod.literal('assistantship'),zod.literal('fellowship'),zod.literal('research'),zod.literal('other'),zod.literal(null)]).nullable(),
+  "awardAmount": zod.string().max(listUniversityFactsResponseItemsItemAwardAmountMax).nullable(),
+  "eligibleCitizenships": zod.array(zod.string()),
+  "eligibleResidenceCountries": zod.array(zod.string()),
+  "eligibleResidenceRegions": zod.array(zod.string()),
+  "eligibleDegreeLevels": zod.array(zod.string()),
+  "eligibleMajors": zod.array(zod.string()),
+  "majorRequirement": zod.union([zod.literal('required'),zod.literal('not_restricted'),zod.literal(null)]).nullable(),
+  "eligibleCriteria": zod.array(zod.string()),
+  "minimumGpa": zod.number().min(listUniversityFactsResponseItemsItemMinimumGpaMin).max(listUniversityFactsResponseItemsItemMinimumGpaMax).nullable(),
+  "minimumGpaScale": zod.union([zod.literal('4.0'),zod.literal(null)]).nullable(),
+  "deadline": zod.coerce.date().nullable(),
+  "officialUrl": zod.string().nullable(),
+  "sourceName": zod.string(),
+  "sourceUrl": zod.string(),
+  "sourceDate": zod.string().nullable(),
+  "sourceLicenseUrl": zod.string().nullable(),
+  "lastVerifiedAt": zod.coerce.date().nullable(),
+  "importedAt": zod.coerce.date()
+})),
+  "total": zod.number().int(),
+  "page": zod.number().int(),
+  "pageSize": zod.number().int()
+})
+
+
+/**
+ * Evaluates only recent, independently verified institutional funding records. Student inputs are held in memory for this request and are not stored or sent to external services. A match is a potential lead, never a guarantee of award or eligibility.
+ * @summary Find potential source-verified funding opportunities for a student
+ */
+export const getFundingMatchesBodyCitizenshipRegExp = new RegExp('^[A-Za-z]{2}$');
+export const getFundingMatchesBodyResidenceCountryRegExp = new RegExp('^[A-Za-z]{2}$');
+export const getFundingMatchesBodyResidenceRegionMax = 16;
+
+export const getFundingMatchesBodyIntendedMajorMax = 160;
+
+export const getFundingMatchesBodyDegreeLevelMax = 100;
+
+export const getFundingMatchesBodyGpaMin = 0;
+export const getFundingMatchesBodyGpaMax = 4;
+
+export const getFundingMatchesBodyCriteriaItemMax = 100;
+
+export const getFundingMatchesBodyCriteriaMax = 20;
+
+export const getFundingMatchesBodyPageMax = 100000;
+
+export const getFundingMatchesBodyPageSizeMax = 50;
+
+
+
+export const GetFundingMatchesBody = zod.object({
+  "applicantStatus": zod.enum(['Domestic', 'International']).optional(),
+  "applicantGroup": zod.enum(['first-year', 'transfer', 'graduate', 'other']).optional(),
+  "citizenship": zod.string().regex(getFundingMatchesBodyCitizenshipRegExp).optional(),
+  "residenceCountry": zod.string().regex(getFundingMatchesBodyResidenceCountryRegExp).optional(),
+  "residenceRegion": zod.string().max(getFundingMatchesBodyResidenceRegionMax).optional(),
+  "intendedMajor": zod.string().max(getFundingMatchesBodyIntendedMajorMax).optional(),
+  "degreeLevel": zod.string().max(getFundingMatchesBodyDegreeLevelMax).optional(),
+  "gpa": zod.number().min(getFundingMatchesBodyGpaMin).max(getFundingMatchesBodyGpaMax).optional().describe('Optional U.S. 4.0-scale GPA; other grading scales are not converted.'),
+  "criteria": zod.array(zod.string().max(getFundingMatchesBodyCriteriaItemMax)).max(getFundingMatchesBodyCriteriaMax).optional(),
+  "page": zod.number().int().min(1).max(getFundingMatchesBodyPageMax).optional(),
+  "pageSize": zod.number().int().min(1).max(getFundingMatchesBodyPageSizeMax).optional()
+})
+
+export const getFundingMatchesResponseMatchesItemOpportunityAwardAmountMax = 240;
+
+export const getFundingMatchesResponseMatchesItemOpportunityMinimumGpaMin = 0;
+export const getFundingMatchesResponseMatchesItemOpportunityMinimumGpaMax = 4;
+
+export const getFundingMatchesResponseMatchCountMin = 0;
+
+
+export const getFundingMatchesResponsePageSizeMax = 50;
+
+export const getFundingMatchesResponseTotalPagesMin = 0;
+
+
+
+export const GetFundingMatchesResponse = zod.object({
+  "matches": zod.array(zod.object({
+  "institutionId": zod.string(),
+  "institutionName": zod.string(),
+  "countryCode": zod.string(),
+  "city": zod.string(),
+  "opportunity": zod.object({
+  "id": zod.string(),
+  "institutionId": zod.string(),
+  "kind": zod.enum(['program', 'admissions', 'funding']),
+  "title": zod.string(),
+  "fieldsOfStudy": zod.array(zod.string()),
+  "degreeLevel": zod.string().nullable(),
+  "language": zod.string().nullable(),
+  "programType": zod.string().nullable(),
+  "applicantStatuses": zod.array(zod.string()),
+  "requirements": zod.array(zod.string()),
+  "eligibility": zod.string().nullable(),
+  "applicantGroup": zod.union([zod.literal('general'),zod.literal('first-year'),zod.literal('transfer'),zod.literal('international'),zod.literal('graduate'),zod.literal('program-specific'),zod.literal(null)]).nullable(),
+  "admissionScope": zod.union([zod.literal('school-general'),zod.literal('program-specific'),zod.literal(null)]).nullable(),
+  "fundingCategory": zod.union([zod.literal('merit'),zod.literal('need-based-grant'),zod.literal('institutional'),zod.literal('federal'),zod.literal('state'),zod.literal('international'),zod.literal('transfer'),zod.literal('graduate'),zod.literal('athletic'),zod.literal('talent-based'),zod.literal('work-study'),zod.literal('assistantship'),zod.literal('fellowship'),zod.literal('research'),zod.literal('other'),zod.literal(null)]).nullable(),
+  "awardAmount": zod.string().max(getFundingMatchesResponseMatchesItemOpportunityAwardAmountMax).nullable(),
+  "eligibleCitizenships": zod.array(zod.string()),
+  "eligibleResidenceCountries": zod.array(zod.string()),
+  "eligibleResidenceRegions": zod.array(zod.string()),
+  "eligibleDegreeLevels": zod.array(zod.string()),
+  "eligibleMajors": zod.array(zod.string()),
+  "majorRequirement": zod.union([zod.literal('required'),zod.literal('not_restricted'),zod.literal(null)]).nullable(),
+  "eligibleCriteria": zod.array(zod.string()),
+  "minimumGpa": zod.number().min(getFundingMatchesResponseMatchesItemOpportunityMinimumGpaMin).max(getFundingMatchesResponseMatchesItemOpportunityMinimumGpaMax).nullable(),
+  "minimumGpaScale": zod.union([zod.literal('4.0'),zod.literal(null)]).nullable(),
+  "deadline": zod.coerce.date().nullable(),
+  "officialUrl": zod.string().nullable(),
+  "sourceName": zod.string(),
+  "sourceUrl": zod.string(),
+  "sourceDate": zod.string().nullable(),
+  "sourceLicenseUrl": zod.string().nullable(),
+  "lastVerifiedAt": zod.coerce.date().nullable(),
+  "importedAt": zod.coerce.date()
+}),
+  "matchedCriteria": zod.array(zod.string()),
+  "unconfirmedCriteria": zod.array(zod.string()),
+  "deadlineStatus": zod.enum(['Unknown', 'Source-reported date', 'Expired'])
+})),
+  "matchCount": zod.number().int().min(getFundingMatchesResponseMatchCountMin),
+  "page": zod.number().int().min(1),
+  "pageSize": zod.number().int().min(1).max(getFundingMatchesResponsePageSizeMax),
+  "totalPages": zod.number().int().min(getFundingMatchesResponseTotalPagesMin),
+  "verifiedRecordCount": zod.number().int(),
+  "unverifiedRecordCount": zod.number().int(),
+  "expiredRecordCount": zod.number().int(),
+  "notice": zod.string()
+})
+
+
+/**
+ * @summary Get source-supported choices for the student funding finder
+ */
+export const getFundingFinderOptionsResponseCitizenshipsItemRegExp = new RegExp('^[A-Z]{2}$');
+export const getFundingFinderOptionsResponseResidenceCountriesItemRegExp = new RegExp('^[A-Z]{2}$');
+export const getFundingFinderOptionsResponseResidenceRegionsItemMax = 16;
+
+export const getFundingFinderOptionsResponseCriteriaItemMax = 100;
+
+
+
+export const GetFundingFinderOptionsResponse = zod.object({
+  "verifiedOpportunityCount": zod.number().int(),
+  "unverifiedOpportunityCount": zod.number().int(),
+  "expiredOpportunityCount": zod.number().int(),
+  "applicantGroups": zod.array(zod.string()),
+  "applicantStatuses": zod.array(zod.enum(['Domestic', 'International'])),
+  "citizenships": zod.array(zod.string().regex(getFundingFinderOptionsResponseCitizenshipsItemRegExp)),
+  "residenceCountries": zod.array(zod.string().regex(getFundingFinderOptionsResponseResidenceCountriesItemRegExp)),
+  "residenceRegions": zod.array(zod.string().max(getFundingFinderOptionsResponseResidenceRegionsItemMax)),
+  "degreeLevels": zod.array(zod.string()),
+  "criteria": zod.array(zod.string().max(getFundingFinderOptionsResponseCriteriaItemMax)),
+  "verificationWindowDays": zod.number().int()
 })
 
 
@@ -104,6 +348,16 @@ export const GetUniversityResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "country": zod.string(),
+  "countryCode": zod.string(),
+  "sourceScope": zod.string().nullable(),
+  "sourceLicenseUrl": zod.string().nullable(),
+  "recognitionStatus": zod.string().nullable(),
+  "languages": zod.array(zod.string()),
+  "applicantStatuses": zod.array(zod.string()),
+  "dliNumber": zod.string().nullable(),
+  "dliSourceUrl": zod.string().nullable(),
+  "dliVerifiedAt": zod.coerce.date().nullable(),
+  "lastVerifiedAt": zod.coerce.date().nullable(),
   "city": zod.string(),
   "state": zod.string(),
   "institutionType": zod.string(),
@@ -115,10 +369,8 @@ export const GetUniversityResponse = zod.object({
   "majors": zod.array(zod.string()),
   "website": zod.string().nullable(),
   "admissionsWebsite": zod.string().nullable(),
-  "tuitionInStateUsd": zod.number().int().nullable(),
-  "tuitionInStateYear": zod.number().int().nullable(),
-  "tuitionOutOfStateUsd": zod.number().int().nullable(),
-  "tuitionOutOfStateYear": zod.number().int().nullable(),
+  "applicationWebsite": zod.string().nullable(),
+  "financialAidWebsite": zod.string().nullable(),
   "admissionRate": zod.number().nullable(),
   "admissionRateYear": zod.number().int().nullable(),
   "completionRate": zod.number().nullable(),
@@ -197,6 +449,16 @@ export const ListSavedUniversitiesResponseItem = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "country": zod.string(),
+  "countryCode": zod.string(),
+  "sourceScope": zod.string().nullable(),
+  "sourceLicenseUrl": zod.string().nullable(),
+  "recognitionStatus": zod.string().nullable(),
+  "languages": zod.array(zod.string()),
+  "applicantStatuses": zod.array(zod.string()),
+  "dliNumber": zod.string().nullable(),
+  "dliSourceUrl": zod.string().nullable(),
+  "dliVerifiedAt": zod.coerce.date().nullable(),
+  "lastVerifiedAt": zod.coerce.date().nullable(),
   "city": zod.string(),
   "state": zod.string(),
   "institutionType": zod.string(),
@@ -208,10 +470,8 @@ export const ListSavedUniversitiesResponseItem = zod.object({
   "majors": zod.array(zod.string()),
   "website": zod.string().nullable(),
   "admissionsWebsite": zod.string().nullable(),
-  "tuitionInStateUsd": zod.number().int().nullable(),
-  "tuitionInStateYear": zod.number().int().nullable(),
-  "tuitionOutOfStateUsd": zod.number().int().nullable(),
-  "tuitionOutOfStateYear": zod.number().int().nullable(),
+  "applicationWebsite": zod.string().nullable(),
+  "financialAidWebsite": zod.string().nullable(),
   "admissionRate": zod.number().nullable(),
   "admissionRateYear": zod.number().int().nullable(),
   "completionRate": zod.number().nullable(),
@@ -243,6 +503,16 @@ export const SaveUniversityResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "country": zod.string(),
+  "countryCode": zod.string(),
+  "sourceScope": zod.string().nullable(),
+  "sourceLicenseUrl": zod.string().nullable(),
+  "recognitionStatus": zod.string().nullable(),
+  "languages": zod.array(zod.string()),
+  "applicantStatuses": zod.array(zod.string()),
+  "dliNumber": zod.string().nullable(),
+  "dliSourceUrl": zod.string().nullable(),
+  "dliVerifiedAt": zod.coerce.date().nullable(),
+  "lastVerifiedAt": zod.coerce.date().nullable(),
   "city": zod.string(),
   "state": zod.string(),
   "institutionType": zod.string(),
@@ -254,10 +524,8 @@ export const SaveUniversityResponse = zod.object({
   "majors": zod.array(zod.string()),
   "website": zod.string().nullable(),
   "admissionsWebsite": zod.string().nullable(),
-  "tuitionInStateUsd": zod.number().int().nullable(),
-  "tuitionInStateYear": zod.number().int().nullable(),
-  "tuitionOutOfStateUsd": zod.number().int().nullable(),
-  "tuitionOutOfStateYear": zod.number().int().nullable(),
+  "applicationWebsite": zod.string().nullable(),
+  "financialAidWebsite": zod.string().nullable(),
   "admissionRate": zod.number().nullable(),
   "admissionRateYear": zod.number().int().nullable(),
   "completionRate": zod.number().nullable(),

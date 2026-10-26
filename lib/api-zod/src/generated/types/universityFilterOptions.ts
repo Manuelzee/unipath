@@ -5,8 +5,14 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { CountryOption } from './countryOption';
+import type { RegionOption } from './regionOption';
 
 export interface UniversityFilterOptions {
+  countries: CountryOption[];
+  regions: RegionOption[];
+  languages: string[];
+  applicantStatuses: string[];
   institutionTypes: string[];
   ownerships: string[];
   degreeLevels: string[];

@@ -21,3 +21,4 @@ export * from "./studentProfiles";
 export * from "./savedUniversities";
 export * from "./applicationTasks";
 export * from "./institutionDirectory";
+export * from "./institutionFacts";

@@ -13,6 +13,23 @@ export interface University {
   id: string;
   name: string;
   country: string;
+  countryCode: string;
+  /** @nullable */
+  sourceScope: string | null;
+  /** @nullable */
+  sourceLicenseUrl: string | null;
+  /** @nullable */
+  recognitionStatus: string | null;
+  languages: string[];
+  applicantStatuses: string[];
+  /** @nullable */
+  dliNumber: string | null;
+  /** @nullable */
+  dliSourceUrl: string | null;
+  /** @nullable */
+  dliVerifiedAt: string | null;
+  /** @nullable */
+  lastVerifiedAt: string | null;
   city: string;
   state: string;
   institutionType: string;
@@ -29,13 +46,9 @@ export interface University {
   /** @nullable */
   admissionsWebsite: string | null;
   /** @nullable */
-  tuitionInStateUsd: number | null;
+  applicationWebsite: string | null;
   /** @nullable */
-  tuitionInStateYear: number | null;
-  /** @nullable */
-  tuitionOutOfStateUsd: number | null;
-  /** @nullable */
-  tuitionOutOfStateYear: number | null;
+  financialAidWebsite: string | null;
   /** @nullable */
   admissionRate: number | null;
   /** @nullable */
@@ -59,11 +72,314 @@ export interface University {
   lastUpdatedAt: string;
 }
 
+export interface CountryOption {
+  code: string;
+  name: string;
+  count: number;
+}
+
+export interface RegionOption {
+  countryCode: string;
+  code: string;
+}
+
 export interface UniversityFilterOptions {
+  countries: CountryOption[];
+  regions: RegionOption[];
+  languages: string[];
+  applicantStatuses: string[];
   institutionTypes: string[];
   ownerships: string[];
   degreeLevels: string[];
   majors: string[];
+}
+
+export interface CountryCoverage {
+  countryCode: string;
+  country: string;
+  institutionCount: number;
+  programCount: number;
+  status: string;
+  note: string;
+  /** @nullable */
+  lastImportedAt: string | null;
+}
+
+export interface DirectoryReference {
+  name: string;
+  url: string;
+  termsUrl: string;
+  access: string;
+}
+
+export interface DirectoryCoverage {
+  countries: CountryCoverage[];
+  worldwideNote: string;
+  references: DirectoryReference[];
+}
+
+export type InstitutionFactKind = typeof InstitutionFactKind[keyof typeof InstitutionFactKind];
+
+
+export const InstitutionFactKind = {
+  program: 'program',
+  admissions: 'admissions',
+  funding: 'funding',
+} as const;
+
+/**
+ * @nullable
+ */
+export type InstitutionFactApplicantGroup = typeof InstitutionFactApplicantGroup[keyof typeof InstitutionFactApplicantGroup] | null;
+
+
+export const InstitutionFactApplicantGroup = {
+  general: 'general',
+  'first-year': 'first-year',
+  transfer: 'transfer',
+  international: 'international',
+  graduate: 'graduate',
+  'program-specific': 'program-specific',
+} as const;
+
+/**
+ * @nullable
+ */
+export type InstitutionFactAdmissionScope = typeof InstitutionFactAdmissionScope[keyof typeof InstitutionFactAdmissionScope] | null;
+
+
+export const InstitutionFactAdmissionScope = {
+  'school-general': 'school-general',
+  'program-specific': 'program-specific',
+} as const;
+
+/**
+ * @nullable
+ */
+export type InstitutionFactFundingCategory = typeof InstitutionFactFundingCategory[keyof typeof InstitutionFactFundingCategory] | null;
+
+
+export const InstitutionFactFundingCategory = {
+  merit: 'merit',
+  'need-based-grant': 'need-based-grant',
+  institutional: 'institutional',
+  federal: 'federal',
+  state: 'state',
+  international: 'international',
+  transfer: 'transfer',
+  graduate: 'graduate',
+  athletic: 'athletic',
+  'talent-based': 'talent-based',
+  'work-study': 'work-study',
+  assistantship: 'assistantship',
+  fellowship: 'fellowship',
+  research: 'research',
+  other: 'other',
+} as const;
+
+/**
+ * @nullable
+ */
+export type InstitutionFactMajorRequirement = typeof InstitutionFactMajorRequirement[keyof typeof InstitutionFactMajorRequirement] | null;
+
+
+export const InstitutionFactMajorRequirement = {
+  required: 'required',
+  not_restricted: 'not_restricted',
+} as const;
+
+/**
+ * @nullable
+ */
+export type InstitutionFactMinimumGpaScale = typeof InstitutionFactMinimumGpaScale[keyof typeof InstitutionFactMinimumGpaScale] | null;
+
+
+export const InstitutionFactMinimumGpaScale = {
+  '40': '4.0',
+} as const;
+
+export interface InstitutionFact {
+  id: string;
+  institutionId: string;
+  kind: InstitutionFactKind;
+  title: string;
+  fieldsOfStudy: string[];
+  /** @nullable */
+  degreeLevel: string | null;
+  /** @nullable */
+  language: string | null;
+  /** @nullable */
+  programType: string | null;
+  applicantStatuses: string[];
+  requirements: string[];
+  /** @nullable */
+  eligibility: string | null;
+  /** @nullable */
+  applicantGroup: InstitutionFactApplicantGroup;
+  /** @nullable */
+  admissionScope: InstitutionFactAdmissionScope;
+  /** @nullable */
+  fundingCategory: InstitutionFactFundingCategory;
+  /**
+     * @maxLength 240
+     * @nullable
+     */
+  awardAmount: string | null;
+  eligibleCitizenships: string[];
+  eligibleResidenceCountries: string[];
+  eligibleResidenceRegions: string[];
+  eligibleDegreeLevels: string[];
+  eligibleMajors: string[];
+  /** @nullable */
+  majorRequirement: InstitutionFactMajorRequirement;
+  eligibleCriteria: string[];
+  /**
+     * @minimum 0
+     * @maximum 4
+     * @nullable
+     */
+  minimumGpa: number | null;
+  /** @nullable */
+  minimumGpaScale: InstitutionFactMinimumGpaScale;
+  /** @nullable */
+  deadline: string | null;
+  /** @nullable */
+  officialUrl: string | null;
+  sourceName: string;
+  sourceUrl: string;
+  /** @nullable */
+  sourceDate: string | null;
+  /** @nullable */
+  sourceLicenseUrl: string | null;
+  /** @nullable */
+  lastVerifiedAt: string | null;
+  importedAt: string;
+}
+
+export interface InstitutionFactPage {
+  items: InstitutionFact[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export type FundingStudentProfileInputApplicantStatus = typeof FundingStudentProfileInputApplicantStatus[keyof typeof FundingStudentProfileInputApplicantStatus];
+
+
+export const FundingStudentProfileInputApplicantStatus = {
+  Domestic: 'Domestic',
+  International: 'International',
+} as const;
+
+export type FundingStudentProfileInputApplicantGroup = typeof FundingStudentProfileInputApplicantGroup[keyof typeof FundingStudentProfileInputApplicantGroup];
+
+
+export const FundingStudentProfileInputApplicantGroup = {
+  'first-year': 'first-year',
+  transfer: 'transfer',
+  graduate: 'graduate',
+  other: 'other',
+} as const;
+
+export interface FundingStudentProfileInput {
+  applicantStatus?: FundingStudentProfileInputApplicantStatus;
+  applicantGroup?: FundingStudentProfileInputApplicantGroup;
+  /** @pattern ^[A-Za-z]{2}$ */
+  citizenship?: string;
+  /** @pattern ^[A-Za-z]{2}$ */
+  residenceCountry?: string;
+  /** @maxLength 16 */
+  residenceRegion?: string;
+  /** @maxLength 160 */
+  intendedMajor?: string;
+  /** @maxLength 100 */
+  degreeLevel?: string;
+  /**
+     * Optional U.S. 4.0-scale GPA; other grading scales are not converted.
+     * @minimum 0
+     * @maximum 4
+     */
+  gpa?: number;
+  /**
+     * @maxItems 20
+     * @items.maxLength 100
+     */
+  criteria?: string[];
+  /**
+     * @minimum 1
+     * @maximum 100000
+     */
+  page?: number;
+  /**
+     * @minimum 1
+     * @maximum 50
+     */
+  pageSize?: number;
+}
+
+export type FundingPotentialMatchDeadlineStatus = typeof FundingPotentialMatchDeadlineStatus[keyof typeof FundingPotentialMatchDeadlineStatus];
+
+
+export const FundingPotentialMatchDeadlineStatus = {
+  Unknown: 'Unknown',
+  'Source-reported_date': 'Source-reported date',
+  Expired: 'Expired',
+} as const;
+
+export interface FundingPotentialMatch {
+  institutionId: string;
+  institutionName: string;
+  countryCode: string;
+  city: string;
+  opportunity: InstitutionFact;
+  matchedCriteria: string[];
+  unconfirmedCriteria: string[];
+  deadlineStatus: FundingPotentialMatchDeadlineStatus;
+}
+
+export interface FundingMatchResponse {
+  matches: FundingPotentialMatch[];
+  /** @minimum 0 */
+  matchCount: number;
+  /** @minimum 1 */
+  page: number;
+  /**
+     * @minimum 1
+     * @maximum 50
+     */
+  pageSize: number;
+  /** @minimum 0 */
+  totalPages: number;
+  verifiedRecordCount: number;
+  unverifiedRecordCount: number;
+  expiredRecordCount: number;
+  notice: string;
+}
+
+export type FundingFinderOptionsApplicantStatusesItem = typeof FundingFinderOptionsApplicantStatusesItem[keyof typeof FundingFinderOptionsApplicantStatusesItem];
+
+
+export const FundingFinderOptionsApplicantStatusesItem = {
+  Domestic: 'Domestic',
+  International: 'International',
+} as const;
+
+export interface FundingFinderOptions {
+  verifiedOpportunityCount: number;
+  unverifiedOpportunityCount: number;
+  expiredOpportunityCount: number;
+  applicantGroups: string[];
+  applicantStatuses: FundingFinderOptionsApplicantStatusesItem[];
+  /** @items.pattern ^[A-Z]{2}$ */
+  citizenships: string[];
+  /** @items.pattern ^[A-Z]{2}$ */
+  residenceCountries: string[];
+  /** @items.maxLength 16 */
+  residenceRegions: string[];
+  degreeLevels: string[];
+  /** @items.maxLength 100 */
+  criteria: string[];
+  verificationWindowDays: number;
 }
 
 export interface ListUniversitiesResult {
@@ -136,17 +452,20 @@ export interface DashboardSummary {
 }
 
 export type ListUniversitiesParams = {
+/**
+ * @pattern ^[A-Z]{2}$
+ */
+countryCode?: string;
+city?: string;
+language?: string;
+applicantStatus?: ListUniversitiesApplicantStatus;
+fundingOnly?: boolean;
 search?: string;
 state?: string;
 institutionType?: string;
 ownership?: string;
 degreeLevel?: string;
 major?: string;
-/**
- * @minimum 0
- */
-maxTuition?: number;
-tuitionResidency?: ListUniversitiesTuitionResidency;
 /**
  * @minimum 1
  */
@@ -158,11 +477,34 @@ page?: number;
 pageSize?: number;
 };
 
-export type ListUniversitiesTuitionResidency = typeof ListUniversitiesTuitionResidency[keyof typeof ListUniversitiesTuitionResidency];
+export type ListUniversitiesApplicantStatus = typeof ListUniversitiesApplicantStatus[keyof typeof ListUniversitiesApplicantStatus];
 
 
-export const ListUniversitiesTuitionResidency = {
-  in_state: 'in_state',
-  out_of_state: 'out_of_state',
+export const ListUniversitiesApplicantStatus = {
+  Domestic: 'Domestic',
+  International: 'International',
+} as const;
+
+export type ListUniversityFactsParams = {
+institutionId: string;
+kind?: ListUniversityFactsKind;
+/**
+ * @minimum 1
+ */
+page?: number;
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+pageSize?: number;
+};
+
+export type ListUniversityFactsKind = typeof ListUniversityFactsKind[keyof typeof ListUniversityFactsKind];
+
+
+export const ListUniversityFactsKind = {
+  program: 'program',
+  admissions: 'admissions',
+  funding: 'funding',
 } as const;
 

@@ -1,1 +1,4 @@
 - [External data retrieval](external-data-retrieval.md) — when shell egress is blocked, public source files may still be retrievable through CodeExecution.
+- [Scorecard reporting years](scorecard-reporting-years.md) — use year-qualified metrics and small field batches; latest-only values lack reliable per-metric reporting years.
+- [Student directory rules](student-directory-rules.md) — no annual tuition/cost figures; preserve the existing design and plans; label missing and unimported data honestly.
+- [Global source permissions](global-source-permissions.md) — Canada-first expansion; permission-first imports and separate recognition, DLI, and program-availability claims.

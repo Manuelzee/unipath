@@ -1,0 +1,51 @@
+import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useUser } from '@clerk/react';
+import { Link, useLocation } from 'wouter';
+import { getGetStudentDashboardQueryKey, getGetUniversityQueryKey, getListSavedUniversitiesQueryKey, useGetUniversity, useListSavedUniversities, useRemoveSavedUniversity, useSaveUniversity } from '@workspace/api-client-react';
+import { ArrowLeft, Bookmark, Check, LoaderCircle, ShieldCheck } from 'lucide-react';
+import { SourceBadge } from './SchoolCard';
+import { cn, formatDate, monogram, schoolLocation } from './format';
+import { ErrorBlock, LoadingBlock } from './StateViews';
+import { UniversityTabs, type TabId } from './UniversityTabs';
+import { AdmissionsPanel, FieldsPanel, FundingPanel, LinksPanel, OverviewPanel } from './UniversityPanels';
+
+export function UniversityDetailView({ id }: { id: string }) {
+  const q = useGetUniversity(id, { query: { queryKey: getGetUniversityQueryKey(id) } });
+  const { isSignedIn } = useUser(); const [, setLocation] = useLocation(); const qc = useQueryClient();
+  const saved = useListSavedUniversities({ query: { enabled: !!isSignedIn, queryKey: getListSavedUniversitiesQueryKey() } });
+  const save = useSaveUniversity(); const remove = useRemoveSavedUniversity();
+  const [tab, setTab] = useState<TabId>('overview');
+  const isSaved = (saved.data || []).some(x => x.universityId === id);
+  const busy = save.isPending || remove.isPending;
+  const toggle = () => {
+    if (!isSignedIn) { setLocation('/sign-up'); return; }
+    const onSuccess = () => { void qc.invalidateQueries({ queryKey: getListSavedUniversitiesQueryKey() }); void qc.invalidateQueries({ queryKey: getGetStudentDashboardQueryKey() }); };
+    if (isSaved) remove.mutate({ universityId: id }, { onSuccess }); else if (q.data) save.mutate({ data: { universityId: id } }, { onSuccess });
+  };
+  if (q.isLoading) return <div className="page"><LoadingBlock/></div>;
+  if (q.isError || !q.data) return <div className="page"><ErrorBlock retry={() => void q.refetch()}/></div>;
+  const school = q.data;
+  return <div className="page page-enter">
+    <Link href="/discover" className="back-link" data-testid="link-back-discover"><ArrowLeft size={16}/> Back to explore</Link>
+    <div className="detail-hero"><div className={`detail-monogram cover-${school.id.length % 4}`}>{monogram(school.name)}</div><div><SourceBadge school={school}/><p className="school-location detail-location">{schoolLocation(school)}</p><h1 data-testid="text-university-name">{school.name}</h1><p className="detail-subtitle">{school.institutionType || 'Institution type not reported'} · {school.ownership || 'Ownership not reported'}</p></div>
+      <button className={cn('button', isSaved ? 'button-outline' : 'button-primary')} onClick={toggle} disabled={busy} data-testid="button-save-university">{busy ? <LoaderCircle className="spin" size={16}/> : isSaved ? <Check size={16}/> : <Bookmark size={16}/>} {isSaved ? 'Saved to my plan' : 'Save to my plan'}</button></div>
+    <div className="detail-notice"><ShieldCheck size={18}/><span>{school.countryCode === 'CA' ? 'Source-listed institution or campus from a government co-op and internship program listing. The list may include historical or outdated names. Current operation, recognition and admissions are not verified. ' : 'Source-reported data only. '}{school.lastVerifiedAt ? `Independently verified ${formatDate(school.lastVerifiedAt)}.` : 'This record has not been independently verified.'} Unknown means the source didn’t say. Confirm requirements, programs, and deadlines with the institution.</span></div>
+    <UniversityTabs active={tab} onChange={setTab}/>
+    <div className="detail-columns">
+      <div className="detail-main" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`} key={tab}>
+        {tab === 'overview' && <OverviewPanel school={school}/>}
+        {tab === 'fields' && <FieldsPanel school={school}/>}
+        {tab === 'admissions' && <AdmissionsPanel school={school}/>}
+        {tab === 'funding' && <FundingPanel school={school}/>}
+        {tab === 'links' && <LinksPanel school={school}/>}
+      </div>
+      <aside className="detail-aside"><div className="detail-panel source-panel"><span className="eyebrow">SOURCE & DATA</span><p>{school.dataSource}</p>
+        <div className="source-meta"><span>Source reporting period</span><strong>{school.dataYear || 'Not provided'}</strong></div>
+        <div className="source-meta"><span>Directory record imported</span><strong>{formatDate(school.lastUpdatedAt)}</strong></div>
+        <div className="source-meta"><span>Independent verification</span><strong>{formatDate(school.lastVerifiedAt) || 'Unavailable'}</strong></div>
+        <button className="source-link link-button" onClick={() => setTab('links')} data-testid="button-view-links">All official links</button>
+      </div><div className="tip-card"><strong>Keep it personal</strong><p>Compare this school against your priorities, location, and goals.</p><Link href="/profile">Update my profile</Link></div></aside>
+    </div>
+  </div>;
+}

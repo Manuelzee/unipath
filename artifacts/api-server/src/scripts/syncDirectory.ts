@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { and, eq, notInArray, sql } from "drizzle-orm";
+import { and, eq, inArray, notInArray, sql } from "drizzle-orm";
 import {
   db,
   institutionDirectoryTable,
@@ -12,6 +12,9 @@ type IpedsRecord = {
   city: string;
   state: string;
   website: string;
+  admissionsWebsite?: string;
+  applicationWebsite?: string;
+  financialAidWebsite?: string;
   sector: string;
   institutionType: string;
   level: string;
@@ -20,6 +23,17 @@ type IpedsRecord = {
 
 type JsonRecord = Record<string, unknown>;
 type ImportRow = typeof institutionDirectoryTable.$inferInsert;
+
+function institutionCountry(state: string) {
+  // IPEDS also covers these sovereign freely associated states. Preserve their
+  // NCES identities without misclassifying them as U.S. states in global search.
+  const associated: Record<string, string> = {
+    FM: "Federated States of Micronesia", MH: "Marshall Islands", PW: "Palau",
+  };
+  return associated[state]
+    ? { country: associated[state], countryCode: state }
+    : { country: "United States", countryCode: "US" };
+}
 
 const SCORECARD_API =
   "https://api.data.gov/ed/collegescorecard/v1/schools";
@@ -62,9 +76,11 @@ function officialUrl(value: unknown): string | null {
   if (!candidate) return null;
   try {
     const parsed = new URL(
-      candidate.startsWith("www.") ? `https://${candidate}` : candidate,
+      /^[a-z][a-z\d+.-]*:/i.test(candidate) ? candidate : `https://${candidate}`,
     );
-    return ["http:", "https:"].includes(parsed.protocol)
+    return ["http:", "https:"].includes(parsed.protocol) &&
+      parsed.hostname.includes(".") &&
+      !parsed.username && !parsed.password
       ? parsed.toString()
       : null;
   } catch {
@@ -284,14 +300,16 @@ function ipedsRow(record: IpedsRecord, updatedAt: Date): ImportRow {
     name: record.name,
     city: record.city || "",
     state: record.state || "",
-    country: "United States",
+    ...institutionCountry(record.state || ""),
     institutionType: record.institutionType || "Not reported",
     ownership: ownershipFromSector(record.sector),
     degreeLevels: record.degreeLevels ?? [],
     degreeTypes: [],
     majors: [],
     website: officialUrl(record.website),
-    admissionsWebsite: null,
+    admissionsWebsite: officialUrl(record.admissionsWebsite),
+    applicationWebsite: officialUrl(record.applicationWebsite),
+    financialAidWebsite: officialUrl(record.financialAidWebsite),
     tuitionInStateUsd: null,
     tuitionInStateYear: null,
     tuitionOutOfStateUsd: null,
@@ -377,7 +395,7 @@ function mergeScorecard(
     name,
     city: current?.city || textValue(getValue(record, "school.city")) || "",
     state: current?.state || textValue(getValue(record, "school.state")) || "",
-    country: "United States",
+    ...institutionCountry(current?.state || textValue(getValue(record, "school.state")) || ""),
     institutionType:
       current?.institutionType ||
       institutionTypeFallback(ownership, predominant),
@@ -389,7 +407,9 @@ function mergeScorecard(
       current?.website ?? officialUrl(getValue(record, "school.website")),
     admissionsWebsite: officialUrl(
       getValue(record, "school.admissions_url"),
-    ),
+    ) ?? current?.admissionsWebsite ?? null,
+    applicationWebsite: officialUrl(getValue(record, "school.application_url")) ?? current?.applicationWebsite ?? null,
+    financialAidWebsite: officialUrl(getValue(record, "school.financial_aid_url")) ?? current?.financialAidWebsite ?? null,
     tuitionInStateUsd:
       tuitionIn?.value == null ? null : Math.round(tuitionIn.value),
     tuitionInStateYear: tuitionIn?.year ?? null,
@@ -425,7 +445,13 @@ function mergeScorecard(
 
 async function main() {
   const apiKey = process.env.COLLEGE_SCORECARD_API_KEY?.trim();
-  if (!apiKey) {
+  const ipedsOnly = process.argv.includes("--ipeds-only");
+  const fileFlag = process.argv.indexOf("--scorecard-file");
+  const scorecardFile = fileFlag < 0 ? undefined : process.argv[fileFlag + 1];
+  if (fileFlag >= 0 && (!scorecardFile || scorecardFile.startsWith("--"))) {
+    throw new Error("--scorecard-file needs a prepared official data file path.");
+  }
+  if (!apiKey && !ipedsOnly && !scorecardFile) {
     throw new Error(
       "COLLEGE_SCORECARD_API_KEY is missing. Request a free key at https://api.data.gov/signup/ and add it to Replit Secrets before syncing.",
     );
@@ -443,14 +469,64 @@ async function main() {
   }
 
   let total = 0;
-  for (let page = 0; ; page += 1) {
-    const result = await fetchScorecardPage(apiKey, page);
+  if (scorecardFile && !ipedsOnly) {
+    const payload = JSON.parse(await readFile(scorecardFile, "utf8")) as {
+      format?: string;
+      sourceReleaseDate?: string;
+      records?: JsonRecord[];
+    };
+    if (payload.format !== "unipath-scorecard-official-files-v1" || !payload.records?.length) {
+      throw new Error("The prepared Scorecard file is invalid or empty. Nothing was imported.");
+    }
+    const ids = new Set<number>();
+    for (const record of payload.records) {
+      if (numberValue(getValue(record, "school.operating")) !== 1) {
+        throw new Error("The prepared file includes a record not marked active.");
+      }
+      const id = numberValue(getValue(record, "id"));
+      if (!id || ids.has(id)) throw new Error("The prepared file has invalid or duplicate institution identifiers.");
+      ids.add(id);
+      const current = institutions.get(id);
+      const merged = mergeScorecard(current, record, updatedAt);
+      if (!merged) throw new Error(`Cannot import source institution ${id}.`);
+      if (payload.sourceReleaseDate) {
+        merged.dataYear = `${current?.dataYear ? `IPEDS ${current.dataYear}; ` : ""}Scorecard release ${payload.sourceReleaseDate}`;
+      }
+      institutions.set(id, merged);
+    }
+    total = ids.size;
+  }
+  const yearRanges = [];
+  for (let start = FIRST_DATA_YEAR; start <= LAST_DATA_YEAR; start += 5) {
+    yearRanges.push({ start, end: Math.min(start + 4, LAST_DATA_YEAR) });
+  }
+  for (let page = 0; !ipedsOnly && !scorecardFile; page += 1) {
+    // Small field batches avoid the API gateway's request-URI length limit.
+    const batches = await Promise.all(
+      yearRanges.map((range, index) =>
+        fetchScorecardPage(apiKey!, page, range.start, range.end, index === 0),
+      ),
+    );
+    const result = batches[0]!;
     total = result.total;
     if (page === 0 && total === 0) {
       throw new Error("College Scorecard returned no active institutions.");
     }
 
-    for (const record of result.results) {
+    const pageRecords = new Map<number, JsonRecord>();
+    for (const batch of batches) {
+      if (batch.total !== total) {
+        throw new Error("College Scorecard changed during import. Please retry.");
+      }
+      for (const record of batch.results) {
+        const id = numberValue(getValue(record, "id"));
+        if (!id) continue;
+        const combined = pageRecords.get(id) ?? {};
+        mergeJsonRecords(combined, record);
+        pageRecords.set(id, combined);
+      }
+    }
+    for (const record of pageRecords.values()) {
       const scorecardId = numberValue(getValue(record, "id"));
       const current = scorecardId ? institutions.get(scorecardId) : undefined;
       const merged = mergeScorecard(current, record, updatedAt);
@@ -463,9 +539,13 @@ async function main() {
         `College Scorecard stopped returning records at page ${page}.`,
       );
     }
+    console.log(`Retrieved ${Math.min((page + 1) * PAGE_SIZE, total)} of ${total} active Scorecard records.`);
+    await new Promise((resolve) => setTimeout(resolve, 200));
   }
 
-  if (!total) throw new Error("Could not determine the College Scorecard total.");
+  if (!ipedsOnly && !total) {
+    throw new Error("Could not determine the College Scorecard total.");
+  }
 
   const rows = [...institutions.values()];
   await db.transaction(async (tx) => {
@@ -482,6 +562,7 @@ async function main() {
             city: sql`excluded.city`,
             state: sql`excluded.state`,
             country: sql`excluded.country`,
+            countryCode: sql`excluded.country_code`,
             institutionType: sql`excluded.institution_type`,
             ownership: sql`excluded.ownership`,
             degreeLevels: sql`excluded.degree_levels`,
@@ -489,6 +570,8 @@ async function main() {
             majors: sql`excluded.majors`,
             website: sql`excluded.website`,
             admissionsWebsite: sql`excluded.admissions_website`,
+            applicationWebsite: sql`excluded.application_website`,
+            financialAidWebsite: sql`excluded.financial_aid_website`,
             tuitionInStateUsd: sql`excluded.tuition_in_state_usd`,
             tuitionInStateYear: sql`excluded.tuition_in_state_year`,
             tuitionOutOfStateUsd: sql`excluded.tuition_out_of_state_usd`,
@@ -511,11 +594,12 @@ async function main() {
         });
     }
 
-    await tx
+    if (!ipedsOnly) await tx
       .update(institutionDirectoryTable)
       .set({ isActive: false })
       .where(
         and(
+          sql`${institutionDirectoryTable.id} LIKE 'nces-%'`,
           eq(institutionDirectoryTable.isActive, true),
           notInArray(
             institutionDirectoryTable.id,
@@ -525,6 +609,16 @@ async function main() {
       );
   });
 
+  const [verified] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(institutionDirectoryTable)
+    .where(and(
+      eq(institutionDirectoryTable.isActive, true),
+      inArray(institutionDirectoryTable.id, rows.map((row) => row.id)),
+    ));
+  if (verified?.count !== rows.length) {
+    throw new Error("Database verification did not match the imported institution count.");
+  }
   console.log(
     `Imported ${rows.length.toLocaleString()} unique active institutions: ${ipedsRows.length.toLocaleString()} from IPEDS and ${total.toLocaleString()} active College Scorecard records. Data sync completed ${updatedAt.toISOString()}.`,
   );

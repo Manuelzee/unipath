@@ -10,6 +10,23 @@ export interface University {
   id: string;
   name: string;
   country: string;
+  countryCode: string;
+  /** @nullable */
+  sourceScope: string | null;
+  /** @nullable */
+  sourceLicenseUrl: string | null;
+  /** @nullable */
+  recognitionStatus: string | null;
+  languages: string[];
+  applicantStatuses: string[];
+  /** @nullable */
+  dliNumber: string | null;
+  /** @nullable */
+  dliSourceUrl: string | null;
+  /** @nullable */
+  dliVerifiedAt: Date | null;
+  /** @nullable */
+  lastVerifiedAt: Date | null;
   city: string;
   state: string;
   institutionType: string;
@@ -26,13 +43,9 @@ export interface University {
   /** @nullable */
   admissionsWebsite: string | null;
   /** @nullable */
-  tuitionInStateUsd: number | null;
+  applicationWebsite: string | null;
   /** @nullable */
-  tuitionInStateYear: number | null;
-  /** @nullable */
-  tuitionOutOfStateUsd: number | null;
-  /** @nullable */
-  tuitionOutOfStateYear: number | null;
+  financialAidWebsite: string | null;
   /** @nullable */
   admissionRate: number | null;
   /** @nullable */

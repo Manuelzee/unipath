@@ -11,7 +11,7 @@ tags:
   - name: health
     description: Health operations
   - name: universities
-    description: United States college and university directory
+    description: International institution directory with source-limited coverage
   - name: student
     description: Signed-in student profile, saved schools, and application tasks
 paths:
@@ -32,8 +32,23 @@ paths:
     get:
       operationId: listUniversities
       tags: [universities]
-      summary: Search United States colleges and universities
+      summary: Search imported institutions worldwide
       parameters:
+        - in: query
+          name: countryCode
+          schema: { type: string, pattern: "^[A-Z]{2}$" }
+        - in: query
+          name: city
+          schema: { type: string }
+        - in: query
+          name: language
+          schema: { type: string }
+        - in: query
+          name: applicantStatus
+          schema: { type: string, enum: [Domestic, International] }
+        - in: query
+          name: fundingOnly
+          schema: { type: boolean, default: false }
         - in: query
           name: search
           schema: { type: string }
@@ -52,12 +67,6 @@ paths:
         - in: query
           name: major
           schema: { type: string }
-        - in: query
-          name: maxTuition
-          schema: { type: integer, minimum: 0 }
-        - in: query
-          name: tuitionResidency
-          schema: { type: string, enum: [in_state, out_of_state], default: in_state }
         - in: query
           name: page
           schema: { type: integer, minimum: 1, default: 1 }
@@ -81,6 +90,74 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/UniversityFilterOptions" }
+  /universities/coverage:
+    get:
+      operationId: getDirectoryCoverage
+      tags: [universities]
+      summary: Get tested country coverage and source access restrictions
+      responses:
+        "200":
+          description: Actual imported coverage, not a claim of national completeness
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DirectoryCoverage" }
+  /university-facts:
+    get:
+      operationId: listUniversityFacts
+      tags: [universities]
+      summary: Browse source-reported programs, admissions and funding
+      parameters:
+        - in: query
+          name: institutionId
+          required: true
+          schema: { type: string }
+        - in: query
+          name: kind
+          schema: { type: string, enum: [program, admissions, funding], default: program }
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+        - in: query
+          name: pageSize
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+      responses:
+        "200":
+          description: Paginated imported facts; absent facts are never inferred
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InstitutionFactPage" }
+        "404": { description: Institution not found }
+  /funding/matches:
+    post:
+      operationId: getFundingMatches
+      tags: [universities]
+      summary: Find potential source-verified funding opportunities for a student
+      description: Evaluates only recent, independently verified institutional funding records. Student inputs are held in memory for this request and are not stored or sent to external services. A match is a potential lead, never a guarantee of award or eligibility.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FundingStudentProfileInput"
+      responses:
+        "200":
+          description: Source-linked potential opportunities; never a promise of eligibility
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FundingMatchResponse"
+  /funding/options:
+    get:
+      operationId: getFundingFinderOptions
+      tags: [universities]
+      summary: Get source-supported choices for the student funding finder
+      responses:
+        "200":
+          description: Filters derived from recently verified imported opportunity records
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FundingFinderOptions"
   /universities/{id}:
     get:
       operationId: getUniversity
@@ -258,11 +335,21 @@ components:
         - status
     University:
       type: object
-      required: [id, name, country, city, state, institutionType, ownership, dataSource, dataYear, degreeLevels, degreeTypes, majors, website, admissionsWebsite, tuitionInStateUsd, tuitionInStateYear, tuitionOutOfStateUsd, tuitionOutOfStateYear, admissionRate, admissionRateYear, completionRate, completionRateYear, completionRateType, pellGrantRate, pellGrantRateYear, medianDebtUsd, medianDebtYear, sourceUrl, isActive, lastUpdatedAt]
+      required: [id, name, country, countryCode, city, state, institutionType, ownership, dataSource, dataYear, degreeLevels, degreeTypes, majors, website, admissionsWebsite, applicationWebsite, financialAidWebsite, admissionRate, admissionRateYear, completionRate, completionRateYear, completionRateType, pellGrantRate, pellGrantRateYear, medianDebtUsd, medianDebtYear, sourceUrl, isActive, lastUpdatedAt, sourceScope, sourceLicenseUrl, recognitionStatus, languages, applicantStatuses, dliNumber, dliSourceUrl, dliVerifiedAt, lastVerifiedAt]
       properties:
         id: { type: string }
         name: { type: string }
         country: { type: string }
+        countryCode: { type: string }
+        sourceScope: { type: ["string", "null"] }
+        sourceLicenseUrl: { type: ["string", "null"] }
+        recognitionStatus: { type: ["string", "null"] }
+        languages: { type: array, items: { type: string } }
+        applicantStatuses: { type: array, items: { type: string } }
+        dliNumber: { type: ["string", "null"] }
+        dliSourceUrl: { type: ["string", "null"] }
+        dliVerifiedAt: { type: ["string", "null"], format: date-time }
+        lastVerifiedAt: { type: ["string", "null"], format: date-time }
         city: { type: string }
         state: { type: string }
         institutionType: { type: string }
@@ -280,10 +367,8 @@ components:
           items: { type: string }
         website: { type: ["string", "null"] }
         admissionsWebsite: { type: ["string", "null"] }
-        tuitionInStateUsd: { type: ["integer", "null"] }
-        tuitionInStateYear: { type: ["integer", "null"] }
-        tuitionOutOfStateUsd: { type: ["integer", "null"] }
-        tuitionOutOfStateYear: { type: ["integer", "null"] }
+        applicationWebsite: { type: ["string", "null"] }
+        financialAidWebsite: { type: ["string", "null"] }
         admissionRate: { type: ["number", "null"] }
         admissionRateYear: { type: ["integer", "null"] }
         completionRate: { type: ["number", "null"] }
@@ -298,8 +383,17 @@ components:
         lastUpdatedAt: { type: string, format: date-time }
     UniversityFilterOptions:
       type: object
-      required: [institutionTypes, ownerships, degreeLevels, majors]
+      required: [institutionTypes, ownerships, degreeLevels, majors, countries, regions, languages, applicantStatuses]
       properties:
+        countries:
+          type: array
+          items:
+            $ref: "#/components/schemas/CountryOption"
+        regions:
+          type: array
+          items: { $ref: "#/components/schemas/RegionOption" }
+        languages: { type: array, items: { type: string } }
+        applicantStatuses: { type: array, items: { type: string } }
         institutionTypes:
           type: array
           items: { type: string }
@@ -312,6 +406,180 @@ components:
         majors:
           type: array
           items: { type: string }
+    CountryOption:
+      type: object
+      required: [code, name, count]
+      properties:
+        code: { type: string }
+        name: { type: string }
+        count: { type: integer }
+    RegionOption:
+      type: object
+      required: [countryCode, code]
+      properties:
+        countryCode: { type: string }
+        code: { type: string }
+    CountryCoverage:
+      type: object
+      required: [countryCode, country, institutionCount, programCount, status, note, lastImportedAt]
+      properties:
+        countryCode: { type: string }
+        country: { type: string }
+        institutionCount: { type: integer }
+        programCount: { type: integer }
+        status: { type: string }
+        note: { type: string }
+        lastImportedAt: { type: ["string", "null"], format: date-time }
+    DirectoryCoverage:
+      type: object
+      required: [countries, worldwideNote, references]
+      properties:
+        countries:
+          type: array
+          items: { $ref: "#/components/schemas/CountryCoverage" }
+        worldwideNote: { type: string }
+        references:
+          type: array
+          items: { $ref: "#/components/schemas/DirectoryReference" }
+    DirectoryReference:
+      type: object
+      required: [name, url, termsUrl, access]
+      properties:
+        name: { type: string }
+        url: { type: string }
+        termsUrl: { type: string }
+        access: { type: string }
+    InstitutionFact:
+      type: object
+      required: [id, institutionId, kind, title, fieldsOfStudy, degreeLevel, language, programType, applicantStatuses, requirements, eligibility, applicantGroup, admissionScope, fundingCategory, awardAmount, eligibleCitizenships, eligibleResidenceCountries, eligibleResidenceRegions, eligibleDegreeLevels, eligibleMajors, majorRequirement, eligibleCriteria, minimumGpa, minimumGpaScale, deadline, officialUrl, sourceName, sourceUrl, sourceDate, sourceLicenseUrl, lastVerifiedAt, importedAt]
+      properties:
+        id: { type: string }
+        institutionId: { type: string }
+        kind: { type: string, enum: [program, admissions, funding] }
+        title: { type: string }
+        fieldsOfStudy: { type: array, items: { type: string } }
+        degreeLevel: { type: ["string", "null"] }
+        language: { type: ["string", "null"] }
+        programType: { type: ["string", "null"] }
+        applicantStatuses: { type: array, items: { type: string } }
+        requirements: { type: array, items: { type: string } }
+        eligibility: { type: ["string", "null"] }
+        applicantGroup: { type: ["string", "null"], enum: [general, first-year, transfer, international, graduate, program-specific, null] }
+        admissionScope: { type: ["string", "null"], enum: [school-general, program-specific, null] }
+        fundingCategory: { type: ["string", "null"], enum: [merit, need-based-grant, institutional, federal, state, international, transfer, graduate, athletic, talent-based, work-study, assistantship, fellowship, research, other, null] }
+        awardAmount: { type: ["string", "null"], maxLength: 240 }
+        eligibleCitizenships: { type: array, items: { type: string } }
+        eligibleResidenceCountries: { type: array, items: { type: string } }
+        eligibleResidenceRegions: { type: array, items: { type: string } }
+        eligibleDegreeLevels: { type: array, items: { type: string } }
+        eligibleMajors: { type: array, items: { type: string } }
+        majorRequirement: { type: ["string", "null"], enum: [required, not_restricted, null] }
+        eligibleCriteria: { type: array, items: { type: string } }
+        minimumGpa: { type: ["number", "null"], minimum: 0, maximum: 4 }
+        minimumGpaScale: { type: ["string", "null"], enum: ["4.0", null] }
+        deadline: { type: ["string", "null"], format: date }
+        officialUrl: { type: ["string", "null"] }
+        sourceName: { type: string }
+        sourceUrl: { type: string }
+        sourceDate: { type: ["string", "null"] }
+        sourceLicenseUrl: { type: ["string", "null"] }
+        lastVerifiedAt: { type: ["string", "null"], format: date-time }
+        importedAt: { type: string, format: date-time }
+    InstitutionFactPage:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/InstitutionFact" }
+        total: { type: integer }
+        page: { type: integer }
+        pageSize: { type: integer }
+    FundingStudentProfileInput:
+      type: object
+      additionalProperties: false
+      required: []
+      properties:
+        applicantStatus: { type: string, enum: [Domestic, International] }
+        applicantGroup:
+          type: string
+          enum: [first-year, transfer, graduate, other]
+        citizenship: { type: string, pattern: "^[A-Za-z]{2}$" }
+        residenceCountry: { type: string, pattern: "^[A-Za-z]{2}$" }
+        residenceRegion: { type: string, maxLength: 16 }
+        intendedMajor: { type: string, maxLength: 160 }
+        degreeLevel: { type: string, maxLength: 100 }
+        gpa:
+          type: number
+          minimum: 0
+          maximum: 4
+          description: Optional U.S. 4.0-scale GPA; other grading scales are not converted.
+        criteria:
+          type: array
+          maxItems: 20
+          uniqueItems: true
+          items: { type: string, maxLength: 100 }
+        page: { type: integer, minimum: 1, maximum: 100000 }
+        pageSize: { type: integer, minimum: 1, maximum: 50 }
+    FundingPotentialMatch:
+      type: object
+      required: [institutionId, institutionName, countryCode, city, opportunity, matchedCriteria, unconfirmedCriteria, deadlineStatus]
+      properties:
+        institutionId: { type: string }
+        institutionName: { type: string }
+        countryCode: { type: string }
+        city: { type: string }
+        opportunity:
+          $ref: "#/components/schemas/InstitutionFact"
+        matchedCriteria: { type: array, items: { type: string } }
+        unconfirmedCriteria: { type: array, items: { type: string } }
+        deadlineStatus:
+          type: string
+          enum: [Unknown, Source-reported date, Expired]
+    FundingMatchResponse:
+      type: object
+      required: [matches, matchCount, page, pageSize, totalPages, verifiedRecordCount, unverifiedRecordCount, expiredRecordCount, notice]
+      properties:
+        matches:
+          type: array
+          items: { $ref: "#/components/schemas/FundingPotentialMatch" }
+        matchCount: { type: integer, minimum: 0 }
+        page: { type: integer, minimum: 1 }
+        pageSize: { type: integer, minimum: 1, maximum: 50 }
+        totalPages: { type: integer, minimum: 0 }
+        verifiedRecordCount: { type: integer }
+        unverifiedRecordCount: { type: integer }
+        expiredRecordCount: { type: integer }
+        notice: { type: string }
+    FundingFinderOptions:
+      type: object
+      required: [verifiedOpportunityCount, unverifiedOpportunityCount, expiredOpportunityCount, applicantGroups, applicantStatuses, citizenships, residenceCountries, residenceRegions, degreeLevels, criteria, verificationWindowDays]
+      properties:
+        verifiedOpportunityCount: { type: integer }
+        unverifiedOpportunityCount: { type: integer }
+        expiredOpportunityCount: { type: integer }
+        applicantGroups:
+          type: array
+          items: { type: string }
+        applicantStatuses:
+          type: array
+          items: { type: string, enum: [Domestic, International] }
+        citizenships:
+          type: array
+          items: { type: string, pattern: "^[A-Z]{2}$" }
+        residenceCountries:
+          type: array
+          items: { type: string, pattern: "^[A-Z]{2}$" }
+        residenceRegions:
+          type: array
+          items: { type: string, maxLength: 16 }
+        degreeLevels:
+          type: array
+          items: { type: string }
+        criteria:
+          type: array
+          items: { type: string, maxLength: 100 }
+        verificationWindowDays: { type: integer }
     ListUniversitiesResult:
       type: object
       required: [items, total, page, pageSize]

@@ -1,13 +1,14 @@
 import {
   GetUniversityResponse,
   type ListUniversitiesParams,
+  type ListUniversityFactsParams,
+  ListUniversityFactsResponse,
 } from "@workspace/api-zod";
 import {
   and,
   arrayContains,
   eq,
   inArray,
-  lte,
   or,
   sql,
   type SQL,
@@ -15,6 +16,7 @@ import {
 import {
   db,
   institutionDirectoryTable,
+  institutionFactsTable,
   type InstitutionDirectoryRecord,
 } from "@workspace/db";
 
@@ -27,6 +29,16 @@ function toUniversity(
     id: institution.id,
     name: institution.name,
     country: institution.country,
+    countryCode: institution.countryCode,
+    sourceScope: institution.sourceScope,
+    sourceLicenseUrl: institution.sourceLicenseUrl,
+    recognitionStatus: institution.recognitionStatus,
+    languages: institution.languages,
+    applicantStatuses: institution.applicantStatuses,
+    dliNumber: institution.dliNumber,
+    dliSourceUrl: institution.dliSourceUrl,
+    dliVerifiedAt: institution.dliVerifiedAt?.toISOString() ?? null,
+    lastVerifiedAt: institution.lastVerifiedAt?.toISOString() ?? null,
     city: institution.city,
     state: institution.state,
     institutionType: institution.institutionType,
@@ -38,10 +50,8 @@ function toUniversity(
     majors: institution.majors,
     website: institution.website,
     admissionsWebsite: institution.admissionsWebsite,
-    tuitionInStateUsd: institution.tuitionInStateUsd,
-    tuitionInStateYear: institution.tuitionInStateYear,
-    tuitionOutOfStateUsd: institution.tuitionOutOfStateUsd,
-    tuitionOutOfStateYear: institution.tuitionOutOfStateYear,
+    applicationWebsite: institution.applicationWebsite,
+    financialAidWebsite: institution.financialAidWebsite,
     admissionRate: institution.admissionRate,
     admissionRateYear: institution.admissionRateYear,
     completionRate: institution.completionRate,
@@ -66,6 +76,19 @@ export async function searchUniversities(
 ) {
   const conditions: SQL[] = [eq(institutionDirectoryTable.isActive, true)];
   const search = filters.search?.trim();
+  if (filters.countryCode) conditions.push(eq(institutionDirectoryTable.countryCode, filters.countryCode));
+  if (filters.city?.trim()) {
+    conditions.push(sql`${institutionDirectoryTable.city} ILIKE ${likePattern(filters.city.trim())} ESCAPE '\\'`);
+  }
+  if (filters.language) conditions.push(arrayContains(institutionDirectoryTable.languages, [filters.language]));
+  if (filters.applicantStatus) conditions.push(arrayContains(institutionDirectoryTable.applicantStatuses, [filters.applicantStatus]));
+  if (filters.fundingOnly) {
+    conditions.push(sql`exists (
+      select 1 from ${institutionFactsTable}
+      where ${institutionFactsTable.institutionId} = ${institutionDirectoryTable.id}
+      and ${institutionFactsTable.kind} = 'funding'
+    )`);
+  }
 
   if (filters.state) {
     conditions.push(eq(institutionDirectoryTable.state, filters.state));
@@ -80,22 +103,16 @@ export async function searchUniversities(
   }
   if (filters.degreeLevel) {
     conditions.push(
-      arrayContains(institutionDirectoryTable.degreeLevels, [
-        filters.degreeLevel,
-      ]),
+      or(
+        arrayContains(institutionDirectoryTable.degreeLevels, [filters.degreeLevel]),
+        arrayContains(institutionDirectoryTable.degreeTypes, [filters.degreeLevel]),
+      )!,
     );
   }
   if (filters.major) {
     conditions.push(
       arrayContains(institutionDirectoryTable.majors, [filters.major]),
     );
-  }
-  if (filters.maxTuition !== undefined) {
-    const tuitionColumn =
-      filters.tuitionResidency === "out_of_state"
-        ? institutionDirectoryTable.tuitionOutOfStateUsd
-        : institutionDirectoryTable.tuitionInStateUsd;
-    conditions.push(lte(tuitionColumn, filters.maxTuition));
   }
   if (search) {
     const pattern = likePattern(search);
@@ -105,6 +122,7 @@ export async function searchUniversities(
       sql`${institutionDirectoryTable.state} ILIKE ${pattern} ESCAPE '\\'`,
       sql`${institutionDirectoryTable.institutionType} ILIKE ${pattern} ESCAPE '\\'`,
       sql`${institutionDirectoryTable.ownership} ILIKE ${pattern} ESCAPE '\\'`,
+      sql`${institutionDirectoryTable.country} ILIKE ${pattern} ESCAPE '\\'`,
     );
     if (searchCondition) conditions.push(searchCondition);
   }
@@ -121,7 +139,7 @@ export async function searchUniversities(
       .select()
       .from(institutionDirectoryTable)
       .where(where)
-      .orderBy(institutionDirectoryTable.name)
+      .orderBy(institutionDirectoryTable.name, institutionDirectoryTable.id)
       .limit(pageSize)
       .offset((page - 1) * pageSize),
   ]);
@@ -161,7 +179,7 @@ export async function findUniversities(
 
 export async function getUniversityFilterOptions() {
   const active = eq(institutionDirectoryTable.isActive, true);
-  const [institutionTypes, ownerships, degreeLevels, majors] =
+  const [institutionTypes, ownerships, degreeLevels, majors, countries, regions, languages, applicantStatuses] =
     await Promise.all([
       db
         .selectDistinct({ value: institutionDirectoryTable.institutionType })
@@ -175,7 +193,7 @@ export async function getUniversityFilterOptions() {
         .orderBy(institutionDirectoryTable.ownership),
       db
         .selectDistinct({
-          value: sql<string>`unnest(${institutionDirectoryTable.degreeLevels})`,
+          value: sql<string>`unnest(${institutionDirectoryTable.degreeLevels} || ${institutionDirectoryTable.degreeTypes})`,
         })
         .from(institutionDirectoryTable)
         .where(active)
@@ -187,6 +205,23 @@ export async function getUniversityFilterOptions() {
         .from(institutionDirectoryTable)
         .where(active)
         .orderBy(sql`1`),
+      db.select({
+        code: institutionDirectoryTable.countryCode,
+        name: institutionDirectoryTable.country,
+        count: sql<number>`count(*)::int`,
+      }).from(institutionDirectoryTable).where(active)
+        .groupBy(institutionDirectoryTable.countryCode, institutionDirectoryTable.country)
+        .orderBy(institutionDirectoryTable.country),
+      db.selectDistinct({
+        countryCode: institutionDirectoryTable.countryCode,
+        code: institutionDirectoryTable.state,
+      }).from(institutionDirectoryTable)
+        .where(and(active, sql`${institutionDirectoryTable.state} <> ''`))
+        .orderBy(institutionDirectoryTable.countryCode, institutionDirectoryTable.state),
+      db.selectDistinct({ value: sql<string>`unnest(${institutionDirectoryTable.languages})` })
+        .from(institutionDirectoryTable).where(active).orderBy(sql`1`),
+      db.selectDistinct({ value: sql<string>`unnest(${institutionDirectoryTable.applicantStatuses})` })
+        .from(institutionDirectoryTable).where(active).orderBy(sql`1`),
     ]);
 
   return {
@@ -194,5 +229,32 @@ export async function getUniversityFilterOptions() {
     ownerships: ownerships.flatMap((row) => (row.value ? [row.value] : [])),
     degreeLevels: degreeLevels.map((row) => row.value),
     majors: majors.map((row) => row.value),
+    countries,
+    regions,
+    languages: languages.map((row) => row.value),
+    applicantStatuses: applicantStatuses.map((row) => row.value),
   };
+}
+
+export async function listUniversityFacts(params: ListUniversityFactsParams) {
+  const page = params.page ?? 1;
+  const pageSize = params.pageSize ?? 50;
+  const where = and(
+    eq(institutionFactsTable.institutionId, params.institutionId),
+    eq(institutionFactsTable.kind, params.kind ?? "program"),
+  );
+  const [counts, records] = await Promise.all([
+    db.select({ count: sql<number>`count(*)::int` }).from(institutionFactsTable).where(where),
+    db.select().from(institutionFactsTable).where(where)
+      .orderBy(institutionFactsTable.title, institutionFactsTable.id)
+      .limit(pageSize).offset((page - 1) * pageSize),
+  ]);
+  return ListUniversityFactsResponse.parse({
+    items: records.map((row) => ({
+      ...row,
+      lastVerifiedAt: row.lastVerifiedAt?.toISOString() ?? null,
+      importedAt: row.importedAt.toISOString(),
+    })),
+    total: counts[0]?.count ?? 0, page, pageSize,
+  });
 }

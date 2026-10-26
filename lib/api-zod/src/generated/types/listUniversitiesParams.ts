@@ -5,20 +5,23 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import type { ListUniversitiesTuitionResidency } from './listUniversitiesTuitionResidency';
+import type { ListUniversitiesApplicantStatus } from './listUniversitiesApplicantStatus';
 
 export type ListUniversitiesParams = {
+/**
+ * @pattern ^[A-Z]{2}$
+ */
+countryCode?: string;
+city?: string;
+language?: string;
+applicantStatus?: ListUniversitiesApplicantStatus;
+fundingOnly?: boolean;
 search?: string;
 state?: string;
 institutionType?: string;
 ownership?: string;
 degreeLevel?: string;
 major?: string;
-/**
- * @minimum 0
- */
-maxTuition?: number;
-tuitionResidency?: ListUniversitiesTuitionResidency;
 /**
  * @minimum 1
  */
