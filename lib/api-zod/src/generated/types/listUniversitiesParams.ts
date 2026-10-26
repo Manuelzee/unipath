@@ -5,12 +5,27 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { ListUniversitiesTuitionResidency } from './listUniversitiesTuitionResidency';
 
 export type ListUniversitiesParams = {
-country?: string;
-major?: string;
-degreeLevel?: string;
-maxTuition?: number;
-admissionRequirement?: string;
 search?: string;
+state?: string;
+institutionType?: string;
+ownership?: string;
+degreeLevel?: string;
+major?: string;
+/**
+ * @minimum 0
+ */
+maxTuition?: number;
+tuitionResidency?: ListUniversitiesTuitionResidency;
+/**
+ * @minimum 1
+ */
+page?: number;
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+pageSize?: number;
 };

@@ -24,7 +24,7 @@ import {
   savedUniversitiesTable,
   studentProfilesTable,
 } from "@workspace/db";
-import { findUniversity } from "../lib/universities";
+import { findUniversities, findUniversity } from "../lib/universities";
 import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
@@ -107,8 +107,11 @@ router.get("/me/saved", requireAuth, async (req, res): Promise<void> => {
     .from(savedUniversitiesTable)
     .where(eq(savedUniversitiesTable.userId, studentId(req)))
     .orderBy(desc(savedUniversitiesTable.savedAt));
+  const universitiesById = await findUniversities(
+    entries.map((entry) => entry.universityId),
+  );
   const saved = entries.flatMap((entry) => {
-    const university = findUniversity(entry.universityId);
+    const university = universitiesById.get(entry.universityId);
     if (!university) return [];
     return [
       {
@@ -127,7 +130,7 @@ router.post("/me/saved", requireAuth, async (req, res): Promise<void> => {
     res.status(400).json({ error: body.error.message });
     return;
   }
-  const university = findUniversity(body.data.universityId);
+  const university = await findUniversity(body.data.universityId);
   if (!university) {
     res.status(404).json({ error: "University listing not found." });
     return;
@@ -189,7 +192,10 @@ router.post("/me/tasks", requireAuth, async (req, res): Promise<void> => {
     res.status(400).json({ error: body.error.message });
     return;
   }
-  if (!findUniversity(body.data.universityId) && body.data.universityId !== "") {
+  if (
+    !(await findUniversity(body.data.universityId)) &&
+    body.data.universityId !== ""
+  ) {
     res.status(404).json({ error: "University listing not found." });
     return;
   }
@@ -217,7 +223,7 @@ router.patch(
     if (
       body.data.universityId !== undefined &&
       body.data.universityId !== "" &&
-      !findUniversity(body.data.universityId)
+      !(await findUniversity(body.data.universityId))
     ) {
       res.status(404).json({ error: "University listing not found." });
       return;

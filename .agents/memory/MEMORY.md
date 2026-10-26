@@ -1,0 +1,1 @@
+- [External data retrieval](external-data-retrieval.md) — when shell egress is blocked, public source files may still be retrievable through CodeExecution.

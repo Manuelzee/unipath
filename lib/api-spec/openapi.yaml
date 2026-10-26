@@ -11,7 +11,7 @@ tags:
   - name: health
     description: Health operations
   - name: universities
-    description: Sample university discovery
+    description: United States college and university directory
   - name: student
     description: Signed-in student profile, saved schools, and application tasks
 paths:
@@ -32,39 +32,60 @@ paths:
     get:
       operationId: listUniversities
       tags: [universities]
-      summary: Search sample university listings
+      summary: Search United States colleges and universities
       parameters:
         - in: query
-          name: country
+          name: search
           schema: { type: string }
         - in: query
-          name: major
+          name: state
+          schema: { type: string }
+        - in: query
+          name: institutionType
+          schema: { type: string }
+        - in: query
+          name: ownership
           schema: { type: string }
         - in: query
           name: degreeLevel
           schema: { type: string }
         - in: query
+          name: major
+          schema: { type: string }
+        - in: query
           name: maxTuition
-          schema: { type: number }
+          schema: { type: integer, minimum: 0 }
         - in: query
-          name: admissionRequirement
-          schema: { type: string }
+          name: tuitionResidency
+          schema: { type: string, enum: [in_state, out_of_state], default: in_state }
         - in: query
-          name: search
-          schema: { type: string }
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+        - in: query
+          name: pageSize
+          schema: { type: integer, minimum: 1, maximum: 100, default: 24 }
       responses:
         "200":
-          description: Matching sample university listings
+          description: Matching active institutions from the NCES IPEDS and College Scorecard datasets
           content:
             application/json:
-              schema:
-                type: array
-                items: { $ref: "#/components/schemas/University" }
+              schema: { $ref: "#/components/schemas/ListUniversitiesResult" }
+  /universities/filters:
+    get:
+      operationId: getUniversityFilterOptions
+      tags: [universities]
+      summary: Get directory filter values from the imported institution database
+      responses:
+        "200":
+          description: Available institution types, ownerships, degrees, and majors
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UniversityFilterOptions" }
   /universities/{id}:
     get:
       operationId: getUniversity
       tags: [universities]
-      summary: Get a sample university listing
+      summary: Get a college or university listing
       parameters:
         - in: path
           name: id
@@ -72,7 +93,7 @@ paths:
           schema: { type: string }
       responses:
         "200":
-          description: Sample university listing
+          description: Institution directory record
           content:
             application/json:
               schema: { $ref: "#/components/schemas/University" }
@@ -237,26 +258,70 @@ components:
         - status
     University:
       type: object
-      required: [id, name, country, city, tuitionUsd, degreeLevels, majors, admissions, scholarships, deadline, website, sourceUrl, verifiedAt, sampleData]
+      required: [id, name, country, city, state, institutionType, ownership, dataSource, dataYear, degreeLevels, degreeTypes, majors, website, admissionsWebsite, tuitionInStateUsd, tuitionInStateYear, tuitionOutOfStateUsd, tuitionOutOfStateYear, admissionRate, admissionRateYear, completionRate, completionRateYear, completionRateType, pellGrantRate, pellGrantRateYear, medianDebtUsd, medianDebtYear, sourceUrl, isActive, lastUpdatedAt]
       properties:
         id: { type: string }
         name: { type: string }
         country: { type: string }
         city: { type: string }
-        tuitionUsd: { type: number }
+        state: { type: string }
+        institutionType: { type: string }
+        ownership: { type: ["string", "null"] }
+        dataSource: { type: string }
+        dataYear: { type: ["string", "null"] }
+        degreeLevels:
+          type: array
+          items: { type: string }
+        degreeTypes:
+          type: array
+          items: { type: string }
+        majors:
+          type: array
+          items: { type: string }
+        website: { type: ["string", "null"] }
+        admissionsWebsite: { type: ["string", "null"] }
+        tuitionInStateUsd: { type: ["integer", "null"] }
+        tuitionInStateYear: { type: ["integer", "null"] }
+        tuitionOutOfStateUsd: { type: ["integer", "null"] }
+        tuitionOutOfStateYear: { type: ["integer", "null"] }
+        admissionRate: { type: ["number", "null"] }
+        admissionRateYear: { type: ["integer", "null"] }
+        completionRate: { type: ["number", "null"] }
+        completionRateYear: { type: ["integer", "null"] }
+        completionRateType: { type: ["string", "null"] }
+        pellGrantRate: { type: ["number", "null"] }
+        pellGrantRateYear: { type: ["integer", "null"] }
+        medianDebtUsd: { type: ["integer", "null"] }
+        medianDebtYear: { type: ["integer", "null"] }
+        sourceUrl: { type: string }
+        isActive: { type: boolean }
+        lastUpdatedAt: { type: string, format: date-time }
+    UniversityFilterOptions:
+      type: object
+      required: [institutionTypes, ownerships, degreeLevels, majors]
+      properties:
+        institutionTypes:
+          type: array
+          items: { type: string }
+        ownerships:
+          type: array
+          items: { type: string }
         degreeLevels:
           type: array
           items: { type: string }
         majors:
           type: array
           items: { type: string }
-        admissions: { type: string }
-        scholarships: { type: string }
-        deadline: { type: string }
-        website: { type: string }
-        sourceUrl: { type: string }
-        verifiedAt: { type: string }
-        sampleData: { type: boolean }
+    ListUniversitiesResult:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/University" }
+        total: { type: integer }
+        page: { type: integer }
+        pageSize: { type: integer }
     StudentProfileInput:
       type: object
       required: [residenceCountry, citizenship, studyCountry, degreeLevel, major, grades, annualBudgetUsd, preferredLanguage, englishTest, englishScore]

@@ -11,14 +11,47 @@ export interface University {
   name: string;
   country: string;
   city: string;
-  tuitionUsd: number;
+  state: string;
+  institutionType: string;
+  /** @nullable */
+  ownership: string | null;
+  dataSource: string;
+  /** @nullable */
+  dataYear: string | null;
   degreeLevels: string[];
+  degreeTypes: string[];
   majors: string[];
-  admissions: string;
-  scholarships: string;
-  deadline: string;
-  website: string;
+  /** @nullable */
+  website: string | null;
+  /** @nullable */
+  admissionsWebsite: string | null;
+  /** @nullable */
+  tuitionInStateUsd: number | null;
+  /** @nullable */
+  tuitionInStateYear: number | null;
+  /** @nullable */
+  tuitionOutOfStateUsd: number | null;
+  /** @nullable */
+  tuitionOutOfStateYear: number | null;
+  /** @nullable */
+  admissionRate: number | null;
+  /** @nullable */
+  admissionRateYear: number | null;
+  /** @nullable */
+  completionRate: number | null;
+  /** @nullable */
+  completionRateYear: number | null;
+  /** @nullable */
+  completionRateType: string | null;
+  /** @nullable */
+  pellGrantRate: number | null;
+  /** @nullable */
+  pellGrantRateYear: number | null;
+  /** @nullable */
+  medianDebtUsd: number | null;
+  /** @nullable */
+  medianDebtYear: number | null;
   sourceUrl: string;
-  verifiedAt: string;
-  sampleData: boolean;
+  isActive: boolean;
+  lastUpdatedAt: Date;
 }

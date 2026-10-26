@@ -26,12 +26,14 @@ import type {
   DashboardSummary,
   HealthStatus,
   ListUniversitiesParams,
+  ListUniversitiesResult,
   SaveUniversityInput,
   SavedUniversity,
   StudentProfile,
   StudentProfileInput,
   StudentProfileResult,
-  University
+  University,
+  UniversityFilterOptions
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -155,11 +157,11 @@ export const getListUniversitiesUrl = (params?: ListUniversitiesParams,) => {
 }
 
 /**
- * @summary Search sample university listings
+ * @summary Search United States colleges and universities
  */
-export const listUniversities = async (params?: ListUniversitiesParams, options?: Parameters<typeof customFetch>[1]): Promise<University[]> => {
+export const listUniversities = async (params?: ListUniversitiesParams, options?: Parameters<typeof customFetch>[1]): Promise<ListUniversitiesResult> => {
 
-  return customFetch<University[]>(getListUniversitiesUrl(params),
+  return customFetch<ListUniversitiesResult>(getListUniversitiesUrl(params),
   {
     ...options,
     method: 'GET'
@@ -202,7 +204,7 @@ export type ListUniversitiesQueryError = ErrorType<unknown>
 
 
 /**
- * @summary Search sample university listings
+ * @summary Search United States colleges and universities
  */
 
 export function useListUniversities<TData = Awaited<ReturnType<typeof listUniversities>>, TError = ErrorType<unknown>>(
@@ -211,6 +213,83 @@ export function useListUniversities<TData = Awaited<ReturnType<typeof listUniver
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getListUniversitiesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetUniversityFilterOptionsUrl = () => {
+
+
+
+
+  return `/api/universities/filters`
+}
+
+/**
+ * @summary Get directory filter values from the imported institution database
+ */
+export const getUniversityFilterOptions = async ( options?: Parameters<typeof customFetch>[1]): Promise<UniversityFilterOptions> => {
+
+  return customFetch<UniversityFilterOptions>(getGetUniversityFilterOptionsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetUniversityFilterOptionsQueryKey = () => {
+    return [
+    `/api/universities/filters`
+    ] as const;
+    }
+
+
+export const getGetUniversityFilterOptionsQueryOptions = <TData = Awaited<ReturnType<typeof getUniversityFilterOptions>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getUniversityFilterOptions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetUniversityFilterOptionsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUniversityFilterOptions>>> = ({ signal }) => getUniversityFilterOptions({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getUniversityFilterOptions>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetUniversityFilterOptionsQueryResult = NonNullable<Awaited<ReturnType<typeof getUniversityFilterOptions>>>
+export type GetUniversityFilterOptionsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get directory filter values from the imported institution database
+ */
+
+export function useGetUniversityFilterOptions<TData = Awaited<ReturnType<typeof getUniversityFilterOptions>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getUniversityFilterOptions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetUniversityFilterOptionsQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -232,7 +311,7 @@ export const getGetUniversityUrl = (id: string,) => {
 }
 
 /**
- * @summary Get a sample university listing
+ * @summary Get a college or university listing
  */
 export const getUniversity = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<University> => {
 
@@ -279,7 +358,7 @@ export type GetUniversityQueryError = ErrorType<void>
 
 
 /**
- * @summary Get a sample university listing
+ * @summary Get a college or university listing
  */
 
 export function useGetUniversity<TData = Awaited<ReturnType<typeof getUniversity>>, TError = ErrorType<void>>(

@@ -14,16 +14,63 @@ export interface University {
   name: string;
   country: string;
   city: string;
-  tuitionUsd: number;
+  state: string;
+  institutionType: string;
+  /** @nullable */
+  ownership: string | null;
+  dataSource: string;
+  /** @nullable */
+  dataYear: string | null;
+  degreeLevels: string[];
+  degreeTypes: string[];
+  majors: string[];
+  /** @nullable */
+  website: string | null;
+  /** @nullable */
+  admissionsWebsite: string | null;
+  /** @nullable */
+  tuitionInStateUsd: number | null;
+  /** @nullable */
+  tuitionInStateYear: number | null;
+  /** @nullable */
+  tuitionOutOfStateUsd: number | null;
+  /** @nullable */
+  tuitionOutOfStateYear: number | null;
+  /** @nullable */
+  admissionRate: number | null;
+  /** @nullable */
+  admissionRateYear: number | null;
+  /** @nullable */
+  completionRate: number | null;
+  /** @nullable */
+  completionRateYear: number | null;
+  /** @nullable */
+  completionRateType: string | null;
+  /** @nullable */
+  pellGrantRate: number | null;
+  /** @nullable */
+  pellGrantRateYear: number | null;
+  /** @nullable */
+  medianDebtUsd: number | null;
+  /** @nullable */
+  medianDebtYear: number | null;
+  sourceUrl: string;
+  isActive: boolean;
+  lastUpdatedAt: string;
+}
+
+export interface UniversityFilterOptions {
+  institutionTypes: string[];
+  ownerships: string[];
   degreeLevels: string[];
   majors: string[];
-  admissions: string;
-  scholarships: string;
-  deadline: string;
-  website: string;
-  sourceUrl: string;
-  verifiedAt: string;
-  sampleData: boolean;
+}
+
+export interface ListUniversitiesResult {
+  items: University[];
+  total: number;
+  page: number;
+  pageSize: number;
 }
 
 export interface StudentProfileInput {
@@ -89,11 +136,33 @@ export interface DashboardSummary {
 }
 
 export type ListUniversitiesParams = {
-country?: string;
-major?: string;
-degreeLevel?: string;
-maxTuition?: number;
-admissionRequirement?: string;
 search?: string;
+state?: string;
+institutionType?: string;
+ownership?: string;
+degreeLevel?: string;
+major?: string;
+/**
+ * @minimum 0
+ */
+maxTuition?: number;
+tuitionResidency?: ListUniversitiesTuitionResidency;
+/**
+ * @minimum 1
+ */
+page?: number;
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+pageSize?: number;
 };
+
+export type ListUniversitiesTuitionResidency = typeof ListUniversitiesTuitionResidency[keyof typeof ListUniversitiesTuitionResidency];
+
+
+export const ListUniversitiesTuitionResidency = {
+  in_state: 'in_state',
+  out_of_state: 'out_of_state',
+} as const;
 

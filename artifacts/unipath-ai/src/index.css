@@ -254,3 +254,24 @@ html { scroll-behavior: smooth; }
 .support-packages span { color:#74858d;font-size:9px;line-height:1.45; }
 .support-packages b { margin-top:3px;color:#34766f;font-size:12px; }
 @media (max-width:700px) { .support-packages { grid-template-columns:1fr; } }
+.official-badge { background:#edf7f3;border-color:#d7e9e1;color:#3e7869; }
+.official-badge>span { background:#4b9b7a; }
+.college-filter-grid { grid-template-columns:repeat(3,minmax(0,1fr));max-width:none; }
+.filter-grid input { height:39px;width:100%;padding:0 10px;border:1px solid #e2e9ed;border-radius:8px;outline:0;background:#f9fbfc;color:#3b5265;font-size:11px; }
+.filter-grid input:focus,.filter-grid select:focus { border-color:#67a99e;box-shadow:0 0 0 3px #4e9f9111; }
+.school-costs { display:grid;grid-template-columns:1fr 1fr;gap:8px;min-width:0;flex:1; }
+.school-costs>span { display:flex;flex-direction:column;gap:3px;color:#8a989f;font-size:8px;font-weight:700; }
+.school-costs strong { color:#2b4659;font-size:11px;line-height:1.35; }
+.metric-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 20px;margin-top:18px; }
+.metric-item { display:flex;flex-direction:column;gap:5px; }
+.metric-item>span { color:#83939c;font-size:10px;line-height:1.45; }
+.metric-item>strong { color:#2d4b5e;font-size:15px;line-height:1.4; }
+.metric-footnote { margin:18px 0 0;color:#89969c;font-size:9px;line-height:1.6; }
+.programs-accordion { margin-top:18px;padding-top:15px;border-top:1px solid #edf1f2; }
+.programs-accordion summary { color:#327b71;font-size:11px;font-weight:700;cursor:pointer; }
+.programs-list { display:flex;flex-wrap:wrap;gap:7px;margin-top:13px; }
+.programs-list span { padding:6px 8px;border-radius:6px;background:#f1f6f4;color:#56736d;font-size:10px; }
+.pagination-bar { display:flex;align-items:center;justify-content:center;gap:16px;margin:22px 0 8px;color:#738690;font-size:11px; }
+.pagination-bar .button { display:inline-flex;align-items:center;gap:6px; }
+.pagination-bar .button:disabled { opacity:.45;cursor:not-allowed; }
+@media (max-width:600px) { .college-filter-grid { grid-template-columns:1fr; } .metric-grid { grid-template-columns:1fr; } .pagination-bar { gap:10px; } }

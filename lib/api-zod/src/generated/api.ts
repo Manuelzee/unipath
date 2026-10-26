@@ -18,38 +18,83 @@ export const HealthCheckResponse = zod.object({
 
 
 /**
- * @summary Search sample university listings
+ * @summary Search United States colleges and universities
  */
+export const listUniversitiesQueryMaxTuitionMin = 0;
+
+export const listUniversitiesQueryTuitionResidencyDefault = `in_state`;
+export const listUniversitiesQueryPageDefault = 1;
+
+export const listUniversitiesQueryPageSizeDefault = 24;
+export const listUniversitiesQueryPageSizeMax = 100;
+
+
+
 export const ListUniversitiesQueryParams = zod.object({
-  "country": zod.coerce.string().optional(),
-  "major": zod.coerce.string().optional(),
+  "search": zod.coerce.string().optional(),
+  "state": zod.coerce.string().optional(),
+  "institutionType": zod.coerce.string().optional(),
+  "ownership": zod.coerce.string().optional(),
   "degreeLevel": zod.coerce.string().optional(),
-  "maxTuition": zod.coerce.number().optional(),
-  "admissionRequirement": zod.coerce.string().optional(),
-  "search": zod.coerce.string().optional()
+  "major": zod.coerce.string().optional(),
+  "maxTuition": zod.coerce.number().int().min(listUniversitiesQueryMaxTuitionMin).optional(),
+  "tuitionResidency": zod.enum(['in_state', 'out_of_state']).default(listUniversitiesQueryTuitionResidencyDefault),
+  "page": zod.coerce.number().int().min(1).default(listUniversitiesQueryPageDefault),
+  "pageSize": zod.coerce.number().int().min(1).max(listUniversitiesQueryPageSizeMax).default(listUniversitiesQueryPageSizeDefault)
 })
 
-export const ListUniversitiesResponseItem = zod.object({
+export const ListUniversitiesResponse = zod.object({
+  "items": zod.array(zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "country": zod.string(),
   "city": zod.string(),
-  "tuitionUsd": zod.number(),
+  "state": zod.string(),
+  "institutionType": zod.string(),
+  "ownership": zod.string().nullable(),
+  "dataSource": zod.string(),
+  "dataYear": zod.string().nullable(),
   "degreeLevels": zod.array(zod.string()),
+  "degreeTypes": zod.array(zod.string()),
   "majors": zod.array(zod.string()),
-  "admissions": zod.string(),
-  "scholarships": zod.string(),
-  "deadline": zod.string(),
-  "website": zod.string(),
+  "website": zod.string().nullable(),
+  "admissionsWebsite": zod.string().nullable(),
+  "tuitionInStateUsd": zod.number().int().nullable(),
+  "tuitionInStateYear": zod.number().int().nullable(),
+  "tuitionOutOfStateUsd": zod.number().int().nullable(),
+  "tuitionOutOfStateYear": zod.number().int().nullable(),
+  "admissionRate": zod.number().nullable(),
+  "admissionRateYear": zod.number().int().nullable(),
+  "completionRate": zod.number().nullable(),
+  "completionRateYear": zod.number().int().nullable(),
+  "completionRateType": zod.string().nullable(),
+  "pellGrantRate": zod.number().nullable(),
+  "pellGrantRateYear": zod.number().int().nullable(),
+  "medianDebtUsd": zod.number().int().nullable(),
+  "medianDebtYear": zod.number().int().nullable(),
   "sourceUrl": zod.string(),
-  "verifiedAt": zod.string(),
-  "sampleData": zod.boolean()
+  "isActive": zod.boolean(),
+  "lastUpdatedAt": zod.coerce.date()
+})),
+  "total": zod.number().int(),
+  "page": zod.number().int(),
+  "pageSize": zod.number().int()
 })
-export const ListUniversitiesResponse = zod.array(ListUniversitiesResponseItem)
 
 
 /**
- * @summary Get a sample university listing
+ * @summary Get directory filter values from the imported institution database
+ */
+export const GetUniversityFilterOptionsResponse = zod.object({
+  "institutionTypes": zod.array(zod.string()),
+  "ownerships": zod.array(zod.string()),
+  "degreeLevels": zod.array(zod.string()),
+  "majors": zod.array(zod.string())
+})
+
+
+/**
+ * @summary Get a college or university listing
  */
 export const GetUniversityParams = zod.object({
   "id": zod.coerce.string()
@@ -60,16 +105,32 @@ export const GetUniversityResponse = zod.object({
   "name": zod.string(),
   "country": zod.string(),
   "city": zod.string(),
-  "tuitionUsd": zod.number(),
+  "state": zod.string(),
+  "institutionType": zod.string(),
+  "ownership": zod.string().nullable(),
+  "dataSource": zod.string(),
+  "dataYear": zod.string().nullable(),
   "degreeLevels": zod.array(zod.string()),
+  "degreeTypes": zod.array(zod.string()),
   "majors": zod.array(zod.string()),
-  "admissions": zod.string(),
-  "scholarships": zod.string(),
-  "deadline": zod.string(),
-  "website": zod.string(),
+  "website": zod.string().nullable(),
+  "admissionsWebsite": zod.string().nullable(),
+  "tuitionInStateUsd": zod.number().int().nullable(),
+  "tuitionInStateYear": zod.number().int().nullable(),
+  "tuitionOutOfStateUsd": zod.number().int().nullable(),
+  "tuitionOutOfStateYear": zod.number().int().nullable(),
+  "admissionRate": zod.number().nullable(),
+  "admissionRateYear": zod.number().int().nullable(),
+  "completionRate": zod.number().nullable(),
+  "completionRateYear": zod.number().int().nullable(),
+  "completionRateType": zod.string().nullable(),
+  "pellGrantRate": zod.number().nullable(),
+  "pellGrantRateYear": zod.number().int().nullable(),
+  "medianDebtUsd": zod.number().int().nullable(),
+  "medianDebtYear": zod.number().int().nullable(),
   "sourceUrl": zod.string(),
-  "verifiedAt": zod.string(),
-  "sampleData": zod.boolean()
+  "isActive": zod.boolean(),
+  "lastUpdatedAt": zod.coerce.date()
 })
 
 
@@ -137,16 +198,32 @@ export const ListSavedUniversitiesResponseItem = zod.object({
   "name": zod.string(),
   "country": zod.string(),
   "city": zod.string(),
-  "tuitionUsd": zod.number(),
+  "state": zod.string(),
+  "institutionType": zod.string(),
+  "ownership": zod.string().nullable(),
+  "dataSource": zod.string(),
+  "dataYear": zod.string().nullable(),
   "degreeLevels": zod.array(zod.string()),
+  "degreeTypes": zod.array(zod.string()),
   "majors": zod.array(zod.string()),
-  "admissions": zod.string(),
-  "scholarships": zod.string(),
-  "deadline": zod.string(),
-  "website": zod.string(),
+  "website": zod.string().nullable(),
+  "admissionsWebsite": zod.string().nullable(),
+  "tuitionInStateUsd": zod.number().int().nullable(),
+  "tuitionInStateYear": zod.number().int().nullable(),
+  "tuitionOutOfStateUsd": zod.number().int().nullable(),
+  "tuitionOutOfStateYear": zod.number().int().nullable(),
+  "admissionRate": zod.number().nullable(),
+  "admissionRateYear": zod.number().int().nullable(),
+  "completionRate": zod.number().nullable(),
+  "completionRateYear": zod.number().int().nullable(),
+  "completionRateType": zod.string().nullable(),
+  "pellGrantRate": zod.number().nullable(),
+  "pellGrantRateYear": zod.number().int().nullable(),
+  "medianDebtUsd": zod.number().int().nullable(),
+  "medianDebtYear": zod.number().int().nullable(),
   "sourceUrl": zod.string(),
-  "verifiedAt": zod.string(),
-  "sampleData": zod.boolean()
+  "isActive": zod.boolean(),
+  "lastUpdatedAt": zod.coerce.date()
 })
 })
 export const ListSavedUniversitiesResponse = zod.array(ListSavedUniversitiesResponseItem)
@@ -167,16 +244,32 @@ export const SaveUniversityResponse = zod.object({
   "name": zod.string(),
   "country": zod.string(),
   "city": zod.string(),
-  "tuitionUsd": zod.number(),
+  "state": zod.string(),
+  "institutionType": zod.string(),
+  "ownership": zod.string().nullable(),
+  "dataSource": zod.string(),
+  "dataYear": zod.string().nullable(),
   "degreeLevels": zod.array(zod.string()),
+  "degreeTypes": zod.array(zod.string()),
   "majors": zod.array(zod.string()),
-  "admissions": zod.string(),
-  "scholarships": zod.string(),
-  "deadline": zod.string(),
-  "website": zod.string(),
+  "website": zod.string().nullable(),
+  "admissionsWebsite": zod.string().nullable(),
+  "tuitionInStateUsd": zod.number().int().nullable(),
+  "tuitionInStateYear": zod.number().int().nullable(),
+  "tuitionOutOfStateUsd": zod.number().int().nullable(),
+  "tuitionOutOfStateYear": zod.number().int().nullable(),
+  "admissionRate": zod.number().nullable(),
+  "admissionRateYear": zod.number().int().nullable(),
+  "completionRate": zod.number().nullable(),
+  "completionRateYear": zod.number().int().nullable(),
+  "completionRateType": zod.string().nullable(),
+  "pellGrantRate": zod.number().nullable(),
+  "pellGrantRateYear": zod.number().int().nullable(),
+  "medianDebtUsd": zod.number().int().nullable(),
+  "medianDebtYear": zod.number().int().nullable(),
   "sourceUrl": zod.string(),
-  "verifiedAt": zod.string(),
-  "sampleData": zod.boolean()
+  "isActive": zod.boolean(),
+  "lastUpdatedAt": zod.coerce.date()
 })
 })
 
