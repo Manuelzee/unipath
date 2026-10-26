@@ -1,4 +1,6 @@
 import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { and, eq, inArray, notInArray, sql } from "drizzle-orm";
 import {
   db,
@@ -6,34 +8,10 @@ import {
   pool,
 } from "@workspace/db";
 
-type IpedsRecord = {
-  unitid: string;
-  name: string;
-  city: string;
-  state: string;
-  website: string;
-  admissionsWebsite?: string;
-  applicationWebsite?: string;
-  financialAidWebsite?: string;
-  sector: string;
-  institutionType: string;
-  level: string;
-  degreeLevels: string[];
-};
+import { bundledIpedsRecords, institutionCountry, ipedsRow } from "../lib/ipedsSnapshot";
 
 type JsonRecord = Record<string, unknown>;
 type ImportRow = typeof institutionDirectoryTable.$inferInsert;
-
-function institutionCountry(state: string) {
-  // IPEDS also covers these sovereign freely associated states. Preserve their
-  // NCES identities without misclassifying them as U.S. states in global search.
-  const associated: Record<string, string> = {
-    FM: "Federated States of Micronesia", MH: "Marshall Islands", PW: "Palau",
-  };
-  return associated[state]
-    ? { country: associated[state], countryCode: state }
-    : { country: "United States", countryCode: "US" };
-}
 
 const SCORECARD_API =
   "https://api.data.gov/ed/collegescorecard/v1/schools";
@@ -86,17 +64,6 @@ function officialUrl(value: unknown): string | null {
   } catch {
     return null;
   }
-}
-
-function ownershipFromSector(sector: string): string | null {
-  if (sector === "1" || sector === "4" || sector === "7") return "Public";
-  if (sector === "2" || sector === "5" || sector === "8") {
-    return "Private nonprofit";
-  }
-  if (sector === "3" || sector === "6" || sector === "9") {
-    return "Private for-profit";
-  }
-  return null;
 }
 
 function ownershipFromScorecard(value: unknown): string | null {
@@ -265,7 +232,7 @@ async function fetchScorecardPage(
   }
 
   throw new Error(
-    `Could not retrieve College Scorecard page ${page}. ${lastError} Check the API key and try again.`,
+    `Could not retrieve College Scorecard page ${page}. ${lastError.replaceAll(apiKey, "[redacted]")} Check API access or use the official file import.`,
   );
 }
 
@@ -285,50 +252,6 @@ function mergeJsonRecords(target: JsonRecord, source: JsonRecord): void {
       target[key] = value;
     }
   }
-}
-
-function ipedsRow(record: IpedsRecord, updatedAt: Date): ImportRow {
-  const ipedsId = Number(record.unitid);
-  if (!Number.isInteger(ipedsId) || ipedsId <= 0) {
-    throw new Error(`Invalid IPEDS UnitID: ${record.unitid}`);
-  }
-
-  return {
-    id: `nces-${ipedsId}`,
-    ipedsId,
-    scorecardId: null,
-    name: record.name,
-    city: record.city || "",
-    state: record.state || "",
-    ...institutionCountry(record.state || ""),
-    institutionType: record.institutionType || "Not reported",
-    ownership: ownershipFromSector(record.sector),
-    degreeLevels: record.degreeLevels ?? [],
-    degreeTypes: [],
-    majors: [],
-    website: officialUrl(record.website),
-    admissionsWebsite: officialUrl(record.admissionsWebsite),
-    applicationWebsite: officialUrl(record.applicationWebsite),
-    financialAidWebsite: officialUrl(record.financialAidWebsite),
-    tuitionInStateUsd: null,
-    tuitionInStateYear: null,
-    tuitionOutOfStateUsd: null,
-    tuitionOutOfStateYear: null,
-    admissionRate: null,
-    admissionRateYear: null,
-    completionRate: null,
-    completionRateYear: null,
-    completionRateType: null,
-    pellGrantRate: null,
-    pellGrantRateYear: null,
-    medianDebtUsd: null,
-    medianDebtYear: null,
-    dataSource: "NCES IPEDS",
-    dataYear: "2025–26",
-    sourceUrl: `https://nces.ed.gov/collegenavigator/?id=${ipedsId}`,
-    isActive: true,
-    lastUpdatedAt: updatedAt,
-  };
 }
 
 function mergeScorecard(
@@ -451,15 +374,14 @@ async function main() {
   if (fileFlag >= 0 && (!scorecardFile || scorecardFile.startsWith("--"))) {
     throw new Error("--scorecard-file needs a prepared official data file path.");
   }
+  if (ipedsOnly && scorecardFile) throw new Error("Choose --ipeds-only or --scorecard-file, not both.");
   if (!apiKey && !ipedsOnly && !scorecardFile) {
     throw new Error(
       "COLLEGE_SCORECARD_API_KEY is missing. Request a free key at https://api.data.gov/signup/ and add it to Replit Secrets before syncing.",
     );
   }
 
-  const ipedsRows = JSON.parse(
-    await readFile(new URL("../data/us-colleges-2025.json", import.meta.url), "utf8"),
-  ) as IpedsRecord[];
+  const ipedsRows = bundledIpedsRecords;
   const updatedAt = new Date();
   const institutions = new Map<number, ImportRow>();
 
@@ -470,7 +392,16 @@ async function main() {
 
   let total = 0;
   if (scorecardFile && !ipedsOnly) {
-    const payload = JSON.parse(await readFile(scorecardFile, "utf8")) as {
+    let sourceText: string;
+    try {
+      sourceText = await readFile(resolve(scorecardFile), "utf8");
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+      const workspaceRoot = fileURLToPath(new URL("../../../../", import.meta.url));
+      try { sourceText = await readFile(resolve(workspaceRoot, scorecardFile), "utf8"); }
+      catch { throw new Error("Prepared Scorecard file not found. Upload the official ZIP and run prepareScorecardFiles.py first. Workspace-relative and absolute paths are supported."); }
+    }
+    const payload = JSON.parse(sourceText) as {
       format?: string;
       sourceReleaseDate?: string;
       records?: JsonRecord[];
@@ -548,8 +479,16 @@ async function main() {
   }
 
   const rows = [...institutions.values()];
+  let insertedCount = 0;
   await db.transaction(async (tx) => {
     for (let start = 0; start < rows.length; start += PAGE_SIZE) {
+      if (ipedsOnly) {
+        const inserted = await tx.insert(institutionDirectoryTable).values(rows.slice(start, start + PAGE_SIZE))
+          .onConflictDoNothing({ target: institutionDirectoryTable.id })
+          .returning({ id: institutionDirectoryTable.id });
+        insertedCount += inserted.length;
+        continue;
+      }
       await tx
         .insert(institutionDirectoryTable)
         .values(rows.slice(start, start + PAGE_SIZE))
@@ -620,7 +559,7 @@ async function main() {
     throw new Error("Database verification did not match the imported institution count.");
   }
   console.log(
-    `Imported ${rows.length.toLocaleString()} unique active institutions: ${ipedsRows.length.toLocaleString()} from IPEDS and ${total.toLocaleString()} active College Scorecard records. Data sync completed ${updatedAt.toISOString()}.`,
+    `Verified ${verified.count.toLocaleString()} unique active source institutions: ${ipedsRows.length.toLocaleString()} from IPEDS and ${total.toLocaleString()} active College Scorecard records.${ipedsOnly ? ` Newly inserted: ${insertedCount}; already present: ${rows.length - insertedCount}. Existing enrichment and international records preserved.` : " Source records upserted by stable institution ID."} Data sync completed ${updatedAt.toISOString()}.`,
   );
 }
 

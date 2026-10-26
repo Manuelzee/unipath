@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { getDirectoryImportStatus } from "../lib/bootstrapDirectory";
 import {
   GetUniversityParams,
   GetUniversityResponse,
@@ -21,6 +22,14 @@ import {
 } from "../lib/directoryCoverage";
 
 const router: IRouter = Router();
+
+router.get("/universities/import-status", async (_req, res): Promise<void> => {
+  const status = await getDirectoryImportStatus();
+  res.status(status.ready ? 200 : 503).json({
+    ...status,
+    ...(!status.ready ? { error: "Institution data is not fully imported. Please retry shortly; do not interpret this as zero matching schools." } : {}),
+  });
+});
 
 router.get("/universities/coverage", async (_req, res): Promise<void> => {
   res.json(await getDirectoryCoverage());

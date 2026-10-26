@@ -1,5 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
+import { ensureInstitutionDirectory } from "./lib/bootstrapDirectory";
+import { publicRequestFailure } from "./lib/requestErrors";
 
 const rawPort = process.env["PORT"];
 
@@ -15,11 +17,20 @@ if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
-app.listen(port, (err) => {
-  if (err) {
-    logger.error({ err }, "Error listening on port");
-    process.exit(1);
-  }
+async function start() {
+  const directory = await ensureInstitutionDirectory();
+  logger.info(directory, directory.imported || directory.factsImported ? "Imported and verified missing source records; existing records preserved" : "Institution and program snapshot already present; no data written");
+  app.listen(port, (err) => {
+    if (err) {
+      logger.error({ err }, "Error listening on port");
+      process.exit(1);
+    }
 
-  logger.info({ port }, "Server listening");
+    logger.info({ port }, "Server listening");
+  });
+}
+
+start().catch((err: unknown) => {
+  logger.fatal({ code: publicRequestFailure(err).code }, "Cannot initialize institution directory. Check database connection, source identity conflicts and publish-time schema migration; no sample data will be substituted.");
+  process.exit(1);
 });

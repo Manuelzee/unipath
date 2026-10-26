@@ -2,3 +2,4 @@
 - [Scorecard reporting years](scorecard-reporting-years.md) — use year-qualified metrics and small field batches; latest-only values lack reliable per-metric reporting years.
 - [Student directory rules](student-directory-rules.md) — no annual tuition/cost figures; preserve the existing design and plans; label missing and unimported data honestly.
 - [Global source permissions](global-source-permissions.md) — Canada-first expansion; permission-first imports and separate recognition, DLI, and program-availability claims.
+- [Published directory data](published-directory-data.md) — verify production row counts; publishing schema does not establish that institution data was imported.

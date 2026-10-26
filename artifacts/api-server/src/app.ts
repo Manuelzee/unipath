@@ -1,10 +1,11 @@
-import express, { type Express } from "express";
+import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
 import { clerkMiddleware } from "@clerk/express";
 import { publishableKeyFromHost } from "@clerk/shared/keys";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import { publicRequestFailure } from "./lib/requestErrors";
 import {
   CLERK_PROXY_PATH,
   clerkProxyMiddleware,
@@ -46,5 +47,12 @@ app.use(
 );
 
 app.use("/api", router);
+
+app.use((error: unknown, req: Request, res: Response, next: NextFunction) => {
+  if (res.headersSent) { next(error); return; }
+  const failure = publicRequestFailure(error);
+  req.log.error({ code: failure.code, requestId: req.id }, "API request failed; details withheld to protect credentials and request data");
+  res.status(failure.status).json({ error: failure.error, code: failure.code, requestId: req.id });
+});
 
 export default app;
