@@ -1,0 +1,299 @@
+import { Router, type IRouter } from "express";
+import { getAuth } from "@clerk/express";
+import { and, desc, eq } from "drizzle-orm";
+import {
+  CreateApplicationTaskBody,
+  CreateApplicationTaskResponse,
+  DeleteApplicationTaskParams,
+  GetStudentDashboardResponse,
+  GetStudentProfileResponse,
+  ListApplicationTasksResponse,
+  ListSavedUniversitiesResponse,
+  RemoveSavedUniversityParams,
+  SaveStudentProfileBody,
+  SaveStudentProfileResponse,
+  SaveUniversityBody,
+  SaveUniversityResponse,
+  UpdateApplicationTaskBody,
+  UpdateApplicationTaskParams,
+  UpdateApplicationTaskResponse,
+} from "@workspace/api-zod";
+import {
+  applicationTasksTable,
+  db,
+  savedUniversitiesTable,
+  studentProfilesTable,
+} from "@workspace/db";
+import { findUniversity } from "../lib/universities";
+import { requireAuth } from "../middlewares/requireAuth";
+
+const router: IRouter = Router();
+
+function studentId(req: Parameters<typeof getAuth>[0]): string {
+  const userId = getAuth(req).userId;
+  if (!userId) throw new Error("Authenticated user ID was not available.");
+  return userId;
+}
+
+function toTask(task: typeof applicationTasksTable.$inferSelect) {
+  return {
+    ...task,
+    createdAt: task.createdAt.toISOString(),
+  };
+}
+
+router.get("/me/profile", requireAuth, async (req, res): Promise<void> => {
+  const [profile] = await db
+    .select()
+    .from(studentProfilesTable)
+    .where(eq(studentProfilesTable.userId, studentId(req)))
+    .limit(1);
+  res.json(
+    GetStudentProfileResponse.parse({
+      profile: profile
+        ? {
+            residenceCountry: profile.residenceCountry,
+            citizenship: profile.citizenship,
+            studyCountry: profile.studyCountry,
+            degreeLevel: profile.degreeLevel,
+            major: profile.major,
+            grades: profile.grades,
+            annualBudgetUsd: profile.annualBudgetUsd,
+            preferredLanguage: profile.preferredLanguage,
+            englishTest: profile.englishTest,
+            englishScore: profile.englishScore,
+            updatedAt: profile.updatedAt.toISOString(),
+          }
+        : null,
+    }),
+  );
+});
+
+router.put("/me/profile", requireAuth, async (req, res): Promise<void> => {
+  const body = SaveStudentProfileBody.safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ error: body.error.message });
+    return;
+  }
+  const values = { ...body.data, userId: studentId(req) };
+  const [profile] = await db
+    .insert(studentProfilesTable)
+    .values(values)
+    .onConflictDoUpdate({
+      target: studentProfilesTable.userId,
+      set: { ...body.data, updatedAt: new Date() },
+    })
+    .returning();
+  res.json(
+    SaveStudentProfileResponse.parse({
+      residenceCountry: profile.residenceCountry,
+      citizenship: profile.citizenship,
+      studyCountry: profile.studyCountry,
+      degreeLevel: profile.degreeLevel,
+      major: profile.major,
+      grades: profile.grades,
+      annualBudgetUsd: profile.annualBudgetUsd,
+      preferredLanguage: profile.preferredLanguage,
+      englishTest: profile.englishTest,
+      englishScore: profile.englishScore,
+      updatedAt: profile.updatedAt.toISOString(),
+    }),
+  );
+});
+
+router.get("/me/saved", requireAuth, async (req, res): Promise<void> => {
+  const entries = await db
+    .select()
+    .from(savedUniversitiesTable)
+    .where(eq(savedUniversitiesTable.userId, studentId(req)))
+    .orderBy(desc(savedUniversitiesTable.savedAt));
+  const saved = entries.flatMap((entry) => {
+    const university = findUniversity(entry.universityId);
+    if (!university) return [];
+    return [
+      {
+        universityId: entry.universityId,
+        savedAt: entry.savedAt.toISOString(),
+        university,
+      },
+    ];
+  });
+  res.json(ListSavedUniversitiesResponse.parse(saved));
+});
+
+router.post("/me/saved", requireAuth, async (req, res): Promise<void> => {
+  const body = SaveUniversityBody.safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ error: body.error.message });
+    return;
+  }
+  const university = findUniversity(body.data.universityId);
+  if (!university) {
+    res.status(404).json({ error: "University listing not found." });
+    return;
+  }
+  const userId = studentId(req);
+  const [entry] = await db
+    .insert(savedUniversitiesTable)
+    .values({ userId, universityId: university.id })
+    .onConflictDoUpdate({
+      target: [
+        savedUniversitiesTable.userId,
+        savedUniversitiesTable.universityId,
+      ],
+      set: { savedAt: new Date() },
+    })
+    .returning();
+  res.status(201).json(
+    SaveUniversityResponse.parse({
+      universityId: entry.universityId,
+      savedAt: entry.savedAt.toISOString(),
+      university,
+    }),
+  );
+});
+
+router.delete(
+  "/me/saved/:universityId",
+  requireAuth,
+  async (req, res): Promise<void> => {
+    const params = RemoveSavedUniversityParams.safeParse(req.params);
+    if (!params.success) {
+      res.status(400).json({ error: params.error.message });
+      return;
+    }
+    await db
+      .delete(savedUniversitiesTable)
+      .where(
+        and(
+          eq(savedUniversitiesTable.userId, studentId(req)),
+          eq(savedUniversitiesTable.universityId, params.data.universityId),
+        ),
+      );
+    res.sendStatus(204);
+  },
+);
+
+router.get("/me/tasks", requireAuth, async (req, res): Promise<void> => {
+  const tasks = await db
+    .select()
+    .from(applicationTasksTable)
+    .where(eq(applicationTasksTable.userId, studentId(req)))
+    .orderBy(applicationTasksTable.dueDate);
+  res.json(ListApplicationTasksResponse.parse(tasks.map(toTask)));
+});
+
+router.post("/me/tasks", requireAuth, async (req, res): Promise<void> => {
+  const body = CreateApplicationTaskBody.safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ error: body.error.message });
+    return;
+  }
+  if (!findUniversity(body.data.universityId) && body.data.universityId !== "") {
+    res.status(404).json({ error: "University listing not found." });
+    return;
+  }
+  const [task] = await db
+    .insert(applicationTasksTable)
+    .values({ ...body.data, userId: studentId(req) })
+    .returning();
+  res.status(201).json(CreateApplicationTaskResponse.parse(toTask(task)));
+});
+
+router.patch(
+  "/me/tasks/:id",
+  requireAuth,
+  async (req, res): Promise<void> => {
+    const params = UpdateApplicationTaskParams.safeParse(req.params);
+    const body = UpdateApplicationTaskBody.safeParse(req.body);
+    if (!params.success) {
+      res.status(400).json({ error: params.error.message });
+      return;
+    }
+    if (!body.success) {
+      res.status(400).json({ error: body.error.message });
+      return;
+    }
+    if (
+      body.data.universityId !== undefined &&
+      body.data.universityId !== "" &&
+      !findUniversity(body.data.universityId)
+    ) {
+      res.status(404).json({ error: "University listing not found." });
+      return;
+    }
+    const [task] = await db
+      .update(applicationTasksTable)
+      .set(body.data)
+      .where(
+        and(
+          eq(applicationTasksTable.id, params.data.id),
+          eq(applicationTasksTable.userId, studentId(req)),
+        ),
+      )
+      .returning();
+    if (!task) {
+      res.status(404).json({ error: "Task not found." });
+      return;
+    }
+    res.json(UpdateApplicationTaskResponse.parse(toTask(task)));
+  },
+);
+
+router.delete(
+  "/me/tasks/:id",
+  requireAuth,
+  async (req, res): Promise<void> => {
+    const params = DeleteApplicationTaskParams.safeParse(req.params);
+    if (!params.success) {
+      res.status(400).json({ error: params.error.message });
+      return;
+    }
+    const [task] = await db
+      .delete(applicationTasksTable)
+      .where(
+        and(
+          eq(applicationTasksTable.id, params.data.id),
+          eq(applicationTasksTable.userId, studentId(req)),
+        ),
+      )
+      .returning();
+    if (!task) {
+      res.status(404).json({ error: "Task not found." });
+      return;
+    }
+    res.sendStatus(204);
+  },
+);
+
+router.get("/me/dashboard", requireAuth, async (req, res): Promise<void> => {
+  const userId = studentId(req);
+  const [savedEntries, tasks] = await Promise.all([
+    db
+      .select()
+      .from(savedUniversitiesTable)
+      .where(eq(savedUniversitiesTable.userId, userId)),
+    db
+      .select()
+      .from(applicationTasksTable)
+      .where(eq(applicationTasksTable.userId, userId)),
+  ]);
+  const today = new Date().toISOString().slice(0, 10);
+  const completed = tasks.filter((task) => task.completed);
+  const open = tasks.filter((task) => !task.completed);
+  const upcoming = open
+    .filter((task) => task.dueDate >= today)
+    .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
+    .slice(0, 5)
+    .map(toTask);
+  res.json(
+    GetStudentDashboardResponse.parse({
+      savedCount: savedEntries.length,
+      openTasks: open.length,
+      completedTasks: completed.length,
+      upcomingTasks: upcoming,
+    }),
+  );
+});
+
+export default router;

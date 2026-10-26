@@ -10,6 +10,10 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: universities
+    description: Sample university discovery
+  - name: student
+    description: Signed-in student profile, saved schools, and application tasks
 paths:
   /healthz:
     get:
@@ -24,6 +28,204 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /universities:
+    get:
+      operationId: listUniversities
+      tags: [universities]
+      summary: Search sample university listings
+      parameters:
+        - in: query
+          name: country
+          schema: { type: string }
+        - in: query
+          name: major
+          schema: { type: string }
+        - in: query
+          name: degreeLevel
+          schema: { type: string }
+        - in: query
+          name: maxTuition
+          schema: { type: number }
+        - in: query
+          name: admissionRequirement
+          schema: { type: string }
+        - in: query
+          name: search
+          schema: { type: string }
+      responses:
+        "200":
+          description: Matching sample university listings
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/University" }
+  /universities/{id}:
+    get:
+      operationId: getUniversity
+      tags: [universities]
+      summary: Get a sample university listing
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Sample university listing
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/University" }
+        "404": { description: University not found }
+  /me/profile:
+    get:
+      operationId: getStudentProfile
+      tags: [student]
+      summary: Get the signed-in student's profile
+      responses:
+        "200":
+          description: Student profile or null when not completed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StudentProfileResult" }
+        "401": { description: Sign in required }
+    put:
+      operationId: saveStudentProfile
+      tags: [student]
+      summary: Save the signed-in student's profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StudentProfileInput" }
+      responses:
+        "200":
+          description: Saved profile
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StudentProfile" }
+        "401": { description: Sign in required }
+  /me/saved:
+    get:
+      operationId: listSavedUniversities
+      tags: [student]
+      summary: List saved universities for the signed-in student
+      responses:
+        "200":
+          description: Saved university listings
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/SavedUniversity" }
+        "401": { description: Sign in required }
+    post:
+      operationId: saveUniversity
+      tags: [student]
+      summary: Save a university to the student's list
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SaveUniversityInput" }
+      responses:
+        "201":
+          description: Saved university
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SavedUniversity" }
+        "401": { description: Sign in required }
+  /me/saved/{universityId}:
+    delete:
+      operationId: removeSavedUniversity
+      tags: [student]
+      summary: Remove a saved university
+      parameters:
+        - in: path
+          name: universityId
+          required: true
+          schema: { type: string }
+      responses:
+        "204": { description: University removed }
+        "401": { description: Sign in required }
+  /me/tasks:
+    get:
+      operationId: listApplicationTasks
+      tags: [student]
+      summary: List application tasks
+      responses:
+        "200":
+          description: Tasks for the signed-in student
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ApplicationTask" }
+        "401": { description: Sign in required }
+    post:
+      operationId: createApplicationTask
+      tags: [student]
+      summary: Create an application task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ApplicationTaskInput" }
+      responses:
+        "201":
+          description: Created task
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApplicationTask" }
+        "401": { description: Sign in required }
+  /me/tasks/{id}:
+    patch:
+      operationId: updateApplicationTask
+      tags: [student]
+      summary: Update a task or mark it complete
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ApplicationTaskUpdate" }
+      responses:
+        "200":
+          description: Updated task
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApplicationTask" }
+        "401": { description: Sign in required }
+        "404": { description: Task not found }
+    delete:
+      operationId: deleteApplicationTask
+      tags: [student]
+      summary: Delete a task
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "204": { description: Task deleted }
+        "401": { description: Sign in required }
+        "404": { description: Task not found }
+  /me/dashboard:
+    get:
+      operationId: getStudentDashboard
+      tags: [student]
+      summary: Get application dashboard summary
+      responses:
+        "200":
+          description: Summary for the signed-in student
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DashboardSummary" }
+        "401": { description: Sign in required }
 components:
   schemas:
     HealthStatus:
@@ -33,4 +235,101 @@ components:
           type: string
       required:
         - status
+    University:
+      type: object
+      required: [id, name, country, city, tuitionUsd, degreeLevels, majors, admissions, scholarships, deadline, website, sourceUrl, verifiedAt, sampleData]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        country: { type: string }
+        city: { type: string }
+        tuitionUsd: { type: number }
+        degreeLevels:
+          type: array
+          items: { type: string }
+        majors:
+          type: array
+          items: { type: string }
+        admissions: { type: string }
+        scholarships: { type: string }
+        deadline: { type: string }
+        website: { type: string }
+        sourceUrl: { type: string }
+        verifiedAt: { type: string }
+        sampleData: { type: boolean }
+    StudentProfileInput:
+      type: object
+      required: [residenceCountry, citizenship, studyCountry, degreeLevel, major, grades, annualBudgetUsd, preferredLanguage, englishTest, englishScore]
+      properties:
+        residenceCountry: { type: string }
+        citizenship: { type: string }
+        studyCountry: { type: string }
+        degreeLevel: { type: string }
+        major: { type: string }
+        grades: { type: string }
+        annualBudgetUsd: { type: number }
+        preferredLanguage: { type: string }
+        englishTest: { type: string }
+        englishScore: { type: string }
+    StudentProfile:
+      allOf:
+        - $ref: "#/components/schemas/StudentProfileInput"
+        - type: object
+          required: [updatedAt]
+          properties:
+            updatedAt: { type: string }
+    StudentProfileResult:
+      type: object
+      required: [profile]
+      properties:
+        profile:
+          anyOf:
+            - $ref: "#/components/schemas/StudentProfile"
+            - type: "null"
+    SaveUniversityInput:
+      type: object
+      required: [universityId]
+      properties:
+        universityId: { type: string }
+    SavedUniversity:
+      type: object
+      required: [universityId, savedAt, university]
+      properties:
+        universityId: { type: string }
+        savedAt: { type: string }
+        university: { $ref: "#/components/schemas/University" }
+    ApplicationTaskInput:
+      type: object
+      required: [title, dueDate, universityId]
+      properties:
+        title: { type: string, minLength: 1 }
+        dueDate: { type: string }
+        universityId: { type: string }
+    ApplicationTaskUpdate:
+      type: object
+      properties:
+        title: { type: string, minLength: 1 }
+        dueDate: { type: string }
+        universityId: { type: string }
+        completed: { type: boolean }
+    ApplicationTask:
+      type: object
+      required: [id, title, dueDate, universityId, completed, createdAt]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        dueDate: { type: string }
+        universityId: { type: string }
+        completed: { type: boolean }
+        createdAt: { type: string }
+    DashboardSummary:
+      type: object
+      required: [savedCount, openTasks, completedTasks, upcomingTasks]
+      properties:
+        savedCount: { type: integer }
+        openTasks: { type: integer }
+        completedTasks: { type: integer }
+        upcomingTasks:
+          type: array
+          items: { $ref: "#/components/schemas/ApplicationTask" }
 
