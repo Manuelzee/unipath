@@ -11,11 +11,13 @@ import { ArrowLeft, ArrowRight, ShieldCheck, X } from 'lucide-react';
 import { CoveragePanel } from './CoveragePanel';
 import { DiscoverFilters, EMPTY_FILTERS, type DiscoverFilterState } from './DiscoverFilters';
 import { SchoolCard } from './SchoolCard';
+import { getGetInstitutionLogoCoverageQueryKey, useGetInstitutionLogoCoverage } from '@workspace/api-client-react';
 import { EmptyBlock, ErrorBlock, LoadingBlock } from './StateViews';
 
 const PAGE_SIZE = 24;
 
 export function DiscoverView() {
+  const logoCoverage = useGetInstitutionLogoCoverage({ query: { queryKey: getGetInstitutionLogoCoverageQueryKey(), staleTime: 30_000, refetchInterval: 60_000 } });
   const [filters, setFilters] = useState<DiscoverFilterState>(EMPTY_FILTERS);
   const [page, setPage] = useState(1);
   const { isSignedIn } = useUser(); const [, setLocation] = useLocation(); const qc = useQueryClient();
@@ -51,7 +53,7 @@ export function DiscoverView() {
     return p;
   }, [filters, page]);
 
-  const results = useListUniversities(params, { query: { queryKey: getListUniversitiesQueryKey(params) } });
+  const results = useListUniversities(params, { query: { queryKey: getListUniversitiesQueryKey(params), staleTime: 30_000, refetchInterval: 60_000 } });
   const saved = useListSavedUniversities({ query: { enabled: !!isSignedIn, queryKey: getListSavedUniversitiesQueryKey() } });
   const save = useSaveUniversity(); const remove = useRemoveSavedUniversity();
   const savedIds = new Set((saved.data || []).map(s => s.universityId));
@@ -72,6 +74,10 @@ export function DiscoverView() {
     <div className="page-heading"><div><div className="eyebrow">INSTITUTION DIRECTORY</div><h1>Find a place to study.</h1><p>Search imported official institution records by country, region, and what the sources actually report.</p></div></div>
     <div className="data-notice"><ShieldCheck size={17}/><span><strong>Honest about the gaps.</strong> Coverage is partial: U.S. records come from NCES IPEDS, and Canadian records come from a limited government co-op and internship program listing, not a full list of Canadian institutions or an accreditation register. When a source doesn't report a detail, we show it as unknown instead of guessing.</span></div>
     <CoveragePanel/>
+    <p className="logo-coverage-note">{logoCoverage.data
+      ? `${logoCoverage.data.rows.filter(row => row.status === 'verified').reduce((sum, row) => sum + row.count, 0).toLocaleString()} verified logos · Checks attempted for ${logoCoverage.data.rows.filter(row => row.status !== 'not_checked').reduce((sum, row) => sum + row.count, 0).toLocaleString()} institutions. Other schools use name placeholders; a placeholder is not an official logo.`
+      : logoCoverage.isError ? 'Logo verification counts could not be loaded. Unavailable images use name placeholders.'
+      : 'Institution logos are shown only after identity and reuse checks. Other schools use name placeholders.'}</p>
     {options.isError && <div className="inline-warning" role="alert">Filter options could not be loaded. Institution data may be temporarily unavailable. <button onClick={() => void options.refetch()} data-testid="button-retry-filters">Retry</button></div>}
     <DiscoverFilters filters={filters} options={options.data} onChange={update}/>
     <div className="results-header"><div><h2>{countryName ? `Institutions in ${countryName}` : 'Institutions'}</h2><p data-testid="text-result-count">{results.isLoading ? 'Searching...' : results.isError ? 'Institution search is unavailable—not a zero-record result.' : `${total.toLocaleString()} matching imported records`}</p></div>{active && <button className="clear-filters" onClick={clear} data-testid="button-clear-filters"><X size={13}/> Clear filters</button>}</div>

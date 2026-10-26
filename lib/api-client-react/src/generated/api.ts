@@ -30,6 +30,7 @@ import type {
   FundingStudentProfileInput,
   HealthStatus,
   InstitutionFactPage,
+  InstitutionLogoCoverage,
   ListUniversitiesParams,
   ListUniversitiesResult,
   ListUniversityFactsParams,
@@ -68,6 +69,148 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export const getGetInstitutionLogoImageUrl = (file: string,) => {
+
+
+
+
+  return `/api/institution-logos/${file}`
+}
+
+export const getInstitutionLogoImage = async (file: string, options?: Parameters<typeof customFetch>[1]): Promise<Blob> => {
+
+  return customFetch<Blob>(getGetInstitutionLogoImageUrl(file),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetInstitutionLogoImageQueryKey = (file: string,) => {
+    return [
+    `/api/institution-logos/${file}`
+    ] as const;
+    }
+
+
+export const getGetInstitutionLogoImageQueryOptions = <TData = Awaited<ReturnType<typeof getInstitutionLogoImage>>, TError = ErrorType<void>>(file: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getInstitutionLogoImage>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetInstitutionLogoImageQueryKey(file);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getInstitutionLogoImage>>> = ({ signal }) => getInstitutionLogoImage(file, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: file !== null && file !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getInstitutionLogoImage>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetInstitutionLogoImageQueryResult = NonNullable<Awaited<ReturnType<typeof getInstitutionLogoImage>>>
+export type GetInstitutionLogoImageQueryError = ErrorType<void>
+
+
+
+export function useGetInstitutionLogoImage<TData = Awaited<ReturnType<typeof getInstitutionLogoImage>>, TError = ErrorType<void>>(
+ file: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getInstitutionLogoImage>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetInstitutionLogoImageQueryOptions(file,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetInstitutionLogoCoverageUrl = () => {
+
+
+
+
+  return `/api/universities/logo-coverage`
+}
+
+export const getInstitutionLogoCoverage = async ( options?: Parameters<typeof customFetch>[1]): Promise<InstitutionLogoCoverage> => {
+
+  return customFetch<InstitutionLogoCoverage>(getGetInstitutionLogoCoverageUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetInstitutionLogoCoverageQueryKey = () => {
+    return [
+    `/api/universities/logo-coverage`
+    ] as const;
+    }
+
+
+export const getGetInstitutionLogoCoverageQueryOptions = <TData = Awaited<ReturnType<typeof getInstitutionLogoCoverage>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getInstitutionLogoCoverage>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetInstitutionLogoCoverageQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getInstitutionLogoCoverage>>> = ({ signal }) => getInstitutionLogoCoverage({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getInstitutionLogoCoverage>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetInstitutionLogoCoverageQueryResult = NonNullable<Awaited<ReturnType<typeof getInstitutionLogoCoverage>>>
+export type GetInstitutionLogoCoverageQueryError = ErrorType<unknown>
+
+
+
+export function useGetInstitutionLogoCoverage<TData = Awaited<ReturnType<typeof getInstitutionLogoCoverage>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getInstitutionLogoCoverage>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetInstitutionLogoCoverageQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getHealthCheckUrl = () => {
 

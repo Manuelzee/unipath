@@ -5,13 +5,14 @@ import { Link, useLocation } from 'wouter';
 import { getGetStudentDashboardQueryKey, getGetUniversityQueryKey, getListSavedUniversitiesQueryKey, useGetUniversity, useListSavedUniversities, useRemoveSavedUniversity, useSaveUniversity } from '@workspace/api-client-react';
 import { ArrowLeft, Bookmark, Check, LoaderCircle, ShieldCheck } from 'lucide-react';
 import { SourceBadge } from './SchoolCard';
-import { cn, formatDate, monogram, schoolLocation } from './format';
+import { cn, formatDate, schoolLocation } from './format';
+import { InstitutionLogo } from './InstitutionLogo';
 import { ErrorBlock, LoadingBlock } from './StateViews';
 import { UniversityTabs, type TabId } from './UniversityTabs';
 import { AdmissionsPanel, FieldsPanel, FundingPanel, LinksPanel, OverviewPanel } from './UniversityPanels';
 
 export function UniversityDetailView({ id }: { id: string }) {
-  const q = useGetUniversity(id, { query: { queryKey: getGetUniversityQueryKey(id) } });
+  const q = useGetUniversity(id, { query: { queryKey: getGetUniversityQueryKey(id), staleTime: 30_000, refetchInterval: 60_000 } });
   const { isSignedIn } = useUser(); const [, setLocation] = useLocation(); const qc = useQueryClient();
   const saved = useListSavedUniversities({ query: { enabled: !!isSignedIn, queryKey: getListSavedUniversitiesQueryKey() } });
   const save = useSaveUniversity(); const remove = useRemoveSavedUniversity();
@@ -28,7 +29,7 @@ export function UniversityDetailView({ id }: { id: string }) {
   const school = q.data;
   return <div className="page page-enter">
     <Link href="/discover" className="back-link" data-testid="link-back-discover"><ArrowLeft size={16}/> Back to explore</Link>
-    <div className="detail-hero"><div className={`detail-monogram cover-${school.id.length % 4}`}>{monogram(school.name)}</div><div><SourceBadge school={school}/><p className="school-location detail-location">{schoolLocation(school)}</p><h1 data-testid="text-university-name">{school.name}</h1><p className="detail-subtitle">{school.institutionType || 'Institution type not reported'} · {school.ownership || 'Ownership not reported'}</p></div>
+    <div className="detail-hero"><div className={`detail-monogram cover-${school.id.length % 4}`}><InstitutionLogo school={school} size="large" showSource/></div><div><SourceBadge school={school}/><p className="school-location detail-location">{schoolLocation(school)}</p><h1 data-testid="text-university-name">{school.name}</h1><p className="detail-subtitle">{school.institutionType || 'Institution type not reported'} · {school.ownership || 'Ownership not reported'}</p></div>
       <button className={cn('button', isSaved ? 'button-outline' : 'button-primary')} onClick={toggle} disabled={busy} data-testid="button-save-university">{busy ? <LoaderCircle className="spin" size={16}/> : isSaved ? <Check size={16}/> : <Bookmark size={16}/>} {isSaved ? 'Saved to my plan' : 'Save to my plan'}</button></div>
     <div className="detail-notice"><ShieldCheck size={18}/><span>{school.countryCode === 'CA' ? 'Source-listed institution or campus from a government co-op and internship program listing. The list may include historical or outdated names. Current operation, recognition and admissions are not verified. ' : 'Source-reported data only. '}{school.lastVerifiedAt ? `Independently verified ${formatDate(school.lastVerifiedAt)}.` : 'This record has not been independently verified.'} Unknown means the source didn’t say. Confirm requirements, programs, and deadlines with the institution.</span></div>
     <UniversityTabs active={tab} onChange={setTab}/>

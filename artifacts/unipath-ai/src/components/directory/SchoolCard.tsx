@@ -1,7 +1,8 @@
 import type { University } from '@workspace/api-client-react';
 import { ArrowRight, Bookmark, Check, Globe2, LoaderCircle } from 'lucide-react';
 import { Link } from 'wouter';
-import { cn, formatDate, monogram, regionName, schoolLocation, sourceShort } from './format';
+import { cn, formatDate, regionName, schoolLocation, sourceShort } from './format';
+import { InstitutionLogo } from './InstitutionLogo';
 
 export function SourceBadge({ school }: { school: University }) {
   return <span className="sample-badge official-badge" data-testid={`badge-source-${school.id}`}><span/>{sourceShort(school)} · {formatDate(school.lastUpdatedAt)}</span>;
@@ -9,7 +10,7 @@ export function SourceBadge({ school }: { school: University }) {
 
 export function SchoolCard({ school, saved, saving, onSave }: { school: University; saved: boolean; saving: boolean; onSave: () => void }) {
   return <article className="school-card" data-testid={`card-university-${school.id}`}>
-    <div className={`school-cover cover-${school.id.length % 4}`}><span className="cover-monogram">{monogram(school.name)}</span><span className="cover-country"><Globe2 size={13}/>{school.countryCode}{school.state ? ` · ${regionName(school.countryCode, school.state)}` : ''}</span><SourceBadge school={school}/></div>
+    <div className={`school-cover cover-${school.id.length % 4}`}><span className="cover-monogram"><InstitutionLogo school={school}/></span><span className="cover-country"><Globe2 size={13}/>{school.countryCode}{school.state ? ` · ${regionName(school.countryCode, school.state)}` : ''}</span><SourceBadge school={school}/></div>
     <div className="school-content">
       <div className="school-location">{schoolLocation(school)}</div>
       <h3>{school.name}</h3>

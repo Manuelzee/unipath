@@ -1,0 +1,170 @@
+{
+  "format": "unipath-institution-logos-v1",
+  "exportedAt": "2026-10-26T08:27:02.563Z",
+  "sourcePausedUntil": "2026-10-26T09:21:27.997Z",
+  "institutions": [
+    {
+      "id": "nces-100654",
+      "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/1/10/Alternative_Alabama_A%26M_logo.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "logoSource": "https://commons.wikimedia.org/wiki/File:Alternative_Alabama_A%26M_logo.png",
+      "logoIdentitySource": "https://www.wikidata.org/entity/Q1551044",
+      "logoAssetHash": "cfbfb77513d153238b56e85f43f5abc65f4337037233fed28d74a98cdf568e22",
+      "logoLicenseUrl": "https://commons.wikimedia.org/wiki/Commons:Licensing#Material_in_the_public_domain",
+      "logoUsageNote": "For institution identification only. Trademarks remain with their owners; no affiliation or endorsement is implied.",
+      "logoVerificationStatus": "verified",
+      "logoLastCheckedAt": "2026-10-26T08:15:06.882Z"
+    },
+    {
+      "id": "nces-100663",
+      "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/1/19/UABirmingham_logo.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "logoSource": "https://commons.wikimedia.org/wiki/File:UABirmingham_logo.png",
+      "logoIdentitySource": "https://www.wikidata.org/entity/Q1472663",
+      "logoAssetHash": "b2008c4019e9ed82ecb952f0e4cb3e3a88799adec06640f770e53769632ae0ce",
+      "logoLicenseUrl": "https://commons.wikimedia.org/wiki/Commons:Licensing#Material_in_the_public_domain",
+      "logoUsageNote": "For institution identification only. Trademarks remain with their owners; no affiliation or endorsement is implied.",
+      "logoVerificationStatus": "verified",
+      "logoLastCheckedAt": "2026-10-26T08:15:07.599Z"
+    },
+    {
+      "id": "nces-100690",
+      "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/c/c9/Amridge_University_Header.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "logoSource": "https://commons.wikimedia.org/wiki/File:Amridge_University_Header.svg",
+      "logoIdentitySource": "https://www.wikidata.org/entity/Q4748638",
+      "logoAssetHash": "132ff3ac517a741a4c9bc353a913d155f241f06c2e4e6478577eec63a23df26d",
+      "logoLicenseUrl": "https://commons.wikimedia.org/wiki/Commons:Licensing#Material_in_the_public_domain",
+      "logoUsageNote": "For institution identification only. Trademarks remain with their owners; no affiliation or endorsement is implied.",
+      "logoVerificationStatus": "verified",
+      "logoLastCheckedAt": "2026-10-26T08:15:08.404Z"
+    },
+    {
+      "id": "nces-100751",
+      "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0d/University_of_Alabama_logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "logoSource": "https://commons.wikimedia.org/wiki/File:University_of_Alabama_logo.svg",
+      "logoIdentitySource": "https://www.wikidata.org/entity/Q492318",
+      "logoAssetHash": "9a5d99f3b533f915465158561442bb183e967fb7323b81d6d1bcb26b20df81eb",
+      "logoLicenseUrl": "https://commons.wikimedia.org/wiki/Commons:Licensing#Material_in_the_public_domain",
+      "logoUsageNote": "For institution identification only. Trademarks remain with their owners; no affiliation or endorsement is implied.",
+      "logoVerificationStatus": "verified",
+      "logoLastCheckedAt": "2026-10-26T08:15:09.840Z"
+    },
+    {
+      "id": "nces-100706",
+      "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/1/1e/Alabama-Huntsville_UAH_logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "logoSource": "https://commons.wikimedia.org/wiki/File:Alabama-Huntsville_UAH_logo.svg",
+      "logoIdentitySource": "https://www.wikidata.org/entity/Q1783148",
+      "logoAssetHash": "3f731051ba236ac80cc013ef648101e606cb342a2a700cedd2bc0651ee04f3d6",
+      "logoLicenseUrl": "https://commons.wikimedia.org/wiki/Commons:Licensing#Material_in_the_public_domain",
+      "logoUsageNote": "For institution identification only. Trademarks remain with their owners; no affiliation or endorsement is implied.",
+      "logoVerificationStatus": "verified",
+      "logoLastCheckedAt": "2026-10-26T08:18:58.980Z"
+    },
+    {
+      "id": "nces-102614",
+      "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/2/2b/Univ_alaska_fairbanks_textlogo.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "logoSource": "https://commons.wikimedia.org/wiki/File:Univ_alaska_fairbanks_textlogo.png",
+      "logoIdentitySource": "https://www.wikidata.org/entity/Q1285262",
+      "logoAssetHash": "25b3fb7ebade7a45e916bc5b9ecab0fe0dfae732cd6f7d90b86d4b513e76f2da",
+      "logoLicenseUrl": "https://commons.wikimedia.org/wiki/Commons:Licensing#Material_in_the_public_domain",
+      "logoUsageNote": "For institution identification only. Trademarks remain with their owners; no affiliation or endorsement is implied.",
+      "logoVerificationStatus": "verified",
+      "logoLastCheckedAt": "2026-10-26T08:21:25.312Z"
+    },
+    {
+      "id": "nces-102632",
+      "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/d/dd/UAS_Horizontal_Logo.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "logoSource": "https://commons.wikimedia.org/wiki/File:UAS_Horizontal_Logo.png",
+      "logoIdentitySource": "https://www.wikidata.org/entity/Q94279",
+      "logoAssetHash": "44a81358543593a84896392f3539f9f1cf8c498516590733b0ae5b8834023e37",
+      "logoLicenseUrl": "https://commons.wikimedia.org/wiki/Commons:Licensing#Material_in_the_public_domain",
+      "logoUsageNote": "For institution identification only. Trademarks remain with their owners; no affiliation or endorsement is implied.",
+      "logoVerificationStatus": "verified",
+      "logoLastCheckedAt": "2026-10-26T08:21:26.882Z"
+    }
+  ],
+  "assets": [
+    {
+      "hash": "cfbfb77513d153238b56e85f43f5abc65f4337037233fed28d74a98cdf568e22",
+      "objectKey": "institution-logos/cfbfb77513d153238b56e85f43f5abc65f4337037233fed28d74a98cdf568e22.webp",
+      "contentType": "image/webp",
+      "width": 512,
+      "height": 223,
+      "byteSize": 50744,
+      "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/1/10/Alternative_Alabama_A%26M_logo.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "licenseUrl": "https://commons.wikimedia.org/wiki/Commons:Licensing#Material_in_the_public_domain",
+      "credit": "Alternative Alabama A&M logo.png · Public domain · Wikimedia Commons",
+      "createdAt": "2026-10-26T08:15:06.869Z"
+    },
+    {
+      "hash": "b2008c4019e9ed82ecb952f0e4cb3e3a88799adec06640f770e53769632ae0ce",
+      "objectKey": "institution-logos/b2008c4019e9ed82ecb952f0e4cb3e3a88799adec06640f770e53769632ae0ce.webp",
+      "contentType": "image/webp",
+      "width": 484,
+      "height": 45,
+      "byteSize": 6790,
+      "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/1/19/UABirmingham_logo.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "licenseUrl": "https://commons.wikimedia.org/wiki/Commons:Licensing#Material_in_the_public_domain",
+      "credit": "UABirmingham logo.png · Public domain · Wikimedia Commons",
+      "createdAt": "2026-10-26T08:15:07.588Z"
+    },
+    {
+      "hash": "132ff3ac517a741a4c9bc353a913d155f241f06c2e4e6478577eec63a23df26d",
+      "objectKey": "institution-logos/132ff3ac517a741a4c9bc353a913d155f241f06c2e4e6478577eec63a23df26d.webp",
+      "contentType": "image/webp",
+      "width": 294,
+      "height": 51,
+      "byteSize": 4212,
+      "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/c/c9/Amridge_University_Header.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "licenseUrl": "https://commons.wikimedia.org/wiki/Commons:Licensing#Material_in_the_public_domain",
+      "credit": "Amridge University Header.svg · Public domain · Wikimedia Commons",
+      "createdAt": "2026-10-26T08:15:08.395Z"
+    },
+    {
+      "hash": "9a5d99f3b533f915465158561442bb183e967fb7323b81d6d1bcb26b20df81eb",
+      "objectKey": "institution-logos/9a5d99f3b533f915465158561442bb183e967fb7323b81d6d1bcb26b20df81eb.webp",
+      "contentType": "image/webp",
+      "width": 512,
+      "height": 132,
+      "byteSize": 12458,
+      "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0d/University_of_Alabama_logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "licenseUrl": "https://commons.wikimedia.org/wiki/Commons:Licensing#Material_in_the_public_domain",
+      "credit": "University of Alabama logo.svg · Public domain · Wikimedia Commons",
+      "createdAt": "2026-10-26T08:15:09.831Z"
+    },
+    {
+      "hash": "3f731051ba236ac80cc013ef648101e606cb342a2a700cedd2bc0651ee04f3d6",
+      "objectKey": "institution-logos/3f731051ba236ac80cc013ef648101e606cb342a2a700cedd2bc0651ee04f3d6.webp",
+      "contentType": "image/webp",
+      "width": 253,
+      "height": 101,
+      "byteSize": 5136,
+      "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/1/1e/Alabama-Huntsville_UAH_logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "licenseUrl": "https://commons.wikimedia.org/wiki/Commons:Licensing#Material_in_the_public_domain",
+      "credit": "Alabama-Huntsville UAH logo.svg · Public domain · Wikimedia Commons",
+      "createdAt": "2026-10-26T08:18:58.970Z"
+    },
+    {
+      "hash": "25b3fb7ebade7a45e916bc5b9ecab0fe0dfae732cd6f7d90b86d4b513e76f2da",
+      "objectKey": "institution-logos/25b3fb7ebade7a45e916bc5b9ecab0fe0dfae732cd6f7d90b86d4b513e76f2da.webp",
+      "contentType": "image/webp",
+      "width": 512,
+      "height": 194,
+      "byteSize": 39886,
+      "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/2/2b/Univ_alaska_fairbanks_textlogo.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "licenseUrl": "https://commons.wikimedia.org/wiki/Commons:Licensing#Material_in_the_public_domain",
+      "credit": "Univ alaska fairbanks textlogo.png · Public domain · Wikimedia Commons",
+      "createdAt": "2026-10-26T08:21:25.285Z"
+    },
+    {
+      "hash": "44a81358543593a84896392f3539f9f1cf8c498516590733b0ae5b8834023e37",
+      "objectKey": "institution-logos/44a81358543593a84896392f3539f9f1cf8c498516590733b0ae5b8834023e37.webp",
+      "contentType": "image/webp",
+      "width": 512,
+      "height": 80,
+      "byteSize": 15300,
+      "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/d/dd/UAS_Horizontal_Logo.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "licenseUrl": "https://commons.wikimedia.org/wiki/Commons:Licensing#Material_in_the_public_domain",
+      "credit": "UAS Horizontal Logo.png · Public domain · Wikimedia Commons",
+      "createdAt": "2026-10-26T08:21:26.873Z"
+    }
+  ]
+}

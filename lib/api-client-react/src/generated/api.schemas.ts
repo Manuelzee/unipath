@@ -5,9 +5,34 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+export interface InstitutionLogoCoverageRow {
+  countryCode: string;
+  status: string;
+  count: number;
+  /** @nullable */
+  lastCheckedAt: string | null;
+}
+
+export interface InstitutionLogoCoverage {
+  note: string;
+  rows: InstitutionLogoCoverageRow[];
+}
+
 export interface HealthStatus {
   status: string;
 }
+
+export type UniversityLogoVerificationStatus = typeof UniversityLogoVerificationStatus[keyof typeof UniversityLogoVerificationStatus];
+
+
+export const UniversityLogoVerificationStatus = {
+  not_checked: 'not_checked',
+  verified: 'verified',
+  review_required: 'review_required',
+  not_found: 'not_found',
+  missing_website: 'missing_website',
+  error: 'error',
+} as const;
 
 export interface University {
   id: string;
@@ -49,6 +74,22 @@ export interface University {
   applicationWebsite: string | null;
   /** @nullable */
   financialAidWebsite: string | null;
+  /**
+     * Cached image URL, returned only for verified institution logos.
+     * @nullable
+     */
+  logoUrl?: string | null;
+  /** @nullable */
+  logoSource?: string | null;
+  /** @nullable */
+  logoIdentitySource?: string | null;
+  /** @nullable */
+  logoLicenseUrl?: string | null;
+  /** @nullable */
+  logoUsageNote?: string | null;
+  logoVerificationStatus?: UniversityLogoVerificationStatus;
+  /** @nullable */
+  logoLastCheckedAt?: string | null;
   /** @nullable */
   admissionRate: number | null;
   /** @nullable */

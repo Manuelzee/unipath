@@ -8,6 +8,27 @@
 import * as zod from 'zod';
 
 
+export const getInstitutionLogoImagePathFileRegExp = new RegExp('^[a-f0-9]{64}\\.webp$');
+
+
+export const GetInstitutionLogoImageParams = zod.object({
+  "file": zod.coerce.string().regex(getInstitutionLogoImagePathFileRegExp)
+})
+
+export const GetInstitutionLogoImageResponse = zod.unknown()
+
+
+export const GetInstitutionLogoCoverageResponse = zod.object({
+  "note": zod.string(),
+  "rows": zod.array(zod.object({
+  "countryCode": zod.string(),
+  "status": zod.string(),
+  "count": zod.number().int(),
+  "lastCheckedAt": zod.string().nullable()
+}))
+})
+
+
 /**
  * Returns server health status
  * @summary Health check
@@ -73,6 +94,13 @@ export const ListUniversitiesResponse = zod.object({
   "admissionsWebsite": zod.string().nullable(),
   "applicationWebsite": zod.string().nullable(),
   "financialAidWebsite": zod.string().nullable(),
+  "logoUrl": zod.string().nullish().describe('Cached image URL, returned only for verified institution logos.'),
+  "logoSource": zod.string().nullish(),
+  "logoIdentitySource": zod.string().nullish(),
+  "logoLicenseUrl": zod.string().nullish(),
+  "logoUsageNote": zod.string().nullish(),
+  "logoVerificationStatus": zod.enum(['not_checked', 'verified', 'review_required', 'not_found', 'missing_website', 'error']).optional(),
+  "logoLastCheckedAt": zod.coerce.date().nullish(),
   "admissionRate": zod.number().nullable(),
   "admissionRateYear": zod.number().int().nullable(),
   "completionRate": zod.number().nullable(),
@@ -371,6 +399,13 @@ export const GetUniversityResponse = zod.object({
   "admissionsWebsite": zod.string().nullable(),
   "applicationWebsite": zod.string().nullable(),
   "financialAidWebsite": zod.string().nullable(),
+  "logoUrl": zod.string().nullish().describe('Cached image URL, returned only for verified institution logos.'),
+  "logoSource": zod.string().nullish(),
+  "logoIdentitySource": zod.string().nullish(),
+  "logoLicenseUrl": zod.string().nullish(),
+  "logoUsageNote": zod.string().nullish(),
+  "logoVerificationStatus": zod.enum(['not_checked', 'verified', 'review_required', 'not_found', 'missing_website', 'error']).optional(),
+  "logoLastCheckedAt": zod.coerce.date().nullish(),
   "admissionRate": zod.number().nullable(),
   "admissionRateYear": zod.number().int().nullable(),
   "completionRate": zod.number().nullable(),
@@ -472,6 +507,13 @@ export const ListSavedUniversitiesResponseItem = zod.object({
   "admissionsWebsite": zod.string().nullable(),
   "applicationWebsite": zod.string().nullable(),
   "financialAidWebsite": zod.string().nullable(),
+  "logoUrl": zod.string().nullish().describe('Cached image URL, returned only for verified institution logos.'),
+  "logoSource": zod.string().nullish(),
+  "logoIdentitySource": zod.string().nullish(),
+  "logoLicenseUrl": zod.string().nullish(),
+  "logoUsageNote": zod.string().nullish(),
+  "logoVerificationStatus": zod.enum(['not_checked', 'verified', 'review_required', 'not_found', 'missing_website', 'error']).optional(),
+  "logoLastCheckedAt": zod.coerce.date().nullish(),
   "admissionRate": zod.number().nullable(),
   "admissionRateYear": zod.number().int().nullable(),
   "completionRate": zod.number().nullable(),
@@ -526,6 +568,13 @@ export const SaveUniversityResponse = zod.object({
   "admissionsWebsite": zod.string().nullable(),
   "applicationWebsite": zod.string().nullable(),
   "financialAidWebsite": zod.string().nullable(),
+  "logoUrl": zod.string().nullish().describe('Cached image URL, returned only for verified institution logos.'),
+  "logoSource": zod.string().nullish(),
+  "logoIdentitySource": zod.string().nullish(),
+  "logoLicenseUrl": zod.string().nullish(),
+  "logoUsageNote": zod.string().nullish(),
+  "logoVerificationStatus": zod.enum(['not_checked', 'verified', 'review_required', 'not_found', 'missing_website', 'error']).optional(),
+  "logoLastCheckedAt": zod.coerce.date().nullish(),
   "admissionRate": zod.number().nullable(),
   "admissionRateYear": zod.number().int().nullable(),
   "completionRate": zod.number().nullable(),

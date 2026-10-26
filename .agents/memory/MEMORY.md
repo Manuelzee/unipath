@@ -3,3 +3,4 @@
 - [Student directory rules](student-directory-rules.md) — no annual tuition/cost figures; preserve the existing design and plans; label missing and unimported data honestly.
 - [Global source permissions](global-source-permissions.md) — Canada-first expansion; permission-first imports and separate recognition, DLI, and program-availability claims.
 - [Published directory data](published-directory-data.md) — verify production row counts; publishing schema does not establish that institution data was imported.
+- [Institution logo policy](institution-logo-policy.md) — verify identity and reuse permission; use name placeholders, preserve correct logos and report checked coverage honestly.

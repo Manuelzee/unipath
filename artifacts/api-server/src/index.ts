@@ -2,6 +2,8 @@ import app from "./app";
 import { logger } from "./lib/logger";
 import { ensureInstitutionDirectory } from "./lib/bootstrapDirectory";
 import { publicRequestFailure } from "./lib/requestErrors";
+import { applyLogoManifest } from "./lib/logos/manifest";
+import { startAutomaticLogoDiscovery } from "./lib/logos/automatic";
 
 const rawPort = process.env["PORT"];
 
@@ -19,6 +21,7 @@ if (Number.isNaN(port) || port <= 0) {
 
 async function start() {
   const directory = await ensureInstitutionDirectory();
+  logger.info(await applyLogoManifest(), "Verified logo manifest applied; existing verified logos preserved");
   logger.info(directory, directory.imported || directory.factsImported ? "Imported and verified missing source records; existing records preserved" : "Institution and program snapshot already present; no data written");
   app.listen(port, (err) => {
     if (err) {
@@ -27,6 +30,7 @@ async function start() {
     }
 
     logger.info({ port }, "Server listening");
+    startAutomaticLogoDiscovery();
   });
 }
 

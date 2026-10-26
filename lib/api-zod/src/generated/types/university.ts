@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { UniversityLogoVerificationStatus } from './universityLogoVerificationStatus';
 
 export interface University {
   id: string;
@@ -46,6 +47,22 @@ export interface University {
   applicationWebsite: string | null;
   /** @nullable */
   financialAidWebsite: string | null;
+  /**
+     * Cached image URL, returned only for verified institution logos.
+     * @nullable
+     */
+  logoUrl?: string | null;
+  /** @nullable */
+  logoSource?: string | null;
+  /** @nullable */
+  logoIdentitySource?: string | null;
+  /** @nullable */
+  logoLicenseUrl?: string | null;
+  /** @nullable */
+  logoUsageNote?: string | null;
+  logoVerificationStatus?: UniversityLogoVerificationStatus;
+  /** @nullable */
+  logoLastCheckedAt?: Date | null;
   /** @nullable */
   admissionRate: number | null;
   /** @nullable */

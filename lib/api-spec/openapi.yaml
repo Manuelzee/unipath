@@ -15,6 +15,31 @@ tags:
   - name: student
     description: Signed-in student profile, saved schools, and application tasks
 paths:
+  /institution-logos/{file}:
+    get:
+      operationId: getInstitutionLogoImage
+      parameters:
+        - in: path
+          name: file
+          required: true
+          schema: { type: string, pattern: '^[a-f0-9]{64}\.webp$' }
+      responses:
+        "200":
+          description: Immutable verified WebP logo cached in App Storage.
+          content:
+            image/webp:
+              schema: { type: string, format: binary }
+        "304": { description: Cached image has not changed. }
+        "404": { description: No verified image is available. }
+  /universities/logo-coverage:
+    get:
+      operationId: getInstitutionLogoCoverage
+      responses:
+        "200":
+          description: Actual logo verification coverage by country and status.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InstitutionLogoCoverage" }
   /healthz:
     get:
       operationId: healthCheck
@@ -326,6 +351,22 @@ paths:
         "401": { description: Sign in required }
 components:
   schemas:
+    InstitutionLogoCoverage:
+      type: object
+      required: [rows, note]
+      properties:
+        note: { type: string }
+        rows:
+          type: array
+          items: { $ref: "#/components/schemas/InstitutionLogoCoverageRow" }
+    InstitutionLogoCoverageRow:
+      type: object
+      required: [countryCode, status, count, lastCheckedAt]
+      properties:
+        countryCode: { type: string }
+        status: { type: string }
+        count: { type: integer }
+        lastCheckedAt: { type: ["string", "null"] }
     HealthStatus:
       type: object
       properties:
@@ -369,6 +410,13 @@ components:
         admissionsWebsite: { type: ["string", "null"] }
         applicationWebsite: { type: ["string", "null"] }
         financialAidWebsite: { type: ["string", "null"] }
+        logoUrl: { type: ["string", "null"], description: "Cached image URL, returned only for verified institution logos." }
+        logoSource: { type: ["string", "null"] }
+        logoIdentitySource: { type: ["string", "null"] }
+        logoLicenseUrl: { type: ["string", "null"] }
+        logoUsageNote: { type: ["string", "null"] }
+        logoVerificationStatus: { type: string, enum: [not_checked, verified, review_required, not_found, missing_website, error] }
+        logoLastCheckedAt: { type: ["string", "null"], format: date-time }
         admissionRate: { type: ["number", "null"] }
         admissionRateYear: { type: ["integer", "null"] }
         completionRate: { type: ["number", "null"] }
