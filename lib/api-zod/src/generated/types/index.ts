@@ -23,6 +23,7 @@ export * from './fundingStudentProfileInput';
 export * from './fundingStudentProfileInputApplicantGroup';
 export * from './fundingStudentProfileInputApplicantStatus';
 export * from './healthStatus';
+export * from './institutionBrandingCoverage';
 export * from './institutionFact';
 export * from './institutionFactAdmissionScope';
 export * from './institutionFactApplicantGroup';

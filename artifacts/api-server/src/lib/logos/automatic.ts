@@ -46,7 +46,7 @@ export function startAutomaticLogoDiscovery() {
             }
           } catch { logger.warn("Logo identity metadata refresh unavailable; previous catalog retained."); }
         }
-        logger.info(await runLogoDiscovery({ catalog: rows, limit: 5 }), "Automatic logo discovery batch completed");
+        logger.info(await runLogoDiscovery({ catalog: rows, limit: 1 }), "Automatic logo discovery batch completed");
       });
     } catch {
       logger.warn("Automatic logo discovery paused after a source/storage failure; existing images preserved.");

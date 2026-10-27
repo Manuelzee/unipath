@@ -7,6 +7,8 @@ import { ArrowLeft, Bookmark, Check, LoaderCircle, ShieldCheck } from 'lucide-re
 import { SourceBadge } from './SchoolCard';
 import { cn, formatDate, schoolLocation } from './format';
 import { InstitutionLogo } from './InstitutionLogo';
+import { BrandingPanel, CampusBanner, verifiedColors } from './InstitutionBranding';
+import type { CSSProperties } from 'react';
 import { ErrorBlock, LoadingBlock } from './StateViews';
 import { UniversityTabs, type TabId } from './UniversityTabs';
 import { AdmissionsPanel, FieldsPanel, FundingPanel, LinksPanel, OverviewPanel } from './UniversityPanels';
@@ -27,10 +29,13 @@ export function UniversityDetailView({ id }: { id: string }) {
   if (q.isLoading) return <div className="page"><LoadingBlock/></div>;
   if (q.isError || !q.data) return <div className="page"><ErrorBlock retry={() => void q.refetch()}/></div>;
   const school = q.data;
+  const colors = verifiedColors(school);
+  const brandStyle = colors ? ({ '--brand-primary': colors.primary, '--brand-secondary': colors.secondary, '--brand-fg': colors.fg } as CSSProperties) : undefined;
   return <div className="page page-enter">
     <Link href="/discover" className="back-link" data-testid="link-back-discover"><ArrowLeft size={16}/> Back to explore</Link>
-    <div className="detail-hero"><div className={`detail-monogram cover-${school.id.length % 4}`}><InstitutionLogo school={school} size="large" showSource/></div><div><SourceBadge school={school}/><p className="school-location detail-location">{schoolLocation(school)}</p><h1 data-testid="text-university-name">{school.name}</h1><p className="detail-subtitle">{school.institutionType || 'Institution type not reported'} · {school.ownership || 'Ownership not reported'}</p></div>
-      <button className={cn('button', isSaved ? 'button-outline' : 'button-primary')} onClick={toggle} disabled={busy} data-testid="button-save-university">{busy ? <LoaderCircle className="spin" size={16}/> : isSaved ? <Check size={16}/> : <Bookmark size={16}/>} {isSaved ? 'Saved to my plan' : 'Save to my plan'}</button></div>
+    <CampusBanner school={school}/>
+    <div className={cn('detail-hero', colors && 'has-brand')} style={brandStyle} data-testid="hero-university"><div className={`detail-monogram cover-${school.id.length % 4}`}><InstitutionLogo school={school} size="large" showSource/></div><div><SourceBadge school={school}/><p className="school-location detail-location">{schoolLocation(school)}</p><h1 data-testid="text-university-name">{school.name}</h1><p className="detail-subtitle">{school.institutionType || 'Institution type not reported'} · {school.ownership || 'Ownership not reported'}</p></div>
+      <button className={cn('button', isSaved ? 'button-outline' : 'button-primary', !isSaved && colors?.fg ? 'button-brand' : undefined)} onClick={toggle} disabled={busy} data-testid="button-save-university">{busy ? <LoaderCircle className="spin" size={16}/> : isSaved ? <Check size={16}/> : <Bookmark size={16}/>} {isSaved ? 'Saved to my plan' : 'Save to my plan'}</button>{colors && <span className="brand-rule" aria-hidden/>}</div>
     <div className="detail-notice"><ShieldCheck size={18}/><span>{school.countryCode === 'CA' ? 'Source-listed institution or campus from a government co-op and internship program listing. The list may include historical or outdated names. Current operation, recognition and admissions are not verified. ' : 'Source-reported data only. '}{school.lastVerifiedAt ? `Independently verified ${formatDate(school.lastVerifiedAt)}.` : 'This record has not been independently verified.'} Unknown means the source didn’t say. Confirm requirements, programs, and deadlines with the institution.</span></div>
     <UniversityTabs active={tab} onChange={setTab}/>
     <div className="detail-columns">
@@ -41,7 +46,7 @@ export function UniversityDetailView({ id }: { id: string }) {
         {tab === 'funding' && <FundingPanel school={school}/>}
         {tab === 'links' && <LinksPanel school={school}/>}
       </div>
-      <aside className="detail-aside"><div className="detail-panel source-panel"><span className="eyebrow">SOURCE & DATA</span><p>{school.dataSource}</p>
+      <aside className="detail-aside"><BrandingPanel school={school} colors={colors}/><div className="detail-panel source-panel"><span className="eyebrow">SOURCE & DATA</span><p>{school.dataSource}</p>
         <div className="source-meta"><span>Source reporting period</span><strong>{school.dataYear || 'Not provided'}</strong></div>
         <div className="source-meta"><span>Directory record imported</span><strong>{formatDate(school.lastUpdatedAt)}</strong></div>
         <div className="source-meta"><span>Independent verification</span><strong>{formatDate(school.lastVerifiedAt) || 'Unavailable'}</strong></div>

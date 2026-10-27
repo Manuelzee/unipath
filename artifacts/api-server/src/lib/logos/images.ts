@@ -9,7 +9,8 @@ export async function prepareLogoImage(bytes: Buffer, type: string) {
     for (const element of $("*").toArray()) {
       if (!("attribs" in element)) continue;
       for (const [key, value] of Object.entries(element.attribs)) {
-        if (/^on/i.test(key) || (/(^|:)href$/i.test(key) && value && !value.startsWith("#"))) {
+        if (/^on/i.test(key) || (/(^|:)href$/i.test(key) && value && !value.startsWith("#")) ||
+          (key === "style" && /@import|\\|url\s*\(\s*['"]?(?!#)[^)]/i.test(value))) {
           throw new Error("SVG contains unsafe or external content.");
         }
       }

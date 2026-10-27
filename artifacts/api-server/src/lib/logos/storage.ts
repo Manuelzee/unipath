@@ -11,7 +11,7 @@ const client = new Storage({
 });
 
 export function logoObject(key: string) {
-  if (!/^institution-logos\/[a-f0-9]{64}\.webp$/.test(key)) throw new Error("Invalid logo object key.");
+  if (!/^institution-(?:logos|branding)\/[a-f0-9]{64}\.webp$/.test(key)) throw new Error("Invalid institution image object key.");
   const directory = process.env.PRIVATE_OBJECT_DIR;
   if (!directory) throw new Error("Logo storage is not configured.");
   const [bucket, ...prefix] = directory.replace(/^\/+/, "").split("/");

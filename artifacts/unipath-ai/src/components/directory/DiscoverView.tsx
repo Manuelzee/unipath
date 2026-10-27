@@ -11,13 +11,15 @@ import { ArrowLeft, ArrowRight, ShieldCheck, X } from 'lucide-react';
 import { CoveragePanel } from './CoveragePanel';
 import { DiscoverFilters, EMPTY_FILTERS, type DiscoverFilterState } from './DiscoverFilters';
 import { SchoolCard } from './SchoolCard';
-import { getGetInstitutionLogoCoverageQueryKey, useGetInstitutionLogoCoverage } from '@workspace/api-client-react';
+import { getGetInstitutionBrandingCoverageQueryKey, getGetInstitutionLogoCoverageQueryKey, useGetInstitutionBrandingCoverage, useGetInstitutionLogoCoverage } from '@workspace/api-client-react';
+import './InstitutionBranding.css';
 import { EmptyBlock, ErrorBlock, LoadingBlock } from './StateViews';
 
 const PAGE_SIZE = 24;
 
 export function DiscoverView() {
   const logoCoverage = useGetInstitutionLogoCoverage({ query: { queryKey: getGetInstitutionLogoCoverageQueryKey(), staleTime: 30_000, refetchInterval: 60_000 } });
+  const branding = useGetInstitutionBrandingCoverage({ query: { queryKey: getGetInstitutionBrandingCoverageQueryKey(), staleTime: 30_000, refetchInterval: 60_000 } });
   const [filters, setFilters] = useState<DiscoverFilterState>(EMPTY_FILTERS);
   const [page, setPage] = useState(1);
   const { isSignedIn } = useUser(); const [, setLocation] = useLocation(); const qc = useQueryClient();
@@ -78,6 +80,13 @@ export function DiscoverView() {
       ? `${logoCoverage.data.rows.filter(row => row.status === 'verified').reduce((sum, row) => sum + row.count, 0).toLocaleString()} verified logos · Checks attempted for ${logoCoverage.data.rows.filter(row => row.status !== 'not_checked').reduce((sum, row) => sum + row.count, 0).toLocaleString()} institutions. Other schools use name placeholders; a placeholder is not an official logo.`
       : logoCoverage.isError ? 'Logo verification counts could not be loaded. Unavailable images use name placeholders.'
       : 'Institution logos are shown only after identity and reuse checks. Other schools use name placeholders.'}</p>
+    <div className="brand-coverage" data-testid="text-branding-coverage" aria-live="polite">{branding.data ? <>
+      <span>Verified branding of <b>{branding.data.total.toLocaleString()}</b> records:</span>
+      <span><b>{branding.data.logos.toLocaleString()}</b> logos</span><span><b>{branding.data.colors.toLocaleString()}</b> color sets</span>
+      <span><b>{branding.data.mascots.toLocaleString()}</b> mascot names</span><span><b>{branding.data.mascotImages.toLocaleString()}</b> mascot images</span>
+      <span><b>{branding.data.campusImages.toLocaleString()}</b> campus photos</span><span>({branding.data.attempted.toLocaleString()} checked)</span>
+      <span>Coverage is incomplete; missing branding means not yet verified, not absent. {branding.data.note}</span>
+    </> : branding.isError ? <span>Branding coverage counts could not be loaded. This is not a zero count.</span> : <span>Loading branding coverage counts...</span>}</div>
     {options.isError && <div className="inline-warning" role="alert">Filter options could not be loaded. Institution data may be temporarily unavailable. <button onClick={() => void options.refetch()} data-testid="button-retry-filters">Retry</button></div>}
     <DiscoverFilters filters={filters} options={options.data} onChange={update}/>
     <div className="results-header"><div><h2>{countryName ? `Institutions in ${countryName}` : 'Institutions'}</h2><p data-testid="text-result-count">{results.isLoading ? 'Searching...' : results.isError ? 'Institution search is unavailable—not a zero-record result.' : `${total.toLocaleString()} matching imported records`}</p></div>{active && <button className="clear-filters" onClick={clear} data-testid="button-clear-filters"><X size={13}/> Clear filters</button>}</div>

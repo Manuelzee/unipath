@@ -64,6 +64,55 @@ export interface University {
   /** @nullable */
   logoLastCheckedAt?: Date | null;
   /** @nullable */
+  logoSourceUrl?: string | null;
+  /**
+     * @nullable
+     * @pattern ^#[0-9A-Fa-f]{6}$
+     */
+  primaryColorHex?: string | null;
+  /**
+     * @nullable
+     * @pattern ^#[0-9A-Fa-f]{6}$
+     */
+  secondaryColorHex?: string | null;
+  /** @nullable */
+  colorsSourceUrl?: string | null;
+  /** @nullable */
+  colorsUsageNote?: string | null;
+  colorsVerificationStatus?: string;
+  /** @nullable */
+  colorsLastVerifiedAt?: Date | null;
+  /** @nullable */
+  mascotName?: string | null;
+  /** @nullable */
+  mascotSourceUrl?: string | null;
+  mascotVerificationStatus?: string;
+  /** @nullable */
+  mascotLastVerifiedAt?: Date | null;
+  /** @nullable */
+  mascotImageUrl?: string | null;
+  /** @nullable */
+  mascotImageSourceUrl?: string | null;
+  /** @nullable */
+  mascotImageLicenseUrl?: string | null;
+  /** @nullable */
+  mascotImageCredit?: string | null;
+  mascotImageVerificationStatus?: string;
+  /** @nullable */
+  campusImageUrl?: string | null;
+  /** @nullable */
+  campusImageSourceUrl?: string | null;
+  /** @nullable */
+  campusImageLicenseUrl?: string | null;
+  /** @nullable */
+  campusImageCredit?: string | null;
+  campusImageVerificationStatus?: string;
+  /** @nullable */
+  campusImageLastVerifiedAt?: Date | null;
+  brandingVerificationStatus?: string;
+  /** @nullable */
+  brandingLastVerifiedAt?: Date | null;
+  /** @nullable */
   admissionRate: number | null;
   /** @nullable */
   admissionRateYear: number | null;

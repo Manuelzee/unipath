@@ -40,7 +40,7 @@ unsupported image formats and excessive decoded pixels.
 
 ## Automatic and repeatable imports
 
-The API runs a bounded batch of five due institutions after startup and every
+The API runs a bounded batch of one due institution after startup and every
 ten minutes while it is running. A database advisory lock prevents multiple
 autoscale instances from running background batches together. Verified/negative
 results are due after 30 days; transient errors are due after one day. Autoscale

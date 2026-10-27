@@ -3,10 +3,12 @@ import healthRouter from "./health";
 import universityRouter from "./universities";
 import studentRouter from "./student";
 import institutionLogosRouter from "./institutionLogos";
+import institutionBrandingRouter from "./institutionBranding";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
+router.use(institutionBrandingRouter);
 router.use(institutionLogosRouter);
 router.use(universityRouter);
 router.use(studentRouter);

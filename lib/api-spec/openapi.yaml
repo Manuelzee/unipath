@@ -15,6 +15,30 @@ tags:
   - name: student
     description: Signed-in student profile, saved schools, and application tasks
 paths:
+  /universities/branding-coverage:
+    get:
+      operationId: getInstitutionBrandingCoverage
+      responses:
+        "200":
+          description: Actual verified branding counts, not a full-coverage claim.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InstitutionBrandingCoverage" }
+  /institution-branding/images/{file}:
+    get:
+      operationId: getInstitutionBrandingImage
+      parameters:
+        - in: path
+          name: file
+          required: true
+          schema: { type: string, pattern: '^[a-f0-9]{64}\.webp$' }
+      responses:
+        "200":
+          description: Cached image with verified institution association and permitted reuse.
+          content:
+            image/webp:
+              schema: { type: string, format: binary }
+        "404": { description: No verified image is available. }
   /institution-logos/{file}:
     get:
       operationId: getInstitutionLogoImage
@@ -351,6 +375,18 @@ paths:
         "401": { description: Sign in required }
 components:
   schemas:
+    InstitutionBrandingCoverage:
+      type: object
+      required: [total, logos, colors, mascots, mascotImages, campusImages, attempted, note]
+      properties:
+        total: { type: integer }
+        logos: { type: integer }
+        colors: { type: integer }
+        mascots: { type: integer }
+        mascotImages: { type: integer }
+        campusImages: { type: integer }
+        attempted: { type: integer }
+        note: { type: string }
     InstitutionLogoCoverage:
       type: object
       required: [rows, note]
@@ -417,6 +453,30 @@ components:
         logoUsageNote: { type: ["string", "null"] }
         logoVerificationStatus: { type: string, enum: [not_checked, verified, review_required, not_found, missing_website, error] }
         logoLastCheckedAt: { type: ["string", "null"], format: date-time }
+        logoSourceUrl: { type: ["string", "null"] }
+        primaryColorHex: { type: ["string", "null"], pattern: '^#[0-9A-Fa-f]{6}$' }
+        secondaryColorHex: { type: ["string", "null"], pattern: '^#[0-9A-Fa-f]{6}$' }
+        colorsSourceUrl: { type: ["string", "null"] }
+        colorsUsageNote: { type: ["string", "null"] }
+        colorsVerificationStatus: { type: string }
+        colorsLastVerifiedAt: { type: ["string", "null"], format: date-time }
+        mascotName: { type: ["string", "null"] }
+        mascotSourceUrl: { type: ["string", "null"] }
+        mascotVerificationStatus: { type: string }
+        mascotLastVerifiedAt: { type: ["string", "null"], format: date-time }
+        mascotImageUrl: { type: ["string", "null"] }
+        mascotImageSourceUrl: { type: ["string", "null"] }
+        mascotImageLicenseUrl: { type: ["string", "null"] }
+        mascotImageCredit: { type: ["string", "null"] }
+        mascotImageVerificationStatus: { type: string }
+        campusImageUrl: { type: ["string", "null"] }
+        campusImageSourceUrl: { type: ["string", "null"] }
+        campusImageLicenseUrl: { type: ["string", "null"] }
+        campusImageCredit: { type: ["string", "null"] }
+        campusImageVerificationStatus: { type: string }
+        campusImageLastVerifiedAt: { type: ["string", "null"], format: date-time }
+        brandingVerificationStatus: { type: string }
+        brandingLastVerifiedAt: { type: ["string", "null"], format: date-time }
         admissionRate: { type: ["number", "null"] }
         admissionRateYear: { type: ["integer", "null"] }
         completionRate: { type: ["number", "null"] }

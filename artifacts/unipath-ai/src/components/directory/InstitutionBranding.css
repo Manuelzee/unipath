@@ -1,0 +1,32 @@
+.campus-banner{margin:0 0 15px;border:1px solid #e3eaed;border-radius:14px;overflow:hidden;background:#fff}
+.campus-img{display:block;width:100%;height:clamp(160px,28vw,300px);object-fit:cover;background:#e9f0f2}
+.brand-img-missing{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#647884;font-size:12px;text-align:center;padding:16px;background:repeating-linear-gradient(135deg,#f3f7f8 0 10px,#eef3f5 10px 20px)}
+.campus-img.brand-img-missing{height:120px}
+.campus-banner.has-school-colors .campus-img.brand-img-missing{background:var(--campus-primary);color:var(--campus-fg)}
+.campus-banner figcaption{padding:10px 14px;display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;border-top:1px solid #edf1f2}
+.brand-credit{margin:0;display:flex;flex-wrap:wrap;gap:4px 12px;color:#3d5464;font-size:11px;line-height:1.5;overflow-wrap:anywhere}
+.brand-credit a{display:inline-flex;align-items:center;gap:3px;color:#1f6f67;font-weight:700;text-decoration:underline;text-underline-offset:2px}
+.brand-fine{display:block;color:#5f7380;font-size:10.5px;line-height:1.5}
+.branding-panel{position:relative;overflow:hidden}
+.brand-block{padding:14px 0;border-bottom:1px solid #edf1f2}
+.brand-block h3{margin:0 0 9px;color:#25455b;font:700 13px 'Manrope',sans-serif}
+.swatches{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:8px}
+.swatch{display:flex;align-items:center;gap:8px}.swatch span:last-child{display:flex;flex-direction:column}
+.swatch strong{font-size:10px;color:#5f7380}.swatch code{font-size:12px;color:#25455b}
+.swatch-chip{width:30px;height:30px;border-radius:8px;border:1px solid #d6e0e5;transition:transform .2s}
+.swatch:hover .swatch-chip{transform:scale(1.06)}
+.brand-note{margin:0 0 6px;color:#465d6c;font-size:12px;line-height:1.55}
+.mascot-name{margin:0 0 4px;color:#1c405b;font:700 17px 'Manrope',sans-serif}
+.mascot-figure{margin:10px 0 0}
+.mascot-img{display:block;width:100%;max-width:200px;height:150px;object-fit:contain;border-radius:10px;background:#f5f8f9}
+.mascot-figure figcaption{margin-top:6px}
+.brand-foot{padding-top:12px}
+.detail-hero.has-brand{border-top:4px solid var(--brand-primary)}
+.detail-hero.has-brand .brand-rule{position:absolute;left:24px;bottom:0;width:48px;height:3px;background:var(--brand-secondary)}
+.detail-hero{position:relative}
+.button-brand{background:var(--brand-primary)!important;color:var(--brand-fg)!important;box-shadow:none}
+.button-brand:hover:not(:disabled){filter:none;opacity:.92}
+.brand-coverage{display:flex;flex-wrap:wrap;gap:6px 14px;margin:10px 2px 20px;color:#4f6670;font-size:11px;line-height:1.6}
+.brand-coverage b{color:#1f4a5a}
+@media (max-width:767px){.detail-hero{flex-direction:column;align-items:flex-start}.detail-hero>.button{width:100%}.swatches{gap:10px}}
+@media (prefers-reduced-motion:reduce){.swatch-chip{transition:none}.swatch:hover .swatch-chip{transform:none}}

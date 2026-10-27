@@ -8,6 +8,8 @@ import { safeFetch } from "../lib/logos/safeFetch";
 import { logoObject } from "../lib/logos/storage";
 import { gzipSync } from "node:zlib";
 import { prepareLogoImage } from "../lib/logos/images";
+import { imageSourcesPausedUntil } from "../lib/branding/media";
+import { refreshBrandingStatus } from "../lib/branding/manifest";
 
 const args = process.argv.slice(2);
 function option(name: string) { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : undefined; }
@@ -110,6 +112,7 @@ export async function runLogoDiscovery(settings?: { catalog: CatalogRow[]; limit
     console.log(`${school.id}: ${status}`);
     await new Promise((resolve) => setTimeout(resolve, 1000));
   }
+  await refreshBrandingStatus();
   if (!settings) await exportLogoManifest();
   const [total] = await db.select({ count: sql<number>`count(*)::int` }).from(institutionDirectoryTable)
     .where(eq(institutionDirectoryTable.logoVerificationStatus, "verified"));
@@ -132,9 +135,7 @@ export async function exportLogoManifest() {
 }
 
 async function sourcePausedUntil() {
-  const [recent] = await db.select({ checked: sql<Date>`max(logo_last_checked_at)` })
-    .from(institutionDirectoryTable).where(sql`${institutionDirectoryTable.logoLastError} LIKE '%HTTP 429%'`);
-  return recent.checked ? new Date(new Date(recent.checked).getTime() + 60 * 60_000) : null;
+  return imageSourcesPausedUntil();
 }
 
 // The reusable worker is also bundled into index.mjs; only execute/close the pool for this CLI.

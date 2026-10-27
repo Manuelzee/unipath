@@ -5,6 +5,17 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+export interface InstitutionBrandingCoverage {
+  total: number;
+  logos: number;
+  colors: number;
+  mascots: number;
+  mascotImages: number;
+  campusImages: number;
+  attempted: number;
+  note: string;
+}
+
 export interface InstitutionLogoCoverageRow {
   countryCode: string;
   status: string;
@@ -90,6 +101,55 @@ export interface University {
   logoVerificationStatus?: UniversityLogoVerificationStatus;
   /** @nullable */
   logoLastCheckedAt?: string | null;
+  /** @nullable */
+  logoSourceUrl?: string | null;
+  /**
+     * @nullable
+     * @pattern ^#[0-9A-Fa-f]{6}$
+     */
+  primaryColorHex?: string | null;
+  /**
+     * @nullable
+     * @pattern ^#[0-9A-Fa-f]{6}$
+     */
+  secondaryColorHex?: string | null;
+  /** @nullable */
+  colorsSourceUrl?: string | null;
+  /** @nullable */
+  colorsUsageNote?: string | null;
+  colorsVerificationStatus?: string;
+  /** @nullable */
+  colorsLastVerifiedAt?: string | null;
+  /** @nullable */
+  mascotName?: string | null;
+  /** @nullable */
+  mascotSourceUrl?: string | null;
+  mascotVerificationStatus?: string;
+  /** @nullable */
+  mascotLastVerifiedAt?: string | null;
+  /** @nullable */
+  mascotImageUrl?: string | null;
+  /** @nullable */
+  mascotImageSourceUrl?: string | null;
+  /** @nullable */
+  mascotImageLicenseUrl?: string | null;
+  /** @nullable */
+  mascotImageCredit?: string | null;
+  mascotImageVerificationStatus?: string;
+  /** @nullable */
+  campusImageUrl?: string | null;
+  /** @nullable */
+  campusImageSourceUrl?: string | null;
+  /** @nullable */
+  campusImageLicenseUrl?: string | null;
+  /** @nullable */
+  campusImageCredit?: string | null;
+  campusImageVerificationStatus?: string;
+  /** @nullable */
+  campusImageLastVerifiedAt?: string | null;
+  brandingVerificationStatus?: string;
+  /** @nullable */
+  brandingLastVerifiedAt?: string | null;
   /** @nullable */
   admissionRate: number | null;
   /** @nullable */

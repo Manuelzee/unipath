@@ -1,6 +1,6 @@
 ---
-name: Institution logo source policy
-description: Identity, image-permission and fallback rules for institution logos.
+name: Institution branding source policy
+description: Identity, palette, mascot facts, image permissions and honest fallback rules.
 ---
 
 Use verified institution identity and image-reuse evidence, never similar names,
@@ -23,3 +23,23 @@ no logo, and do not evade it using alternate endpoints or repeated downloads.
 
 **Why:** A small real import hit the image host's limit after metadata requests
 had succeeded. Partial verified results must remain available during the pause.
+
+Colors must come from explicit official palette values/roles, not sampled logos,
+CSS theme colors or photographs. A mascot's name is distinct from a sports team
+nickname, a logo, and permission to reproduce mascot artwork.
+
+**Why:** The user explicitly requires official primary/secondary HEX values and
+verified mascot identity, with separate image authorization and defaults for
+missing data. Complete branding must not be claimed from a few verified fields.
+
+**How to apply:** Keep fact and image categories independent and preserve source
+restrictions in styling. The University of Alabama guide prohibits tints/shades,
+limits secondary colors to small decorative uses, and requires separate Big Al
+artwork approval. Its public mascot name/page is not artwork permission.
+
+Official-guide text can repeat section names in introductory prose. Identify
+palette roles from source structure and named entries, not the first occurrence
+of a heading phrase inside a paragraph.
+
+**Why:** UA's secondary-palette guidance mentions “metallic colors” before the
+actual palette entries; naïve text splitting excludes the legitimate colors.

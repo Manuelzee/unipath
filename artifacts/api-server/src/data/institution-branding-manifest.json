@@ -1,0 +1,37 @@
+{
+  "format": "unipath-branding-v1",
+  "exportedAt": "2026-10-27T16:06:04.068Z",
+  "sourcePausedUntil": "2026-10-27T16:49:56.746Z",
+  "institutions": [
+    {
+      "id": "nces-100751",
+      "website": "https://www.ua.edu/",
+      "ipedsId": 100751,
+      "brandingLastVerifiedAt": "2026-10-27T16:06:02.825Z",
+      "primaryColorHex": "#9E1B32",
+      "secondaryColorHex": "#5F6A72",
+      "colorsSourceUrl": "https://brand.ua.edu/colors/",
+      "colorsUsageNote": "Crimson Flame is in the primary palette; Pachyderm is a secondary palette color. Secondary colors are decorative only, no more than 20% of a design. No tints/shades or secondary-color headlines. Mascot artwork requires separate permission.",
+      "colorsVerificationStatus": "verified",
+      "colorsLastVerifiedAt": "2026-10-27T16:06:02.825Z",
+      "mascotName": "Big Al",
+      "mascotSourceUrl": "https://www.ua.edu/about/traditions/",
+      "mascotVerificationStatus": "verified",
+      "mascotLastVerifiedAt": "2026-10-27T16:00:16.372Z",
+      "mascotImageUrl": null,
+      "mascotImageAssetHash": null,
+      "mascotImageSourceUrl": "https://brand.ua.edu/marks-seals",
+      "mascotImageLicenseUrl": null,
+      "mascotImageCredit": null,
+      "mascotImageVerificationStatus": "review_required",
+      "campusImageUrl": null,
+      "campusImageAssetHash": null,
+      "campusImageSourceUrl": null,
+      "campusImageLicenseUrl": null,
+      "campusImageCredit": null,
+      "campusImageVerificationStatus": "not_checked",
+      "campusImageLastVerifiedAt": null
+    }
+  ],
+  "assets": []
+}

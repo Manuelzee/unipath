@@ -8,6 +8,28 @@
 import * as zod from 'zod';
 
 
+export const GetInstitutionBrandingCoverageResponse = zod.object({
+  "total": zod.number().int(),
+  "logos": zod.number().int(),
+  "colors": zod.number().int(),
+  "mascots": zod.number().int(),
+  "mascotImages": zod.number().int(),
+  "campusImages": zod.number().int(),
+  "attempted": zod.number().int(),
+  "note": zod.string()
+})
+
+
+export const getInstitutionBrandingImagePathFileRegExp = new RegExp('^[a-f0-9]{64}\\.webp$');
+
+
+export const GetInstitutionBrandingImageParams = zod.object({
+  "file": zod.coerce.string().regex(getInstitutionBrandingImagePathFileRegExp)
+})
+
+export const GetInstitutionBrandingImageResponse = zod.unknown()
+
+
 export const getInstitutionLogoImagePathFileRegExp = new RegExp('^[a-f0-9]{64}\\.webp$');
 
 
@@ -66,6 +88,10 @@ export const ListUniversitiesQueryParams = zod.object({
   "pageSize": zod.coerce.number().int().min(1).max(listUniversitiesQueryPageSizeMax).default(listUniversitiesQueryPageSizeDefault)
 })
 
+export const listUniversitiesResponseItemsItemPrimaryColorHexRegExp = new RegExp('^#[0-9A-Fa-f]{6}$');
+export const listUniversitiesResponseItemsItemSecondaryColorHexRegExp = new RegExp('^#[0-9A-Fa-f]{6}$');
+
+
 export const ListUniversitiesResponse = zod.object({
   "items": zod.array(zod.object({
   "id": zod.string(),
@@ -101,6 +127,30 @@ export const ListUniversitiesResponse = zod.object({
   "logoUsageNote": zod.string().nullish(),
   "logoVerificationStatus": zod.enum(['not_checked', 'verified', 'review_required', 'not_found', 'missing_website', 'error']).optional(),
   "logoLastCheckedAt": zod.coerce.date().nullish(),
+  "logoSourceUrl": zod.string().nullish(),
+  "primaryColorHex": zod.string().regex(listUniversitiesResponseItemsItemPrimaryColorHexRegExp).nullish(),
+  "secondaryColorHex": zod.string().regex(listUniversitiesResponseItemsItemSecondaryColorHexRegExp).nullish(),
+  "colorsSourceUrl": zod.string().nullish(),
+  "colorsUsageNote": zod.string().nullish(),
+  "colorsVerificationStatus": zod.string().optional(),
+  "colorsLastVerifiedAt": zod.coerce.date().nullish(),
+  "mascotName": zod.string().nullish(),
+  "mascotSourceUrl": zod.string().nullish(),
+  "mascotVerificationStatus": zod.string().optional(),
+  "mascotLastVerifiedAt": zod.coerce.date().nullish(),
+  "mascotImageUrl": zod.string().nullish(),
+  "mascotImageSourceUrl": zod.string().nullish(),
+  "mascotImageLicenseUrl": zod.string().nullish(),
+  "mascotImageCredit": zod.string().nullish(),
+  "mascotImageVerificationStatus": zod.string().optional(),
+  "campusImageUrl": zod.string().nullish(),
+  "campusImageSourceUrl": zod.string().nullish(),
+  "campusImageLicenseUrl": zod.string().nullish(),
+  "campusImageCredit": zod.string().nullish(),
+  "campusImageVerificationStatus": zod.string().optional(),
+  "campusImageLastVerifiedAt": zod.coerce.date().nullish(),
+  "brandingVerificationStatus": zod.string().optional(),
+  "brandingLastVerifiedAt": zod.coerce.date().nullish(),
   "admissionRate": zod.number().nullable(),
   "admissionRateYear": zod.number().int().nullable(),
   "completionRate": zod.number().nullable(),
@@ -372,6 +422,10 @@ export const GetUniversityParams = zod.object({
   "id": zod.coerce.string()
 })
 
+export const getUniversityResponsePrimaryColorHexRegExp = new RegExp('^#[0-9A-Fa-f]{6}$');
+export const getUniversityResponseSecondaryColorHexRegExp = new RegExp('^#[0-9A-Fa-f]{6}$');
+
+
 export const GetUniversityResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
@@ -406,6 +460,30 @@ export const GetUniversityResponse = zod.object({
   "logoUsageNote": zod.string().nullish(),
   "logoVerificationStatus": zod.enum(['not_checked', 'verified', 'review_required', 'not_found', 'missing_website', 'error']).optional(),
   "logoLastCheckedAt": zod.coerce.date().nullish(),
+  "logoSourceUrl": zod.string().nullish(),
+  "primaryColorHex": zod.string().regex(getUniversityResponsePrimaryColorHexRegExp).nullish(),
+  "secondaryColorHex": zod.string().regex(getUniversityResponseSecondaryColorHexRegExp).nullish(),
+  "colorsSourceUrl": zod.string().nullish(),
+  "colorsUsageNote": zod.string().nullish(),
+  "colorsVerificationStatus": zod.string().optional(),
+  "colorsLastVerifiedAt": zod.coerce.date().nullish(),
+  "mascotName": zod.string().nullish(),
+  "mascotSourceUrl": zod.string().nullish(),
+  "mascotVerificationStatus": zod.string().optional(),
+  "mascotLastVerifiedAt": zod.coerce.date().nullish(),
+  "mascotImageUrl": zod.string().nullish(),
+  "mascotImageSourceUrl": zod.string().nullish(),
+  "mascotImageLicenseUrl": zod.string().nullish(),
+  "mascotImageCredit": zod.string().nullish(),
+  "mascotImageVerificationStatus": zod.string().optional(),
+  "campusImageUrl": zod.string().nullish(),
+  "campusImageSourceUrl": zod.string().nullish(),
+  "campusImageLicenseUrl": zod.string().nullish(),
+  "campusImageCredit": zod.string().nullish(),
+  "campusImageVerificationStatus": zod.string().optional(),
+  "campusImageLastVerifiedAt": zod.coerce.date().nullish(),
+  "brandingVerificationStatus": zod.string().optional(),
+  "brandingLastVerifiedAt": zod.coerce.date().nullish(),
   "admissionRate": zod.number().nullable(),
   "admissionRateYear": zod.number().int().nullable(),
   "completionRate": zod.number().nullable(),
@@ -477,6 +555,10 @@ export const SaveStudentProfileResponse = zod.object({
 /**
  * @summary List saved universities for the signed-in student
  */
+export const listSavedUniversitiesResponseUniversityPrimaryColorHexRegExp = new RegExp('^#[0-9A-Fa-f]{6}$');
+export const listSavedUniversitiesResponseUniversitySecondaryColorHexRegExp = new RegExp('^#[0-9A-Fa-f]{6}$');
+
+
 export const ListSavedUniversitiesResponseItem = zod.object({
   "universityId": zod.string(),
   "savedAt": zod.string(),
@@ -514,6 +596,30 @@ export const ListSavedUniversitiesResponseItem = zod.object({
   "logoUsageNote": zod.string().nullish(),
   "logoVerificationStatus": zod.enum(['not_checked', 'verified', 'review_required', 'not_found', 'missing_website', 'error']).optional(),
   "logoLastCheckedAt": zod.coerce.date().nullish(),
+  "logoSourceUrl": zod.string().nullish(),
+  "primaryColorHex": zod.string().regex(listSavedUniversitiesResponseUniversityPrimaryColorHexRegExp).nullish(),
+  "secondaryColorHex": zod.string().regex(listSavedUniversitiesResponseUniversitySecondaryColorHexRegExp).nullish(),
+  "colorsSourceUrl": zod.string().nullish(),
+  "colorsUsageNote": zod.string().nullish(),
+  "colorsVerificationStatus": zod.string().optional(),
+  "colorsLastVerifiedAt": zod.coerce.date().nullish(),
+  "mascotName": zod.string().nullish(),
+  "mascotSourceUrl": zod.string().nullish(),
+  "mascotVerificationStatus": zod.string().optional(),
+  "mascotLastVerifiedAt": zod.coerce.date().nullish(),
+  "mascotImageUrl": zod.string().nullish(),
+  "mascotImageSourceUrl": zod.string().nullish(),
+  "mascotImageLicenseUrl": zod.string().nullish(),
+  "mascotImageCredit": zod.string().nullish(),
+  "mascotImageVerificationStatus": zod.string().optional(),
+  "campusImageUrl": zod.string().nullish(),
+  "campusImageSourceUrl": zod.string().nullish(),
+  "campusImageLicenseUrl": zod.string().nullish(),
+  "campusImageCredit": zod.string().nullish(),
+  "campusImageVerificationStatus": zod.string().optional(),
+  "campusImageLastVerifiedAt": zod.coerce.date().nullish(),
+  "brandingVerificationStatus": zod.string().optional(),
+  "brandingLastVerifiedAt": zod.coerce.date().nullish(),
   "admissionRate": zod.number().nullable(),
   "admissionRateYear": zod.number().int().nullable(),
   "completionRate": zod.number().nullable(),
@@ -537,6 +643,10 @@ export const ListSavedUniversitiesResponse = zod.array(ListSavedUniversitiesResp
 export const SaveUniversityBody = zod.object({
   "universityId": zod.string()
 })
+
+export const saveUniversityResponseUniversityPrimaryColorHexRegExp = new RegExp('^#[0-9A-Fa-f]{6}$');
+export const saveUniversityResponseUniversitySecondaryColorHexRegExp = new RegExp('^#[0-9A-Fa-f]{6}$');
+
 
 export const SaveUniversityResponse = zod.object({
   "universityId": zod.string(),
@@ -575,6 +685,30 @@ export const SaveUniversityResponse = zod.object({
   "logoUsageNote": zod.string().nullish(),
   "logoVerificationStatus": zod.enum(['not_checked', 'verified', 'review_required', 'not_found', 'missing_website', 'error']).optional(),
   "logoLastCheckedAt": zod.coerce.date().nullish(),
+  "logoSourceUrl": zod.string().nullish(),
+  "primaryColorHex": zod.string().regex(saveUniversityResponseUniversityPrimaryColorHexRegExp).nullish(),
+  "secondaryColorHex": zod.string().regex(saveUniversityResponseUniversitySecondaryColorHexRegExp).nullish(),
+  "colorsSourceUrl": zod.string().nullish(),
+  "colorsUsageNote": zod.string().nullish(),
+  "colorsVerificationStatus": zod.string().optional(),
+  "colorsLastVerifiedAt": zod.coerce.date().nullish(),
+  "mascotName": zod.string().nullish(),
+  "mascotSourceUrl": zod.string().nullish(),
+  "mascotVerificationStatus": zod.string().optional(),
+  "mascotLastVerifiedAt": zod.coerce.date().nullish(),
+  "mascotImageUrl": zod.string().nullish(),
+  "mascotImageSourceUrl": zod.string().nullish(),
+  "mascotImageLicenseUrl": zod.string().nullish(),
+  "mascotImageCredit": zod.string().nullish(),
+  "mascotImageVerificationStatus": zod.string().optional(),
+  "campusImageUrl": zod.string().nullish(),
+  "campusImageSourceUrl": zod.string().nullish(),
+  "campusImageLicenseUrl": zod.string().nullish(),
+  "campusImageCredit": zod.string().nullish(),
+  "campusImageVerificationStatus": zod.string().optional(),
+  "campusImageLastVerifiedAt": zod.coerce.date().nullish(),
+  "brandingVerificationStatus": zod.string().optional(),
+  "brandingLastVerifiedAt": zod.coerce.date().nullish(),
   "admissionRate": zod.number().nullable(),
   "admissionRateYear": zod.number().int().nullable(),
   "completionRate": zod.number().nullable(),
