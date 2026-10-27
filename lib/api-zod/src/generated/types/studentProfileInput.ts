@@ -5,6 +5,11 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { StudentProfileInputAdmissionTrack } from './studentProfileInputAdmissionTrack';
+import type { StudentProfileInputApplicantStatus } from './studentProfileInputApplicantStatus';
+import type { StudentProfileInputBudgetChoice } from './studentProfileInputBudgetChoice';
+import type { StudentProfileInputBudgetScope } from './studentProfileInputBudgetScope';
+import type { StudentProfileInputStartTerm } from './studentProfileInputStartTerm';
 
 export interface StudentProfileInput {
   residenceCountry: string;
@@ -17,4 +22,31 @@ export interface StudentProfileInput {
   preferredLanguage: string;
   englishTest: string;
   englishScore: string;
+  budgetChoice?: StudentProfileInputBudgetChoice;
+  /** @pattern ^[A-Z]{3}$ */
+  budgetCurrency?: string;
+  budgetScope?: StudentProfileInputBudgetScope;
+  /**
+     * @minimum 1
+     * @maximum 1000000000
+     * @nullable
+     */
+  customBudget?: number | null;
+  startTerm?: StudentProfileInputStartTerm;
+  /**
+     * @minimum 2026
+     * @maximum 2100
+     * @nullable
+     */
+  startYear?: number | null;
+  /** @maxItems 20 */
+  priorities?: string[];
+  /** @maxItems 3 */
+  topPriorities?: string[];
+  /** @maxLength 150 */
+  preferredLocation?: string;
+  /** @maxLength 100 */
+  residenceRegion?: string;
+  applicantStatus?: StudentProfileInputApplicantStatus;
+  admissionTrack?: StudentProfileInputAdmissionTrack;
 }

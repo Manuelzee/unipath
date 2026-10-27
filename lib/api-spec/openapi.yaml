@@ -224,6 +224,20 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/University" }
         "404": { description: University not found }
+  /me/recommendations:
+    get:
+      operationId: getStudentRecommendations
+      tags: [student]
+      summary: Explainable preference recommendations using the account's saved questionnaire
+      responses:
+        "200":
+          description: Estimated matches with explicit missing evidence
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RecommendationResult" }
+        "401": { description: Sign in required }
+        "409": { description: Save a profile first }
+        "503": { description: Matching data unavailable }
   /me/profile:
     get:
       operationId: getStudentProfile
@@ -712,6 +726,59 @@ components:
         preferredLanguage: { type: string }
         englishTest: { type: string }
         englishScore: { type: string }
+        budgetChoice:
+          type: string
+          enum: [under_5000, "5000_10000", "10000_20000", "20000_35000", "35000_50000", "50000_plus", aid_needed, none, custom]
+        budgetCurrency: { type: string, pattern: "^[A-Z]{3}$" }
+        budgetScope: { type: string, enum: [tuition, total] }
+        customBudget: { type: [number, "null"], minimum: 1, maximum: 1000000000 }
+        startTerm: { type: string, enum: [spring, summer, fall, winter, flexible] }
+        startYear: { type: [integer, "null"], minimum: 2026, maximum: 2100 }
+        priorities:
+          type: array
+          maxItems: 20
+          items: { type: string }
+        topPriorities:
+          type: array
+          maxItems: 3
+          items: { type: string }
+        preferredLocation: { type: string, maxLength: 150 }
+        residenceRegion: { type: string, maxLength: 100 }
+        applicantStatus: { type: string, enum: [domestic, international, unsure] }
+        admissionTrack: { type: string, enum: [first_year, transfer, graduate, unsure] }
+    RecommendationAssessment:
+      type: object
+      required: [status, message, sources]
+      properties:
+        status: { type: string }
+        message: { type: string }
+        sources:
+          type: array
+          items: { type: string }
+        reportingYear: { type: [integer, "null"] }
+        deadline: { type: [string, "null"] }
+    SchoolRecommendation:
+      type: object
+      required: [university, score, evidenceCoverage, reasons, missingInformation, affordability, startTerm, funding]
+      properties:
+        university: { $ref: "#/components/schemas/University" }
+        score: { type: integer }
+        evidenceCoverage: { type: integer }
+        reasons: { type: array, items: { type: string } }
+        missingInformation: { type: array, items: { type: string } }
+        affordability: { $ref: "#/components/schemas/RecommendationAssessment" }
+        startTerm: { $ref: "#/components/schemas/RecommendationAssessment" }
+        funding: { $ref: "#/components/schemas/RecommendationAssessment" }
+    RecommendationResult:
+      type: object
+      required: [items, methodology, profileUpdatedAt, generatedAt, totalCandidates, disclaimer]
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/SchoolRecommendation" } }
+        methodology: { type: string }
+        profileUpdatedAt: { type: string }
+        generatedAt: { type: string }
+        totalCandidates: { type: integer }
+        disclaimer: { type: string }
     StudentProfile:
       allOf:
         - $ref: "#/components/schemas/StudentProfileInput"

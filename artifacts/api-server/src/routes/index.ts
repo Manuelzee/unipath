@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import healthRouter from "./health";
 import universityRouter from "./universities";
 import studentRouter from "./student";
+import recommendationsRouter from "./recommendations";
 import institutionLogosRouter from "./institutionLogos";
 import institutionBrandingRouter from "./institutionBranding";
 
@@ -12,5 +13,6 @@ router.use(institutionBrandingRouter);
 router.use(institutionLogosRouter);
 router.use(universityRouter);
 router.use(studentRouter);
+router.use(recommendationsRouter);
 
 export default router;

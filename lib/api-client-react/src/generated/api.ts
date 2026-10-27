@@ -35,6 +35,7 @@ import type {
   ListUniversitiesParams,
   ListUniversitiesResult,
   ListUniversityFactsParams,
+  RecommendationResult,
   SaveUniversityInput,
   SavedUniversity,
   StudentProfile,
@@ -986,6 +987,83 @@ export function useGetUniversity<TData = Awaited<ReturnType<typeof getUniversity
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetUniversityQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetStudentRecommendationsUrl = () => {
+
+
+
+
+  return `/api/me/recommendations`
+}
+
+/**
+ * @summary Explainable preference recommendations using the account's saved questionnaire
+ */
+export const getStudentRecommendations = async ( options?: Parameters<typeof customFetch>[1]): Promise<RecommendationResult> => {
+
+  return customFetch<RecommendationResult>(getGetStudentRecommendationsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetStudentRecommendationsQueryKey = () => {
+    return [
+    `/api/me/recommendations`
+    ] as const;
+    }
+
+
+export const getGetStudentRecommendationsQueryOptions = <TData = Awaited<ReturnType<typeof getStudentRecommendations>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStudentRecommendations>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetStudentRecommendationsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getStudentRecommendations>>> = ({ signal }) => getStudentRecommendations({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getStudentRecommendations>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetStudentRecommendationsQueryResult = NonNullable<Awaited<ReturnType<typeof getStudentRecommendations>>>
+export type GetStudentRecommendationsQueryError = ErrorType<void>
+
+
+/**
+ * @summary Explainable preference recommendations using the account's saved questionnaire
+ */
+
+export function useGetStudentRecommendations<TData = Awaited<ReturnType<typeof getStudentRecommendations>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStudentRecommendations>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetStudentRecommendationsQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

@@ -41,6 +41,24 @@ function toTask(task: typeof applicationTasksTable.$inferSelect) {
     createdAt: task.createdAt.toISOString(),
   };
 }
+const PRIORITIES = new Set(["scholarships","affordability","acceptance","major","reputation","internships","career_outcomes","location_climate","close_to_home","campus_life","sports","online","flexible_admissions","international_support","diversity","small_classes","research","graduate_opportunities","housing","accessibility"]);
+function profileResponse(profile: typeof studentProfilesTable.$inferSelect) {
+  return {
+    residenceCountry: profile.residenceCountry, citizenship: profile.citizenship,
+    studyCountry: profile.studyCountry, degreeLevel: profile.degreeLevel,
+    major: profile.major, grades: profile.grades, annualBudgetUsd: profile.annualBudgetUsd,
+    preferredLanguage: profile.preferredLanguage, englishTest: profile.englishTest,
+    englishScore: profile.englishScore,
+    budgetChoice: profile.budgetChoice ?? (profile.annualBudgetUsd > 0 ? "custom" : "none"),
+    budgetCurrency: profile.budgetCurrency, budgetScope: profile.budgetScope,
+    customBudget: profile.customBudget ?? (profile.budgetChoice === null && profile.annualBudgetUsd > 0 ? profile.annualBudgetUsd : null),
+    startTerm: profile.startTerm, startYear: profile.startYear,
+    priorities: profile.priorities, topPriorities: profile.topPriorities,
+    preferredLocation: profile.preferredLocation, residenceRegion: profile.residenceRegion,
+    applicantStatus: profile.applicantStatus, admissionTrack: profile.admissionTrack,
+    updatedAt: profile.updatedAt.toISOString(),
+  };
+}
 
 router.get("/me/profile", requireAuth, async (req, res): Promise<void> => {
   const [profile] = await db
@@ -51,19 +69,7 @@ router.get("/me/profile", requireAuth, async (req, res): Promise<void> => {
   res.json(
     GetStudentProfileResponse.parse({
       profile: profile
-        ? {
-            residenceCountry: profile.residenceCountry,
-            citizenship: profile.citizenship,
-            studyCountry: profile.studyCountry,
-            degreeLevel: profile.degreeLevel,
-            major: profile.major,
-            grades: profile.grades,
-            annualBudgetUsd: profile.annualBudgetUsd,
-            preferredLanguage: profile.preferredLanguage,
-            englishTest: profile.englishTest,
-            englishScore: profile.englishScore,
-            updatedAt: profile.updatedAt.toISOString(),
-          }
+        ? profileResponse(profile)
         : null,
     }),
   );
@@ -75,6 +81,20 @@ router.put("/me/profile", requireAuth, async (req, res): Promise<void> => {
     res.status(400).json({ error: body.error.message });
     return;
   }
+  const p = body.data;
+  if (Object.values(p).some(value => typeof value === "string" && value.length > 200)) {
+    res.status(400).json({ error: "Profile text fields must be shorter than 200 characters." });
+    return;
+  }
+  if ((p.priorities && (new Set(p.priorities).size !== p.priorities.length || p.priorities.some(v => !PRIORITIES.has(v)))) ||
+    (p.topPriorities && (new Set(p.topPriorities).size !== p.topPriorities.length || p.topPriorities.some(v => !PRIORITIES.has(v)))) ||
+    (p.topPriorities && p.priorities && p.topPriorities.some(v => !p.priorities!.includes(v))) ||
+    (p.budgetCurrency && !Intl.supportedValuesOf("currency").includes(p.budgetCurrency)) ||
+    (p.budgetChoice === "custom" && (!p.customBudget || p.customBudget <= 0)) ||
+    (p.startYear && (p.startYear < new Date().getFullYear() || p.startYear > new Date().getFullYear() + 15))) {
+    res.status(400).json({ error: "Check your budget, start year, currency, and ranked priorities." });
+    return;
+  }
   const values = { ...body.data, userId: studentId(req) };
   const [profile] = await db
     .insert(studentProfilesTable)
@@ -84,21 +104,7 @@ router.put("/me/profile", requireAuth, async (req, res): Promise<void> => {
       set: { ...body.data, updatedAt: new Date() },
     })
     .returning();
-  res.json(
-    SaveStudentProfileResponse.parse({
-      residenceCountry: profile.residenceCountry,
-      citizenship: profile.citizenship,
-      studyCountry: profile.studyCountry,
-      degreeLevel: profile.degreeLevel,
-      major: profile.major,
-      grades: profile.grades,
-      annualBudgetUsd: profile.annualBudgetUsd,
-      preferredLanguage: profile.preferredLanguage,
-      englishTest: profile.englishTest,
-      englishScore: profile.englishScore,
-      updatedAt: profile.updatedAt.toISOString(),
-    }),
-  );
+  res.json(SaveStudentProfileResponse.parse(profileResponse(profile)));
 });
 
 router.get("/me/saved", requireAuth, async (req, res): Promise<void> => {

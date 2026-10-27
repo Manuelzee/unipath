@@ -500,8 +500,138 @@ export const GetUniversityResponse = zod.object({
 
 
 /**
+ * @summary Explainable preference recommendations using the account's saved questionnaire
+ */
+export const getStudentRecommendationsResponseItemsItemUniversityPrimaryColorHexRegExp = new RegExp('^#[0-9A-Fa-f]{6}$');
+export const getStudentRecommendationsResponseItemsItemUniversitySecondaryColorHexRegExp = new RegExp('^#[0-9A-Fa-f]{6}$');
+
+
+export const GetStudentRecommendationsResponse = zod.object({
+  "items": zod.array(zod.object({
+  "university": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "country": zod.string(),
+  "countryCode": zod.string(),
+  "sourceScope": zod.string().nullable(),
+  "sourceLicenseUrl": zod.string().nullable(),
+  "recognitionStatus": zod.string().nullable(),
+  "languages": zod.array(zod.string()),
+  "applicantStatuses": zod.array(zod.string()),
+  "dliNumber": zod.string().nullable(),
+  "dliSourceUrl": zod.string().nullable(),
+  "dliVerifiedAt": zod.coerce.date().nullable(),
+  "lastVerifiedAt": zod.coerce.date().nullable(),
+  "city": zod.string(),
+  "state": zod.string(),
+  "institutionType": zod.string(),
+  "ownership": zod.string().nullable(),
+  "dataSource": zod.string(),
+  "dataYear": zod.string().nullable(),
+  "degreeLevels": zod.array(zod.string()),
+  "degreeTypes": zod.array(zod.string()),
+  "majors": zod.array(zod.string()),
+  "website": zod.string().nullable(),
+  "admissionsWebsite": zod.string().nullable(),
+  "applicationWebsite": zod.string().nullable(),
+  "financialAidWebsite": zod.string().nullable(),
+  "logoUrl": zod.string().nullish().describe('Cached image URL, returned only for verified institution logos.'),
+  "logoSource": zod.string().nullish(),
+  "logoIdentitySource": zod.string().nullish(),
+  "logoLicenseUrl": zod.string().nullish(),
+  "logoUsageNote": zod.string().nullish(),
+  "logoVerificationStatus": zod.enum(['not_checked', 'verified', 'review_required', 'not_found', 'missing_website', 'error']).optional(),
+  "logoLastCheckedAt": zod.coerce.date().nullish(),
+  "logoSourceUrl": zod.string().nullish(),
+  "primaryColorHex": zod.string().regex(getStudentRecommendationsResponseItemsItemUniversityPrimaryColorHexRegExp).nullish(),
+  "secondaryColorHex": zod.string().regex(getStudentRecommendationsResponseItemsItemUniversitySecondaryColorHexRegExp).nullish(),
+  "colorsSourceUrl": zod.string().nullish(),
+  "colorsUsageNote": zod.string().nullish(),
+  "colorsVerificationStatus": zod.string().optional(),
+  "colorsLastVerifiedAt": zod.coerce.date().nullish(),
+  "mascotName": zod.string().nullish(),
+  "mascotSourceUrl": zod.string().nullish(),
+  "mascotVerificationStatus": zod.string().optional(),
+  "mascotLastVerifiedAt": zod.coerce.date().nullish(),
+  "mascotImageUrl": zod.string().nullish(),
+  "mascotImageSourceUrl": zod.string().nullish(),
+  "mascotImageLicenseUrl": zod.string().nullish(),
+  "mascotImageCredit": zod.string().nullish(),
+  "mascotImageVerificationStatus": zod.string().optional(),
+  "campusImageUrl": zod.string().nullish(),
+  "campusImageSourceUrl": zod.string().nullish(),
+  "campusImageLicenseUrl": zod.string().nullish(),
+  "campusImageCredit": zod.string().nullish(),
+  "campusImageVerificationStatus": zod.string().optional(),
+  "campusImageLastVerifiedAt": zod.coerce.date().nullish(),
+  "brandingVerificationStatus": zod.string().optional(),
+  "brandingLastVerifiedAt": zod.coerce.date().nullish(),
+  "admissionRate": zod.number().nullable(),
+  "admissionRateYear": zod.number().int().nullable(),
+  "completionRate": zod.number().nullable(),
+  "completionRateYear": zod.number().int().nullable(),
+  "completionRateType": zod.string().nullable(),
+  "pellGrantRate": zod.number().nullable(),
+  "pellGrantRateYear": zod.number().int().nullable(),
+  "medianDebtUsd": zod.number().int().nullable(),
+  "medianDebtYear": zod.number().int().nullable(),
+  "sourceUrl": zod.string(),
+  "isActive": zod.boolean(),
+  "lastUpdatedAt": zod.coerce.date()
+}),
+  "score": zod.number().int(),
+  "evidenceCoverage": zod.number().int(),
+  "reasons": zod.array(zod.string()),
+  "missingInformation": zod.array(zod.string()),
+  "affordability": zod.object({
+  "status": zod.string(),
+  "message": zod.string(),
+  "sources": zod.array(zod.string()),
+  "reportingYear": zod.number().int().nullish(),
+  "deadline": zod.string().nullish()
+}),
+  "startTerm": zod.object({
+  "status": zod.string(),
+  "message": zod.string(),
+  "sources": zod.array(zod.string()),
+  "reportingYear": zod.number().int().nullish(),
+  "deadline": zod.string().nullish()
+}),
+  "funding": zod.object({
+  "status": zod.string(),
+  "message": zod.string(),
+  "sources": zod.array(zod.string()),
+  "reportingYear": zod.number().int().nullish(),
+  "deadline": zod.string().nullish()
+})
+})),
+  "methodology": zod.string(),
+  "profileUpdatedAt": zod.string(),
+  "generatedAt": zod.string(),
+  "totalCandidates": zod.number().int(),
+  "disclaimer": zod.string()
+})
+
+
+/**
  * @summary Get the signed-in student's profile
  */
+export const getStudentProfileResponseProfileOneOneBudgetCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const getStudentProfileResponseProfileOneOneCustomBudgetMax = 1000000000;
+
+export const getStudentProfileResponseProfileOneOneStartYearMin = 2026;
+export const getStudentProfileResponseProfileOneOneStartYearMax = 2100;
+
+export const getStudentProfileResponseProfileOneOnePrioritiesMax = 20;
+
+export const getStudentProfileResponseProfileOneOneTopPrioritiesMax = 3;
+
+export const getStudentProfileResponseProfileOneOnePreferredLocationMax = 150;
+
+export const getStudentProfileResponseProfileOneOneResidenceRegionMax = 100;
+
+
+
 export const GetStudentProfileResponse = zod.object({
   "profile": zod.union([zod.object({
   "residenceCountry": zod.string(),
@@ -513,7 +643,19 @@ export const GetStudentProfileResponse = zod.object({
   "annualBudgetUsd": zod.number(),
   "preferredLanguage": zod.string(),
   "englishTest": zod.string(),
-  "englishScore": zod.string()
+  "englishScore": zod.string(),
+  "budgetChoice": zod.enum(['under_5000', '5000_10000', '10000_20000', '20000_35000', '35000_50000', '50000_plus', 'aid_needed', 'none', 'custom']).optional(),
+  "budgetCurrency": zod.string().regex(getStudentProfileResponseProfileOneOneBudgetCurrencyRegExp).optional(),
+  "budgetScope": zod.enum(['tuition', 'total']).optional(),
+  "customBudget": zod.number().min(1).max(getStudentProfileResponseProfileOneOneCustomBudgetMax).nullish(),
+  "startTerm": zod.enum(['spring', 'summer', 'fall', 'winter', 'flexible']).optional(),
+  "startYear": zod.number().int().min(getStudentProfileResponseProfileOneOneStartYearMin).max(getStudentProfileResponseProfileOneOneStartYearMax).nullish(),
+  "priorities": zod.array(zod.string()).max(getStudentProfileResponseProfileOneOnePrioritiesMax).optional(),
+  "topPriorities": zod.array(zod.string()).max(getStudentProfileResponseProfileOneOneTopPrioritiesMax).optional(),
+  "preferredLocation": zod.string().max(getStudentProfileResponseProfileOneOnePreferredLocationMax).optional(),
+  "residenceRegion": zod.string().max(getStudentProfileResponseProfileOneOneResidenceRegionMax).optional(),
+  "applicantStatus": zod.enum(['domestic', 'international', 'unsure']).optional(),
+  "admissionTrack": zod.enum(['first_year', 'transfer', 'graduate', 'unsure']).optional()
 }).and(zod.object({
   "updatedAt": zod.string()
 })),zod.null()])
@@ -523,6 +665,22 @@ export const GetStudentProfileResponse = zod.object({
 /**
  * @summary Save the signed-in student's profile
  */
+export const saveStudentProfileBodyBudgetCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const saveStudentProfileBodyCustomBudgetMax = 1000000000;
+
+export const saveStudentProfileBodyStartYearMin = 2026;
+export const saveStudentProfileBodyStartYearMax = 2100;
+
+export const saveStudentProfileBodyPrioritiesMax = 20;
+
+export const saveStudentProfileBodyTopPrioritiesMax = 3;
+
+export const saveStudentProfileBodyPreferredLocationMax = 150;
+
+export const saveStudentProfileBodyResidenceRegionMax = 100;
+
+
+
 export const SaveStudentProfileBody = zod.object({
   "residenceCountry": zod.string(),
   "citizenship": zod.string(),
@@ -533,8 +691,36 @@ export const SaveStudentProfileBody = zod.object({
   "annualBudgetUsd": zod.number(),
   "preferredLanguage": zod.string(),
   "englishTest": zod.string(),
-  "englishScore": zod.string()
+  "englishScore": zod.string(),
+  "budgetChoice": zod.enum(['under_5000', '5000_10000', '10000_20000', '20000_35000', '35000_50000', '50000_plus', 'aid_needed', 'none', 'custom']).optional(),
+  "budgetCurrency": zod.string().regex(saveStudentProfileBodyBudgetCurrencyRegExp).optional(),
+  "budgetScope": zod.enum(['tuition', 'total']).optional(),
+  "customBudget": zod.number().min(1).max(saveStudentProfileBodyCustomBudgetMax).nullish(),
+  "startTerm": zod.enum(['spring', 'summer', 'fall', 'winter', 'flexible']).optional(),
+  "startYear": zod.number().int().min(saveStudentProfileBodyStartYearMin).max(saveStudentProfileBodyStartYearMax).nullish(),
+  "priorities": zod.array(zod.string()).max(saveStudentProfileBodyPrioritiesMax).optional(),
+  "topPriorities": zod.array(zod.string()).max(saveStudentProfileBodyTopPrioritiesMax).optional(),
+  "preferredLocation": zod.string().max(saveStudentProfileBodyPreferredLocationMax).optional(),
+  "residenceRegion": zod.string().max(saveStudentProfileBodyResidenceRegionMax).optional(),
+  "applicantStatus": zod.enum(['domestic', 'international', 'unsure']).optional(),
+  "admissionTrack": zod.enum(['first_year', 'transfer', 'graduate', 'unsure']).optional()
 })
+
+export const saveStudentProfileResponseOneBudgetCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const saveStudentProfileResponseOneCustomBudgetMax = 1000000000;
+
+export const saveStudentProfileResponseOneStartYearMin = 2026;
+export const saveStudentProfileResponseOneStartYearMax = 2100;
+
+export const saveStudentProfileResponseOnePrioritiesMax = 20;
+
+export const saveStudentProfileResponseOneTopPrioritiesMax = 3;
+
+export const saveStudentProfileResponseOnePreferredLocationMax = 150;
+
+export const saveStudentProfileResponseOneResidenceRegionMax = 100;
+
+
 
 export const SaveStudentProfileResponse = zod.object({
   "residenceCountry": zod.string(),
@@ -546,7 +732,19 @@ export const SaveStudentProfileResponse = zod.object({
   "annualBudgetUsd": zod.number(),
   "preferredLanguage": zod.string(),
   "englishTest": zod.string(),
-  "englishScore": zod.string()
+  "englishScore": zod.string(),
+  "budgetChoice": zod.enum(['under_5000', '5000_10000', '10000_20000', '20000_35000', '35000_50000', '50000_plus', 'aid_needed', 'none', 'custom']).optional(),
+  "budgetCurrency": zod.string().regex(saveStudentProfileResponseOneBudgetCurrencyRegExp).optional(),
+  "budgetScope": zod.enum(['tuition', 'total']).optional(),
+  "customBudget": zod.number().min(1).max(saveStudentProfileResponseOneCustomBudgetMax).nullish(),
+  "startTerm": zod.enum(['spring', 'summer', 'fall', 'winter', 'flexible']).optional(),
+  "startYear": zod.number().int().min(saveStudentProfileResponseOneStartYearMin).max(saveStudentProfileResponseOneStartYearMax).nullish(),
+  "priorities": zod.array(zod.string()).max(saveStudentProfileResponseOnePrioritiesMax).optional(),
+  "topPriorities": zod.array(zod.string()).max(saveStudentProfileResponseOneTopPrioritiesMax).optional(),
+  "preferredLocation": zod.string().max(saveStudentProfileResponseOnePreferredLocationMax).optional(),
+  "residenceRegion": zod.string().max(saveStudentProfileResponseOneResidenceRegionMax).optional(),
+  "applicantStatus": zod.enum(['domestic', 'international', 'unsure']).optional(),
+  "admissionTrack": zod.enum(['first_year', 'transfer', 'graduate', 'unsure']).optional()
 }).and(zod.object({
   "updatedAt": zod.string()
 }))

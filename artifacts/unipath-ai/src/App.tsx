@@ -1,4 +1,4 @@
-import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from 'react';
+import { Fragment, type FormEvent, type ReactNode, useEffect, useMemo, useState } from 'react';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { ClerkProvider, SignIn, SignUp, Show, useClerk, useUser } from '@clerk/react';
 import { publishableKeyFromHost } from '@clerk/react/internal';
@@ -10,10 +10,12 @@ import { FundingFinder } from '@/components/directory/FundingFinder';
 import { SourceBadge } from '@/components/directory/SchoolCard';
 import { InstitutionLogo, LinkedInstitutionLogo } from '@/components/directory/InstitutionLogo';
 import { schoolLocation } from '@/components/directory/format';
+import { PreferenceFields, thisYear } from '@/components/profile/PreferenceFields';
+import { RecommendationsView } from '@/components/recommendations/RecommendationsView';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import {
-  getGetStudentDashboardQueryKey, getGetStudentProfileQueryKey,
+  getGetStudentDashboardQueryKey, getGetStudentProfileQueryKey, getGetStudentRecommendationsQueryKey,
   getGetUniversityFilterOptionsQueryKey, getGetUniversityQueryKey,
   getListApplicationTasksQueryKey, getListSavedUniversitiesQueryKey,
   getListUniversitiesQueryKey, useCreateApplicationTask, useDeleteApplicationTask,
@@ -31,7 +33,6 @@ import {
 } from 'lucide-react';
 import { Link, Redirect, Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
 
-const queryClient = new QueryClient();
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
 const clerkPubKey = publishableKeyFromHost(window.location.hostname, import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
@@ -70,6 +71,7 @@ const navItems = [
   { href: '/funding', label: 'Funding finder', icon: Sparkles },
   { href: '/dashboard', label: 'My plan', icon: LayoutDashboard },
   { href: '/profile', label: 'My profile', icon: UserRound },
+  { href: '/recommendations', label: 'Matches', icon: GraduationCap },
   { href: '/assistant', label: 'Guidance', icon: MessageCircle },
   { href: '/plans', label: 'Plans', icon: Sparkles },
 ];
@@ -179,15 +181,17 @@ function Dashboard() {
 const profileDefaults: StudentProfileInput = {
   residenceCountry: '', citizenship: '', studyCountry: '', degreeLevel: '',
   major: '', grades: '', annualBudgetUsd: 0, preferredLanguage: '', englishTest: '', englishScore: '',
+  budgetCurrency: 'USD', budgetScope: 'tuition', priorities: [], topPriorities: [], preferredLocation: '', residenceRegion: '', admissionTrack: 'unsure',
 };
 function Profile() {
   const profileQuery=useGetStudentProfile({query:{queryKey:getGetStudentProfileQueryKey()}}); const save=useSaveStudentProfile(); const qc=useQueryClient();
   const profile=profileQuery.data?.profile;
   const [form,setForm]=useState<StudentProfileInput>(profileDefaults);
   const [initialized,setInitialized]=useState(false);
-  useEffect(()=>{if(profile&&!initialized){setForm({...profile});setInitialized(true);}},[profile,initialized]);
+  useEffect(()=>{if(profile&&!initialized){const { updatedAt: _u, ...rest } = profile; void _u; setForm({...profileDefaults,...rest});setInitialized(true);}},[profile,initialized]);
   const update=(key:keyof StudentProfileInput,value:string|number)=>setForm(current=>({...current,[key]:value} as StudentProfileInput));
-  const submit=(e:FormEvent)=>{e.preventDefault();save.mutate({data:{...form,annualBudgetUsd:Number(form.annualBudgetUsd)||0}},{onSuccess:()=>{void qc.invalidateQueries({queryKey:getGetStudentProfileQueryKey()});}});};
+  const customInvalid=form.budgetChoice==='custom'&&!(Number(form.customBudget)>0); const pastYear=form.startYear!=null&&form.startYear<thisYear;
+  const submit=(e:FormEvent)=>{e.preventDefault(); if(customInvalid||pastYear)return; const data:StudentProfileInput={...form,annualBudgetUsd:Number(form.annualBudgetUsd)||0,customBudget:form.budgetChoice==='custom'?Math.floor(Number(form.customBudget)):null,topPriorities:(form.topPriorities??[]).slice(0,3)}; if(!data.applicantStatus)delete data.applicantStatus; save.mutate({data},{onSuccess:()=>{void qc.invalidateQueries({queryKey:getGetStudentProfileQueryKey()});void qc.invalidateQueries({queryKey:getGetStudentRecommendationsQueryKey()});}});};
   return <Shell><div className="page page-enter"><PageHeading kicker="START WITH YOU" title="Your story, your way." body="Share a little about what you’re looking for. You can change any of this whenever you like."/>
     {profileQuery.isLoading?<LoadingState/>:profileQuery.isError?<ErrorState retry={()=>void profileQuery.refetch()}/>:<div className="profile-layout"><form className="profile-form content-panel" onSubmit={submit}>
       <div className="form-section-title"><div className="profile-icon"><UserRound size={20}/></div><div><h2>About you</h2><p>These details help keep your plans grounded in what matters.</p></div></div>
@@ -199,9 +203,14 @@ function Profile() {
         <label className="field"><span>Grades or academic background</span><input value={form.grades} onChange={e=>update('grades',e.target.value)} placeholder="Share only what feels useful" data-testid="input-grades"/></label>
         <label className="field"><span>Preferred language</span><input value={form.preferredLanguage} onChange={e=>update('preferredLanguage',e.target.value)} placeholder="e.g. English" data-testid="input-language"/></label>
         <label className="field"><span>English test (if applicable)</span><input value={form.englishTest} onChange={e=>update('englishTest',e.target.value)} placeholder="IELTS, TOEFL, not yet taken…" data-testid="input-english-test"/></label>
-        <label className="field"><span>English score (optional)</span><input value={form.englishScore} onChange={e=>update('englishScore',e.target.value)} placeholder="Add a score if you have one" data-testid="input-english-score"/></label></div>
-      <div className="form-footer"><span>{profile?.updatedAt?`Last updated ${new Date(profile.updatedAt).toLocaleDateString()}`:'Your information stays yours.'}</span><button className="button button-primary" disabled={save.isPending} data-testid="button-save-profile">{save.isPending?<><LoaderCircle size={16} className="spin"/> Saving…</>:save.isSuccess?<><Check size={16}/> Saved</>:<>Save my profile <ArrowRight size={16}/></>}</button></div>
-      {save.isError&&<p className="form-error" role="alert">We couldn’t save your profile. Please try again.</p>}
+        <label className="field"><span>English score (optional)</span><input value={form.englishScore} onChange={e=>update('englishScore',e.target.value)} placeholder="Add a score if you have one" data-testid="input-english-score"/></label>
+        <label className="field"><span>State, province, or region</span><input value={form.residenceRegion??''} maxLength={100} onChange={e=>update('residenceRegion',e.target.value)} placeholder="Helps with regional scholarships" data-testid="input-residence-region"/></label>
+        <label className="field"><span>Preferred location to study</span><input value={form.preferredLocation??''} maxLength={150} onChange={e=>update('preferredLocation',e.target.value)} placeholder="City, region, or anywhere" data-testid="input-preferred-location"/></label>
+        <label className="field"><span>Applicant status</span><select value={form.applicantStatus??''} onChange={e=>setForm(c=>({...c,applicantStatus:(e.target.value||undefined) as StudentProfileInput['applicantStatus']}))} data-testid="select-applicant-status"><option value="">Choose one</option><option value="domestic">Domestic</option><option value="international">International</option><option value="unsure">Not sure</option></select></label>
+        <label className="field"><span>Application track</span><select value={form.admissionTrack??'unsure'} onChange={e=>setForm(c=>({...c,admissionTrack:e.target.value as NonNullable<StudentProfileInput['admissionTrack']>}))} data-testid="select-admission-track"><option value="first_year">First-year</option><option value="transfer">Transfer</option><option value="graduate">Graduate</option><option value="unsure">Not sure</option></select></label></div>
+      <PreferenceFields form={form} setForm={setForm}/>
+      <div className="form-footer"><span>{profile?.updatedAt?`Last updated ${new Date(profile.updatedAt).toLocaleDateString()}`:'Your information stays yours.'}</span><button className="button button-primary" disabled={save.isPending||customInvalid||pastYear} data-testid="button-save-profile">{save.isPending?<><LoaderCircle size={16} className="spin"/> Saving…</>:save.isSuccess?<><Check size={16}/> Saved</>:<>Save my profile <ArrowRight size={16}/></>}</button></div>
+      {save.isError&&<p className="form-error" role="alert">We couldn’t save your profile. Please try again.</p>}{pastYear&&<p className="form-error" role="alert">Your saved start year has passed. Choose a future year before saving.</p>}{customInvalid&&<p className="form-error" role="alert">Enter a positive custom budget amount, or choose another option.</p>}{save.isSuccess&&<p className="form-footer-note"><Link href="/recommendations" className="text-link" data-testid="link-see-matches">See your matches <ArrowRight size={14}/></Link></p>}
       </form><aside className="profile-side"><div className="profile-note"><div className="note-icon"><ShieldCheck size={19}/></div><h3>Your plan should fit your life.</h3><p>Your interests and budget can help focus your exploration. Nothing here locks you into a choice.</p><Link href="/discover">Explore schools <ArrowRight size={14}/></Link></div><div className="profile-note pale"><Globe2 size={19}/><h3>Still figuring it out?</h3><p>That’s a perfectly good place to be. You can leave any field blank.</p></div></aside></div>}
   </div></Shell>;
 }
@@ -244,13 +253,21 @@ function AuthPage({ kind }: { kind:'sign-in'|'sign-up' }) {
 function Protected({ children }: { children: ReactNode }) {
   return <><Show when="signed-in">{children}</Show><Show when="signed-out"><Redirect to="/"/></Show></>;
 }
+function UserScopedQueries({ children }: { children: ReactNode }) {
+  const { user, isLoaded } = useUser();
+  const identity = isLoaded ? user?.id ?? 'signed-out' : 'loading';
+  // A new query cache and component tree for each identity prevents one student's
+  // saved budget or profile from appearing briefly after switching accounts.
+  const client = useMemo(() => new QueryClient(), [identity]);
+  return <QueryClientProvider client={client}><Fragment key={identity}>{children}</Fragment></QueryClientProvider>;
+}
 function ClerkRoutes() {
   const [,setLocation]=useLocation();
   return <ClerkProvider publishableKey={clerkPubKey} proxyUrl={clerkProxyUrl} appearance={appearance}
     signInUrl={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`}
     localization={{signIn:{start:{title:'Welcome back',subtitle:'Pick up where your plans left off'}},signUp:{start:{title:'Your next chapter starts here',subtitle:'Create an account to make your plan yours'}}}}
     routerPush={to=>setLocation(stripBase(to))} routerReplace={to=>setLocation(stripBase(to),{replace:true})}>
-    <Switch>
+    <UserScopedQueries><Switch>
       <Route path="/" component={Home}/>
       <Route path="/sign-in/*?" component={()=> <AuthPage kind="sign-in"/>}/>
       <Route path="/sign-up/*?" component={()=> <AuthPage kind="sign-up"/>}/>
@@ -259,13 +276,14 @@ function ClerkRoutes() {
       <Route path="/university/:id">{params=><UniversityDetails id={params.id}/>}</Route>
       <Route path="/dashboard">{()=><Protected><Dashboard/></Protected>}</Route>
       <Route path="/profile">{()=><Protected><Profile/></Protected>}</Route>
+      <Route path="/recommendations">{()=><Protected><Shell><RecommendationsView/></Shell></Protected>}</Route>
       <Route path="/assistant">{()=><Protected><Assistant/></Protected>}</Route>
       <Route path="/plans" component={Plans}/>
       <Route><div className="not-found"><Brand/><div className="state-icon"><Compass size={22}/></div><h1>That path isn’t on the map.</h1><p>The page may have moved. Let’s find your way back.</p><Link href="/" className="button button-primary">Go home <ArrowRight size={15}/></Link></div></Route>
-    </Switch>
+    </Switch></UserScopedQueries>
   </ClerkProvider>;
 }
 function App() {
-  return <QueryClientProvider client={queryClient}><TooltipProvider><WouterRouter base={basePath}><ErrorBoundary><ClerkRoutes/></ErrorBoundary></WouterRouter><Toaster/></TooltipProvider></QueryClientProvider>;
+  return <TooltipProvider><WouterRouter base={basePath}><ErrorBoundary><ClerkRoutes/></ErrorBoundary></WouterRouter><Toaster/></TooltipProvider>;
 }
 export default App;

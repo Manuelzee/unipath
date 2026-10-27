@@ -5,6 +5,7 @@ import { publicRequestFailure } from "./lib/requestErrors";
 import { applyLogoManifest } from "./lib/logos/manifest";
 import { startAutomaticLogoDiscovery } from "./lib/logos/automatic";
 import { applyBrandingManifest } from "./lib/branding/manifest";
+import { importVerifiedMatchingEvidence } from "./lib/matching/seed";
 import { startAutomaticBrandingDiscovery } from "./lib/branding/automatic";
 
 const rawPort = process.env["PORT"];
@@ -25,6 +26,7 @@ async function start() {
   const directory = await ensureInstitutionDirectory();
   logger.info(await applyLogoManifest(), "Verified logo manifest applied; existing verified logos preserved");
   logger.info(await applyBrandingManifest(), "Verified branding manifest applied; existing verified fields preserved");
+  logger.info(await importVerifiedMatchingEvidence(), "Official matching evidence imported without overwriting existing sources");
   logger.info(directory, directory.imported || directory.factsImported ? "Imported and verified missing source records; existing records preserved" : "Institution and program snapshot already present; no data written");
   app.listen(port, (err) => {
     if (err) {

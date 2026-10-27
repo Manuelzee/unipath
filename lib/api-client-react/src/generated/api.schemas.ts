@@ -490,6 +490,59 @@ export interface ListUniversitiesResult {
   pageSize: number;
 }
 
+export type StudentProfileInputBudgetChoice = typeof StudentProfileInputBudgetChoice[keyof typeof StudentProfileInputBudgetChoice];
+
+
+export const StudentProfileInputBudgetChoice = {
+  under_5000: 'under_5000',
+  '5000_10000': '5000_10000',
+  '10000_20000': '10000_20000',
+  '20000_35000': '20000_35000',
+  '35000_50000': '35000_50000',
+  '50000_plus': '50000_plus',
+  aid_needed: 'aid_needed',
+  none: 'none',
+  custom: 'custom',
+} as const;
+
+export type StudentProfileInputBudgetScope = typeof StudentProfileInputBudgetScope[keyof typeof StudentProfileInputBudgetScope];
+
+
+export const StudentProfileInputBudgetScope = {
+  tuition: 'tuition',
+  total: 'total',
+} as const;
+
+export type StudentProfileInputStartTerm = typeof StudentProfileInputStartTerm[keyof typeof StudentProfileInputStartTerm];
+
+
+export const StudentProfileInputStartTerm = {
+  spring: 'spring',
+  summer: 'summer',
+  fall: 'fall',
+  winter: 'winter',
+  flexible: 'flexible',
+} as const;
+
+export type StudentProfileInputApplicantStatus = typeof StudentProfileInputApplicantStatus[keyof typeof StudentProfileInputApplicantStatus];
+
+
+export const StudentProfileInputApplicantStatus = {
+  domestic: 'domestic',
+  international: 'international',
+  unsure: 'unsure',
+} as const;
+
+export type StudentProfileInputAdmissionTrack = typeof StudentProfileInputAdmissionTrack[keyof typeof StudentProfileInputAdmissionTrack];
+
+
+export const StudentProfileInputAdmissionTrack = {
+  first_year: 'first_year',
+  transfer: 'transfer',
+  graduate: 'graduate',
+  unsure: 'unsure',
+} as const;
+
 export interface StudentProfileInput {
   residenceCountry: string;
   citizenship: string;
@@ -501,6 +554,63 @@ export interface StudentProfileInput {
   preferredLanguage: string;
   englishTest: string;
   englishScore: string;
+  budgetChoice?: StudentProfileInputBudgetChoice;
+  /** @pattern ^[A-Z]{3}$ */
+  budgetCurrency?: string;
+  budgetScope?: StudentProfileInputBudgetScope;
+  /**
+     * @minimum 1
+     * @maximum 1000000000
+     * @nullable
+     */
+  customBudget?: number | null;
+  startTerm?: StudentProfileInputStartTerm;
+  /**
+     * @minimum 2026
+     * @maximum 2100
+     * @nullable
+     */
+  startYear?: number | null;
+  /** @maxItems 20 */
+  priorities?: string[];
+  /** @maxItems 3 */
+  topPriorities?: string[];
+  /** @maxLength 150 */
+  preferredLocation?: string;
+  /** @maxLength 100 */
+  residenceRegion?: string;
+  applicantStatus?: StudentProfileInputApplicantStatus;
+  admissionTrack?: StudentProfileInputAdmissionTrack;
+}
+
+export interface RecommendationAssessment {
+  status: string;
+  message: string;
+  sources: string[];
+  /** @nullable */
+  reportingYear?: number | null;
+  /** @nullable */
+  deadline?: string | null;
+}
+
+export interface SchoolRecommendation {
+  university: University;
+  score: number;
+  evidenceCoverage: number;
+  reasons: string[];
+  missingInformation: string[];
+  affordability: RecommendationAssessment;
+  startTerm: RecommendationAssessment;
+  funding: RecommendationAssessment;
+}
+
+export interface RecommendationResult {
+  items: SchoolRecommendation[];
+  methodology: string;
+  profileUpdatedAt: string;
+  generatedAt: string;
+  totalCandidates: number;
+  disclaimer: string;
 }
 
 export type StudentProfile = StudentProfileInput & {

@@ -1,4 +1,5 @@
-import { pgTable, real, text, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, real, doublePrecision, text, timestamp, integer } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 export const studentProfilesTable = pgTable("student_profiles", {
   userId: text("user_id").primaryKey(),
@@ -12,6 +13,18 @@ export const studentProfilesTable = pgTable("student_profiles", {
   preferredLanguage: text("preferred_language").notNull(),
   englishTest: text("english_test").notNull(),
   englishScore: text("english_score").notNull(),
+  budgetChoice: text("budget_choice"),
+  budgetCurrency: text("budget_currency").notNull().default("USD"),
+  budgetScope: text("budget_scope").notNull().default("tuition"),
+  customBudget: doublePrecision("custom_budget"),
+  startTerm: text("start_term").notNull().default("flexible"),
+  startYear: integer("start_year"),
+  priorities: text("priorities").array().notNull().default(sql`'{}'::text[]`),
+  topPriorities: text("top_priorities").array().notNull().default(sql`'{}'::text[]`),
+  preferredLocation: text("preferred_location").notNull().default(""),
+  residenceRegion: text("residence_region").notNull().default(""),
+  applicantStatus: text("applicant_status").notNull().default("unsure"),
+  admissionTrack: text("admission_track").notNull().default("unsure"),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow()
