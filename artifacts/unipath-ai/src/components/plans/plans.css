@@ -1,0 +1,51 @@
+.pp-hero { margin-bottom:18px; }
+.pp-hero h1 { margin:8px 0; color:#1d415b; font:700 clamp(28px,4vw,40px) 'Manrope',sans-serif; letter-spacing:-1px; }
+.pp-hero p { margin:0; max-width:640px; color:#617582; font-size:14px; line-height:1.6; }
+.pp-legend { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+.pp-status { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:99px; font-size:10px; font-weight:700; font-style:normal; white-space:nowrap; }
+.pp-available { background:#e3f2ee; color:#2f7a6d; }
+.pp-limited { background:#fbf1de; color:#8a6420; }
+.pp-planned { background:#eceff3; color:#5f6f7c; }
+.pp-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; align-items:stretch; }
+.pp-card { position:relative; display:flex; flex-direction:column; padding:22px 18px 18px; background:#fff; border:1px solid #e1e9ed; border-radius:13px; }
+.pp-popular { border:1.5px solid #83bcb1; box-shadow:0 9px 25px #3c847414; }
+.pp-support { background:#f0f6f4; border-color:#dce9e5; }
+.pp-badge { position:absolute; top:-11px; left:18px; padding:3px 10px; border-radius:99px; background:#173e62; color:#fff; font-size:11px; font-weight:700; }
+.pp-card h2 { margin:0; color:#24475a; font:700 17px 'Manrope',sans-serif; }
+.pp-price { margin:8px 0 4px; color:#1d415b; font:700 28px 'Manrope',sans-serif; letter-spacing:-1px; }
+.pp-price small { margin-left:4px; color:#7d8b94; font:500 12px 'DM Sans',sans-serif; letter-spacing:0; }
+.pp-aud { margin:0 0 12px; color:#71828c; font-size:12px; line-height:1.5; }
+.pp-features { list-style:none; margin:0 0 16px; padding:0; display:grid; gap:10px; }
+.pp-f { display:flex; gap:8px; font-size:12px; color:#425a6a; line-height:1.4; }
+.pp-f>svg { flex:none; margin-top:2px; color:#468e83; }
+.pp-f-limited>svg { color:#b08433; } .pp-f-planned>svg { color:#8a98a3; }
+.pp-f-planned>div>span { color:#6f7f8a; }
+.pp-f small { display:block; color:#87949b; font-size:11px; margin-top:2px; }
+.pp-card>.button { margin-top:auto; width:100%; }
+.pp-explain { margin-top:22px; display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.pp-explain>div { padding:16px; border:1px solid #e1e9ed; border-radius:12px; background:#fff; }
+.pp-explain h3,.pp-faq h2 { margin:0 0 6px; color:#24475a; font:700 15px 'Manrope',sans-serif; }
+.pp-explain p,.pp-faq p { margin:0; color:#617582; font-size:12px; line-height:1.6; }
+.pp-faq { margin-top:22px; }
+.pp-faq details { border-bottom:1px solid #e1e9ed; padding:12px 0; }
+.pp-faq summary { cursor:pointer; color:#24475a; font-weight:700; font-size:13px; }
+.pp-faq details p { margin-top:8px; }
+.pp-overlay { position:fixed; inset:0; background:#14283a73; z-index:50; }
+.pp-dialog { position:fixed; z-index:51; top:50%; left:50%; transform:translate(-50%,-50%); width:min(520px,calc(100vw - 24px)); max-height:calc(100dvh - 32px); overflow:auto; background:#fbfcfc; border-radius:14px; padding:20px; box-shadow:0 20px 50px #14283a33; }
+.pp-dialog:focus { outline:none; }
+.pp-dialog-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:10px; }
+.pp-dialog-title { margin:0; color:#1d415b; font:700 18px 'Manrope',sans-serif; }
+.pp-dialog-body { display:grid; gap:12px; color:#4d6474; font-size:13px; line-height:1.55; }
+.pp-dialog-body p { margin:0; }
+.pp-dialog-body>.button { width:100%; }
+.pp-charged { padding:10px 12px; border-radius:10px; background:#f1f8f6; border:1px solid #d9e8e4; color:#2d5a5c; font-weight:600; }
+.pp-mini { margin:0; padding-left:18px; display:grid; gap:4px; }
+.pp-pkgs { display:grid; gap:8px; }
+.pp-pkg { display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid #dbe4e9; border-radius:10px; background:#fff; cursor:pointer; }
+.pp-pkg span { flex:1; font-weight:600; color:#24475a; }
+.pp-pkg-on { border-color:#83bcb1; background:#f0f6f4; }
+.pp-pkg:focus-within { outline:2px solid #176b70; outline-offset:2px; }
+.pp-pkg-detail { padding:12px; border:1px solid #e1e9ed; border-radius:10px; background:#fff; display:grid; gap:8px; }
+.pp-pkg-detail h3 { margin:0; color:#24475a; font-size:14px; }
+@media (max-width:1100px) { .pp-grid { grid-template-columns:repeat(2,1fr); } }
+@media (max-width:767px) { .pp-grid,.pp-explain { grid-template-columns:1fr; } .pp-card { padding-top:24px; } }

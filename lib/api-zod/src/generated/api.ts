@@ -8,6 +8,215 @@
 import * as zod from 'zod';
 
 
+export const GetPublicInstitutionVerificationParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const GetPublicInstitutionVerificationResponse = zod.object({
+  "institutionId": zod.string(),
+  "fields": zod.array(zod.object({
+  "fieldKey": zod.string(),
+  "title": zod.string(),
+  "value": zod.string(),
+  "status": zod.string(),
+  "sourceUrl": zod.string().nullable(),
+  "checkedAt": zod.string().nullable(),
+  "message": zod.string()
+}))
+})
+
+
+export const GetAdminAccessResponse = zod.object({
+  "userId": zod.string(),
+  "isAdmin": zod.boolean(),
+  "canSetup": zod.boolean(),
+  "setupConfigured": zod.boolean(),
+  "environment": zod.string()
+})
+
+
+export const ConfirmAdminSetupBody = zod.object({
+  "confirmed": zod.literal(true)
+})
+
+export const ConfirmAdminSetupResponse = zod.object({
+  "userId": zod.string(),
+  "isAdmin": zod.boolean(),
+  "canSetup": zod.boolean(),
+  "setupConfigured": zod.boolean(),
+  "environment": zod.string()
+})
+
+
+export const GetAdminStatusResponse = zod.object({
+  "environment": zod.string(),
+  "databaseIdentity": zod.string(),
+  "checkedAt": zod.string(),
+  "institutionCount": zod.number().int(),
+  "uniqueInstitutionIds": zod.number().int(),
+  "programFacts": zod.number().int(),
+  "savedProfiles": zod.number().int(),
+  "pendingProposals": zod.number().int(),
+  "failedChecks": zod.number().int(),
+  "automaticChangesRequireReview": zod.boolean()
+})
+
+
+export const listAdminInstitutionsQuerySearchMax = 160;
+
+export const listAdminInstitutionsQueryPageDefault = 1;
+
+
+
+export const ListAdminInstitutionsQueryParams = zod.object({
+  "search": zod.coerce.string().max(listAdminInstitutionsQuerySearchMax).optional(),
+  "page": zod.coerce.number().int().min(1).default(listAdminInstitutionsQueryPageDefault)
+})
+
+export const ListAdminInstitutionsResponse = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "country": zod.string(),
+  "website": zod.string(),
+  "dataSource": zod.string(),
+  "dataYear": zod.string()
+})),
+  "total": zod.number().int(),
+  "page": zod.number().int(),
+  "pageSize": zod.number().int()
+})
+
+
+export const GetAdminInstitutionParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const GetAdminInstitutionResponse = zod.object({
+  "institution": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "country": zod.string(),
+  "website": zod.string(),
+  "dataSource": zod.string(),
+  "dataYear": zod.string()
+}),
+  "fields": zod.array(zod.object({
+  "fieldKey": zod.string(),
+  "title": zod.string(),
+  "value": zod.string(),
+  "status": zod.string(),
+  "sourceUrl": zod.string().nullable(),
+  "checkedAt": zod.string().nullable(),
+  "message": zod.string()
+})),
+  "jobs": zod.array(zod.object({
+  "id": zod.string(),
+  "institutionId": zod.string(),
+  "status": zod.string(),
+  "requestedAt": zod.string(),
+  "completedAt": zod.string().nullable(),
+  "error": zod.string().nullable(),
+  "checks": zod.array(zod.object({
+  "fieldKey": zod.string(),
+  "title": zod.string(),
+  "value": zod.string(),
+  "status": zod.string(),
+  "sourceUrl": zod.string().nullable(),
+  "checkedAt": zod.string().nullable(),
+  "message": zod.string()
+}))
+})),
+  "proposals": zod.array(zod.object({
+  "id": zod.string(),
+  "jobId": zod.string(),
+  "institutionId": zod.string(),
+  "fieldKey": zod.string(),
+  "value": zod.string(),
+  "previousValue": zod.string().nullable(),
+  "status": zod.string(),
+  "sourceUrl": zod.string(),
+  "checkedAt": zod.string(),
+  "reviewedAt": zod.string().nullable(),
+  "reviewNote": zod.string().nullable()
+}))
+})
+
+
+export const RunAdminInstitutionCheckParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const RunAdminInstitutionCheckResponse = zod.object({
+  "id": zod.string(),
+  "institutionId": zod.string(),
+  "status": zod.string(),
+  "requestedAt": zod.string(),
+  "completedAt": zod.string().nullable(),
+  "error": zod.string().nullable(),
+  "checks": zod.array(zod.object({
+  "fieldKey": zod.string(),
+  "title": zod.string(),
+  "value": zod.string(),
+  "status": zod.string(),
+  "sourceUrl": zod.string().nullable(),
+  "checkedAt": zod.string().nullable(),
+  "message": zod.string()
+}))
+})
+
+
+export const RetryAdminInstitutionCheckParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const RetryAdminInstitutionCheckResponse = zod.object({
+  "id": zod.string(),
+  "institutionId": zod.string(),
+  "status": zod.string(),
+  "requestedAt": zod.string(),
+  "completedAt": zod.string().nullable(),
+  "error": zod.string().nullable(),
+  "checks": zod.array(zod.object({
+  "fieldKey": zod.string(),
+  "title": zod.string(),
+  "value": zod.string(),
+  "status": zod.string(),
+  "sourceUrl": zod.string().nullable(),
+  "checkedAt": zod.string().nullable(),
+  "message": zod.string()
+}))
+})
+
+
+export const ReviewAdminProposalParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const reviewAdminProposalBodyNoteMax = 1000;
+
+
+
+export const ReviewAdminProposalBody = zod.object({
+  "decision": zod.enum(['approve', 'reject']),
+  "note": zod.string().max(reviewAdminProposalBodyNoteMax).optional()
+})
+
+export const ReviewAdminProposalResponse = zod.object({
+  "id": zod.string(),
+  "jobId": zod.string(),
+  "institutionId": zod.string(),
+  "fieldKey": zod.string(),
+  "value": zod.string(),
+  "previousValue": zod.string().nullable(),
+  "status": zod.string(),
+  "sourceUrl": zod.string(),
+  "checkedAt": zod.string(),
+  "reviewedAt": zod.string().nullable(),
+  "reviewNote": zod.string().nullable()
+})
+
+
 export const GetInstitutionBrandingCoverageResponse = zod.object({
   "total": zod.number().int(),
   "logos": zod.number().int(),

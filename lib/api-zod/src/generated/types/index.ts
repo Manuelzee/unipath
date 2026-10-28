@@ -6,6 +6,17 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './adminAccess';
+export * from './adminDatabaseStatus';
+export * from './adminInstitutionDetail';
+export * from './adminInstitutionList';
+export * from './adminInstitutionSummary';
+export * from './adminProposalDecision';
+export * from './adminProposalDecisionDecision';
+export * from './adminSetupConfirmation';
+export * from './adminSourceField';
+export * from './adminVerificationJob';
+export * from './adminVerificationProposal';
 export * from './applicationTask';
 export * from './applicationTaskInput';
 export * from './applicationTaskUpdate';
@@ -34,11 +45,13 @@ export * from './institutionFactMinimumGpaScale';
 export * from './institutionFactPage';
 export * from './institutionLogoCoverage';
 export * from './institutionLogoCoverageRow';
+export * from './listAdminInstitutionsParams';
 export * from './listUniversitiesApplicantStatus';
 export * from './listUniversitiesParams';
 export * from './listUniversitiesResult';
 export * from './listUniversityFactsKind';
 export * from './listUniversityFactsParams';
+export * from './publicInstitutionVerification';
 export * from './recommendationAssessment';
 export * from './recommendationResult';
 export * from './regionOption';

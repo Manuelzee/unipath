@@ -12,6 +12,7 @@ import type { CSSProperties } from 'react';
 import { ErrorBlock, LoadingBlock } from './StateViews';
 import { UniversityTabs, type TabId } from './UniversityTabs';
 import { AdmissionsPanel, FieldsPanel, FundingPanel, LinksPanel, OverviewPanel } from './UniversityPanels';
+import { ReviewedEvidencePanel } from './ReviewedEvidencePanel';
 
 export function UniversityDetailView({ id }: { id: string }) {
   const q = useGetUniversity(id, { query: { queryKey: getGetUniversityQueryKey(id), staleTime: 30_000, refetchInterval: 60_000 } });
@@ -40,7 +41,7 @@ export function UniversityDetailView({ id }: { id: string }) {
     <UniversityTabs active={tab} onChange={setTab}/>
     <div className="detail-columns">
       <div className="detail-main" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`} key={tab}>
-        {tab === 'overview' && <OverviewPanel school={school}/>}
+        {tab === 'overview' && <><OverviewPanel school={school}/><ReviewedEvidencePanel id={school.id}/></>}
         {tab === 'fields' && <FieldsPanel school={school}/>}
         {tab === 'admissions' && <AdmissionsPanel school={school}/>}
         {tab === 'funding' && <FundingPanel school={school}/>}

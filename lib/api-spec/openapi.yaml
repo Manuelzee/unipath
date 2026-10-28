@@ -15,6 +15,110 @@ tags:
   - name: student
     description: Signed-in student profile, saved schools, and application tasks
 paths:
+  /universities/{id}/verification:
+    get:
+      operationId: getPublicInstitutionVerification
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Reviewed non-price field evidence only; no reviewer identities or private jobs
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PublicInstitutionVerification" }
+  /me/admin-access:
+    get:
+      operationId: getAdminAccess
+      responses:
+        "200":
+          description: Signed-in user's server-checked access
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminAccess" }
+  /me/admin-setup:
+    post:
+      operationId: confirmAdminSetup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminSetupConfirmation" }
+      responses:
+        "200":
+          description: Explicit owner-confirmed server-side setup
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminAccess" }
+  /admin/status:
+    get:
+      operationId: getAdminStatus
+      responses:
+        "200":
+          description: Actual connected database aggregates, never another environment's inferred status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminDatabaseStatus" }
+  /admin/institutions:
+    get:
+      operationId: listAdminInstitutions
+      parameters:
+        - { name: search, in: query, schema: { type: string, maxLength: 160 } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+      responses:
+        "200":
+          description: Real paginated institution records
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminInstitutionList" }
+  /admin/institutions/{id}:
+    get:
+      operationId: getAdminInstitution
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Source evidence, latest attempts and review queue
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminInstitutionDetail" }
+  /admin/institutions/{id}/checks:
+    post:
+      operationId: runAdminInstitutionCheck
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Completed source check; supported claims still require review
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminVerificationJob" }
+  /admin/checks/{id}/retry:
+    post:
+      operationId: retryAdminInstitutionCheck
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: A new auditable attempt, never a fabricated success
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminVerificationJob" }
+  /admin/proposals/{id}/review:
+    post:
+      operationId: reviewAdminProposal
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminProposalDecision" }
+      responses:
+        "200":
+          description: Reviewed proposal or explicit stale-data conflict
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminVerificationProposal" }
   /universities/branding-coverage:
     get:
       operationId: getInstitutionBrandingCoverage
@@ -389,6 +493,109 @@ paths:
         "401": { description: Sign in required }
 components:
   schemas:
+    PublicInstitutionVerification:
+      type: object
+      required: [institutionId, fields]
+      properties:
+        institutionId: { type: string }
+        fields: { type: array, items: { $ref: "#/components/schemas/AdminSourceField" } }
+    AdminAccess:
+      type: object
+      required: [userId, isAdmin, canSetup, setupConfigured, environment]
+      properties:
+        userId: { type: string }
+        isAdmin: { type: boolean }
+        canSetup: { type: boolean }
+        setupConfigured: { type: boolean }
+        environment: { type: string }
+    AdminSetupConfirmation:
+      type: object
+      required: [confirmed]
+      properties:
+        confirmed: { type: boolean, const: true }
+    AdminDatabaseStatus:
+      type: object
+      required: [environment, databaseIdentity, checkedAt, institutionCount, uniqueInstitutionIds, programFacts, savedProfiles, pendingProposals, failedChecks, automaticChangesRequireReview]
+      properties:
+        environment: { type: string }
+        databaseIdentity: { type: string }
+        checkedAt: { type: string }
+        institutionCount: { type: integer }
+        uniqueInstitutionIds: { type: integer }
+        programFacts: { type: integer }
+        savedProfiles: { type: integer }
+        pendingProposals: { type: integer }
+        failedChecks: { type: integer }
+        automaticChangesRequireReview: { type: boolean }
+    AdminInstitutionSummary:
+      type: object
+      required: [id, name, country, website, dataSource, dataYear]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        country: { type: string }
+        website: { type: string }
+        dataSource: { type: string }
+        dataYear: { type: string }
+    AdminInstitutionList:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/AdminInstitutionSummary" } }
+        total: { type: integer }
+        page: { type: integer }
+        pageSize: { type: integer }
+    AdminSourceField:
+      type: object
+      required: [fieldKey, title, value, status, sourceUrl, checkedAt, message]
+      properties:
+        fieldKey: { type: string }
+        title: { type: string }
+        value: { type: string }
+        status: { type: string }
+        sourceUrl: { type: ["string", "null"] }
+        checkedAt: { type: ["string", "null"] }
+        message: { type: string }
+    AdminVerificationJob:
+      type: object
+      required: [id, institutionId, status, requestedAt, completedAt, error, checks]
+      properties:
+        id: { type: string }
+        institutionId: { type: string }
+        status: { type: string }
+        requestedAt: { type: string }
+        completedAt: { type: ["string", "null"] }
+        error: { type: ["string", "null"] }
+        checks: { type: array, items: { $ref: "#/components/schemas/AdminSourceField" } }
+    AdminVerificationProposal:
+      type: object
+      required: [id, jobId, institutionId, fieldKey, value, previousValue, status, sourceUrl, checkedAt, reviewedAt, reviewNote]
+      properties:
+        id: { type: string }
+        jobId: { type: string }
+        institutionId: { type: string }
+        fieldKey: { type: string }
+        value: { type: string }
+        previousValue: { type: ["string", "null"] }
+        status: { type: string }
+        sourceUrl: { type: string }
+        checkedAt: { type: string }
+        reviewedAt: { type: ["string", "null"] }
+        reviewNote: { type: ["string", "null"] }
+    AdminProposalDecision:
+      type: object
+      required: [decision]
+      properties:
+        decision: { type: string, enum: [approve, reject] }
+        note: { type: string, maxLength: 1000 }
+    AdminInstitutionDetail:
+      type: object
+      required: [institution, fields, jobs, proposals]
+      properties:
+        institution: { $ref: "#/components/schemas/AdminInstitutionSummary" }
+        fields: { type: array, items: { $ref: "#/components/schemas/AdminSourceField" } }
+        jobs: { type: array, items: { $ref: "#/components/schemas/AdminVerificationJob" } }
+        proposals: { type: array, items: { $ref: "#/components/schemas/AdminVerificationProposal" } }
     InstitutionBrandingCoverage:
       type: object
       required: [total, logos, colors, mascots, mascotImages, campusImages, attempted, note]

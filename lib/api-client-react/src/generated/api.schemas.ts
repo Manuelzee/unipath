@@ -5,6 +5,115 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+export interface AdminSourceField {
+  fieldKey: string;
+  title: string;
+  value: string;
+  status: string;
+  /** @nullable */
+  sourceUrl: string | null;
+  /** @nullable */
+  checkedAt: string | null;
+  message: string;
+}
+
+export interface PublicInstitutionVerification {
+  institutionId: string;
+  fields: AdminSourceField[];
+}
+
+export interface AdminAccess {
+  userId: string;
+  isAdmin: boolean;
+  canSetup: boolean;
+  setupConfigured: boolean;
+  environment: string;
+}
+
+export const AdminSetupConfirmationValue = {
+  confirmed: true,
+} as const;
+export type AdminSetupConfirmation = typeof AdminSetupConfirmationValue;
+
+export interface AdminDatabaseStatus {
+  environment: string;
+  databaseIdentity: string;
+  checkedAt: string;
+  institutionCount: number;
+  uniqueInstitutionIds: number;
+  programFacts: number;
+  savedProfiles: number;
+  pendingProposals: number;
+  failedChecks: number;
+  automaticChangesRequireReview: boolean;
+}
+
+export interface AdminInstitutionSummary {
+  id: string;
+  name: string;
+  country: string;
+  website: string;
+  dataSource: string;
+  dataYear: string;
+}
+
+export interface AdminInstitutionList {
+  items: AdminInstitutionSummary[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface AdminVerificationJob {
+  id: string;
+  institutionId: string;
+  status: string;
+  requestedAt: string;
+  /** @nullable */
+  completedAt: string | null;
+  /** @nullable */
+  error: string | null;
+  checks: AdminSourceField[];
+}
+
+export interface AdminVerificationProposal {
+  id: string;
+  jobId: string;
+  institutionId: string;
+  fieldKey: string;
+  value: string;
+  /** @nullable */
+  previousValue: string | null;
+  status: string;
+  sourceUrl: string;
+  checkedAt: string;
+  /** @nullable */
+  reviewedAt: string | null;
+  /** @nullable */
+  reviewNote: string | null;
+}
+
+export type AdminProposalDecisionDecision = typeof AdminProposalDecisionDecision[keyof typeof AdminProposalDecisionDecision];
+
+
+export const AdminProposalDecisionDecision = {
+  approve: 'approve',
+  reject: 'reject',
+} as const;
+
+export interface AdminProposalDecision {
+  decision: AdminProposalDecisionDecision;
+  /** @maxLength 1000 */
+  note?: string;
+}
+
+export interface AdminInstitutionDetail {
+  institution: AdminInstitutionSummary;
+  fields: AdminSourceField[];
+  jobs: AdminVerificationJob[];
+  proposals: AdminVerificationProposal[];
+}
+
 export interface InstitutionBrandingCoverage {
   total: number;
   logos: number;
@@ -661,6 +770,17 @@ export interface DashboardSummary {
   completedTasks: number;
   upcomingTasks: ApplicationTask[];
 }
+
+export type ListAdminInstitutionsParams = {
+/**
+ * @maxLength 160
+ */
+search?: string;
+/**
+ * @minimum 1
+ */
+page?: number;
+};
 
 export type ListUniversitiesParams = {
 /**

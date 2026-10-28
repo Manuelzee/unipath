@@ -3,10 +3,8 @@ import { logger } from "./lib/logger";
 import { ensureInstitutionDirectory } from "./lib/bootstrapDirectory";
 import { publicRequestFailure } from "./lib/requestErrors";
 import { applyLogoManifest } from "./lib/logos/manifest";
-import { startAutomaticLogoDiscovery } from "./lib/logos/automatic";
 import { applyBrandingManifest } from "./lib/branding/manifest";
 import { importVerifiedMatchingEvidence } from "./lib/matching/seed";
-import { startAutomaticBrandingDiscovery } from "./lib/branding/automatic";
 
 const rawPort = process.env["PORT"];
 
@@ -35,8 +33,7 @@ async function start() {
     }
 
     logger.info({ port }, "Server listening");
-    startAutomaticLogoDiscovery();
-    startAutomaticBrandingDiscovery();
+    logger.info("Discovery auto-apply paused: new verification checks are available in the admin review queue; existing logos and branding are preserved.");
   });
 }
 

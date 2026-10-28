@@ -11,6 +11,8 @@ import { SourceBadge } from '@/components/directory/SchoolCard';
 import { InstitutionLogo, LinkedInstitutionLogo } from '@/components/directory/InstitutionLogo';
 import { schoolLocation } from '@/components/directory/format';
 import { PreferenceFields, thisYear } from '@/components/profile/PreferenceFields';
+import { AdminDashboardView, AdminSetupView } from '@/components/admin/AdminViews';
+import { PlansView } from '@/components/plans/PlansView';
 import { RecommendationsView } from '@/components/recommendations/RecommendationsView';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -18,7 +20,7 @@ import {
   getGetStudentDashboardQueryKey, getGetStudentProfileQueryKey, getGetStudentRecommendationsQueryKey,
   getGetUniversityFilterOptionsQueryKey, getGetUniversityQueryKey,
   getListApplicationTasksQueryKey, getListSavedUniversitiesQueryKey,
-  getListUniversitiesQueryKey, useCreateApplicationTask, useDeleteApplicationTask,
+  getListUniversitiesQueryKey, getGetAdminAccessQueryKey, useGetAdminAccess, useCreateApplicationTask, useDeleteApplicationTask,
   useGetUniversityFilterOptions,
   useGetStudentDashboard, useGetStudentProfile, useGetUniversity, useListApplicationTasks,
   useListSavedUniversities, useListUniversities, useRemoveSavedUniversity,
@@ -105,6 +107,7 @@ function Shell({ children }: { children: ReactNode }) {
   const [location] = useLocation();
   const { user, isSignedIn } = useUser();
   const { signOut } = useClerk();
+  const adminAccess = useGetAdminAccess({ query: { queryKey: getGetAdminAccessQueryKey(), enabled: !!isSignedIn, retry: false } });
   const initials = user?.firstName?.slice(0, 1) || user?.primaryEmailAddress?.emailAddress?.slice(0, 1) || 'S';
   return <div className="app-shell">
     <aside className="sidebar">
@@ -113,8 +116,9 @@ function Shell({ children }: { children: ReactNode }) {
       <nav className="side-nav">
         {navItems.map(item => { const Icon = item.icon; return <Link key={item.href} href={item.href} data-testid={`nav-${item.label.toLowerCase().replaceAll(' ', '-')}`} className={cn('side-link', location === item.href && 'side-link-active')}><Icon size={18}/><span>{item.label}</span>{item.label === 'Guidance' && <span className="side-new">DEMO</span>}</Link>; })}
       </nav>
+      {adminAccess.data?.isAdmin && <Link href="/admin" data-testid="nav-admin" className={cn('side-link', location.startsWith('/admin') && 'side-link-active')} style={{marginTop:5}}><ShieldCheck size={18}/><span>Admin</span></Link>}
       <div className="sidebar-note"><div className="note-icon"><Globe2 size={17}/></div><strong>Your world is wide open.</strong><span>One step at a time, we’ll help you find your way.</span><Link href="/discover">Explore universities <ArrowRight size={14}/></Link></div>
-      {isSignedIn?<div className="side-user"><div className="user-avatar">{initials.toUpperCase()}</div><div className="user-info"><strong>{user?.firstName || 'Student'}</strong><span>Student account</span></div><button className="logout-button" onClick={() => signOut({ redirectUrl: basePath || '/' })} data-testid="button-sign-out">Sign out</button></div>:<div className="side-user"><Link href="/sign-in" className="side-auth-link" data-testid="link-shell-sign-in">Sign in</Link><Link href="/sign-up" className="side-auth-link" data-testid="link-shell-sign-up">Create account <ArrowRight size={13}/></Link></div>}
+      {isSignedIn?<div className="side-user"><div className="user-avatar">{initials.toUpperCase()}</div><div className="user-info"><strong>{user?.firstName || 'Student'}</strong><span>{adminAccess.data?.isAdmin ? 'Admin account' : 'Student account'}</span></div><button className="logout-button" onClick={() => signOut({ redirectUrl: basePath || '/' })} data-testid="button-sign-out">Sign out</button></div>:<div className="side-user"><Link href="/sign-in" className="side-auth-link" data-testid="link-shell-sign-in">Sign in</Link><Link href="/sign-up" className="side-auth-link" data-testid="link-shell-sign-up">Create account <ArrowRight size={13}/></Link></div>}
     </aside>
     <main className="workspace">{children}</main>
   </div>;
@@ -233,19 +237,7 @@ function Assistant() {
   </div></Shell>;
 }
 
-function Plans() {
-  const tiers=[
-    {name:'Free',price:'$0',period:'forever',desc:'A thoughtful first step.',items:['Explore U.S. college listings','Save schools to your plan','Build a personal application checklist'],accent:false},
-    {name:'Student Plus',price:'$9.99',period:'/ month',desc:'More structure for your journey.',items:['Everything in Free','Advanced university comparisons','Application planning tools'],accent:true},
-    {name:'Premium',price:'$29.99',period:'/ month',desc:'Extra support as applications take shape.',items:['Essay brainstorming and feedback','Document checklist','Personalized application guidance'],accent:false},
-  ];
-  return <Shell><div className="page page-enter"><PageHeading kicker="PLANS THAT MEET YOU WHERE YOU ARE" title="Support for every step." body="Start exploring for free. Choose the kind of support that feels right for you."/>
-    <div className="plans-callout"><ShieldCheck size={17}/><span>Plans are informational only. Checkout, payment collection, and subscriptions are not available in this demo.</span></div>
-    <div className="plans-grid">{tiers.map((tier,i)=><article className={cn('plan-card',tier.accent&&'plan-featured')} key={tier.name} data-testid={`plan-${tier.name.toLowerCase().replaceAll(' ','-')}`}><div className="plan-top">{tier.accent&&<span className="popular-label">A LITTLE MORE SUPPORT</span>}<span className="eyebrow">{tier.name.toUpperCase()}</span><h2>{tier.price}<small>{tier.period}</small></h2><p>{tier.desc}</p></div><div className="plan-items">{tier.items.map(item=><div key={item}><Check size={15}/>{item}</div>)}</div><button className={cn('button',tier.accent?'button-primary':'button-outline')} disabled data-testid={`button-plan-${i}`}>{i===0?'Current demo tier':'Checkout unavailable'}</button></article>)}</div>
-     <div className="support-plan"><div><span className="eyebrow">HUMAN SUPPORT</span><h2>Application Support</h2><p>Sample packages and prices for planning only.</p><div className="support-packages"><div><strong>Application Roadmap</strong><span>Shortlist and next-step plan</span><b>$99</b></div><div><strong>Essay Review</strong><span>Feedback on one draft</span><b>$199</b></div><div><strong>Full Application Support</strong><span>Multi-school planning and document review</span><b>$299</b></div></div></div><button className="button button-outline" disabled data-testid="button-application-support">Not available in demo</button></div>
-    <p className="plans-footnote">No payment details are collected. Pricing and plan features are illustrative and may change. UniPath AI does not guarantee admission or replace official university guidance.</p>
-  </div></Shell>;
-}
+function Plans() { return <Shell><PlansView/></Shell>; }
 
 function AuthPage({ kind }: { kind:'sign-in'|'sign-up' }) {
   return <div className="auth-page"><div className="auth-side"><Brand inverse/><div><span className="eyebrow">YOUR JOURNEY STARTS HERE</span><h1>Make room for<br/><em>what’s next.</em></h1><p>Keep your plans, school shortlist, and next steps together in one calm place.</p><div className="auth-world"><Globe2 size={68}/><span>Where will curiosity take you?</span></div></div><span className="auth-legal">A supportive place to plan your next chapter.</span></div><div className="auth-panel"><Link href="/" className="auth-back"><ArrowLeft size={15}/> Back to UniPath AI</Link><div className="auth-form-wrap">{kind==='sign-in'?<SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`}/>:<SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`}/>}</div><p className="auth-footnote">By continuing, you agree to use university information as a starting point and verify all application details directly with the institution.</p></div></div>;
@@ -279,6 +271,8 @@ function ClerkRoutes() {
       <Route path="/recommendations">{()=><Protected><Shell><RecommendationsView/></Shell></Protected>}</Route>
       <Route path="/assistant">{()=><Protected><Assistant/></Protected>}</Route>
       <Route path="/plans" component={Plans}/>
+      <Route path="/admin/setup">{()=><Protected><Shell><AdminSetupView/></Shell></Protected>}</Route>
+      <Route path="/admin">{()=><Protected><Shell><AdminDashboardView/></Shell></Protected>}</Route>
       <Route><div className="not-found"><Brand/><div className="state-icon"><Compass size={22}/></div><h1>That path isn’t on the map.</h1><p>The page may have moved. Let’s find your way back.</p><Link href="/" className="button button-primary">Go home <ArrowRight size={15}/></Link></div></Route>
     </Switch></UserScopedQueries>
   </ClerkProvider>;

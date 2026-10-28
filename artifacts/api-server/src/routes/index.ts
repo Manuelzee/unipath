@@ -5,6 +5,7 @@ import studentRouter from "./student";
 import recommendationsRouter from "./recommendations";
 import institutionLogosRouter from "./institutionLogos";
 import institutionBrandingRouter from "./institutionBranding";
+import adminVerificationRouter from "./adminVerification";
 
 const router: IRouter = Router();
 
@@ -14,5 +15,6 @@ router.use(institutionLogosRouter);
 router.use(universityRouter);
 router.use(studentRouter);
 router.use(recommendationsRouter);
+router.use(adminVerificationRouter);
 
 export default router;

@@ -6,6 +6,7 @@ import { publishableKeyFromHost } from "@clerk/shared/keys";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { publicRequestFailure } from "./lib/requestErrors";
+import { trustedOrigins } from "./lib/admin/security";
 import {
   CLERK_PROXY_PATH,
   clerkProxyMiddleware,
@@ -34,7 +35,7 @@ app.use(
   }),
 );
 app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
-app.use(cors({ credentials: true, origin: true }));
+app.use(cors({ credentials: true, origin: (origin, callback) => callback(null, !origin || trustedOrigins().has(origin)) }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(

@@ -4,3 +4,6 @@
 - [Global source permissions](global-source-permissions.md) — Canada-first expansion; permission-first imports and separate recognition, DLI, and program-availability claims.
 - [Published directory data](published-directory-data.md) — verify production row counts; publishing schema does not establish that institution data was imported.
 - [Institution branding policy](institution-logo-policy.md) — separate identity, colors, mascot facts and image rights; preserve verified data and report partial coverage honestly.
+- [Clerk live verification](clerk-live-verification.md) — development test sign-in does not verify live accounts; inspect environment support and report blocked live journeys honestly.
+- [Admin verification policy](admin-verification-policy.md) — explicit secure owner grants, server-enforced student isolation and source-backed review before applying verification changes.
+- [Subscription marketing](subscription-marketing-policy.md) — preserve existing access and prices; distinguish working tools from planned benefits and never simulate payments.
