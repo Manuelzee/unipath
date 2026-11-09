@@ -24,4 +24,4 @@ export * from "./savedUniversities";
 export * from "./applicationTasks";
 export * from "./institutionDirectory";
 export * from "./institutionFacts";
-export * from "./institutionLogoAssets";
+export * from "./institutionLogoAssets";export * from "./jobApplications";

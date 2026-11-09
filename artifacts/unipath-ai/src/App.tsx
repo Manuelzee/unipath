@@ -13,6 +13,7 @@ import { schoolLocation } from '@/components/directory/format';
 import { PreferenceFields, thisYear } from '@/components/profile/PreferenceFields';
 import { AdminDashboardView, AdminSetupView } from '@/components/admin/AdminViews';
 import { PlansView } from '@/components/plans/PlansView';
+import { JobsView } from '@/components/jobs/JobsView';
 import { RecommendationsView } from '@/components/recommendations/RecommendationsView';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -28,7 +29,7 @@ import {
 } from '@workspace/api-client-react';
 import type { ApplicationTask, StudentProfileInput, University } from '@workspace/api-client-react';
 import {
-  ArrowDownRight, ArrowLeft, ArrowRight, Bookmark, Check, CheckCircle2, ChevronDown,
+  ArrowDownRight, ArrowLeft, ArrowRight, Bookmark, Briefcase, Check, CheckCircle2, ChevronDown,
   Circle, Compass, ExternalLink, Globe2, GraduationCap, LayoutDashboard,
   LoaderCircle, Menu, MessageCircle, Plus, Search, ShieldCheck, Sparkles, Trash2,
   UserRound, X,
@@ -74,6 +75,7 @@ const navItems = [
   { href: '/dashboard', label: 'My plan', icon: LayoutDashboard },
   { href: '/profile', label: 'My profile', icon: UserRound },
   { href: '/recommendations', label: 'Matches', icon: GraduationCap },
+  { href: '/jobs', label: 'Student Jobs', icon: Briefcase },
   { href: '/assistant', label: 'Guidance', icon: MessageCircle },
   { href: '/plans', label: 'Plans', icon: Sparkles },
 ];
@@ -269,6 +271,7 @@ function ClerkRoutes() {
       <Route path="/dashboard">{()=><Protected><Dashboard/></Protected>}</Route>
       <Route path="/profile">{()=><Protected><Profile/></Protected>}</Route>
       <Route path="/recommendations">{()=><Protected><Shell><RecommendationsView/></Shell></Protected>}</Route>
+      <Route path="/jobs">{()=><Protected><Shell><JobsView/></Shell></Protected>}</Route>
       <Route path="/assistant">{()=><Protected><Assistant/></Protected>}</Route>
       <Route path="/plans" component={Plans}/>
       <Route path="/admin/setup">{()=><Protected><Shell><AdminSetupView/></Shell></Protected>}</Route>

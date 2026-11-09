@@ -40,6 +40,8 @@ import type {
   InstitutionBrandingCoverage,
   InstitutionFactPage,
   InstitutionLogoCoverage,
+  JobApplication,
+  JobApplicationInput,
   ListAdminInstitutionsParams,
   ListUniversitiesParams,
   ListUniversitiesResult,
@@ -52,7 +54,8 @@ import type {
   StudentProfileInput,
   StudentProfileResult,
   University,
-  UniversityFilterOptions
+  UniversityFilterOptions,
+  WorkGuidance
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -2479,6 +2482,411 @@ export const useDeleteApplicationTask = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getDeleteApplicationTaskMutationOptions(options));
+    }
+
+export const getGetWorkGuidanceUrl = () => {
+
+
+
+
+  return `/api/student-jobs/guidance`
+}
+
+/**
+ * @summary Official student work-rule sources by country
+ */
+export const getWorkGuidance = async ( options?: Parameters<typeof customFetch>[1]): Promise<WorkGuidance> => {
+
+  return customFetch<WorkGuidance>(getGetWorkGuidanceUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetWorkGuidanceQueryKey = () => {
+    return [
+    `/api/student-jobs/guidance`
+    ] as const;
+    }
+
+
+export const getGetWorkGuidanceQueryOptions = <TData = Awaited<ReturnType<typeof getWorkGuidance>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getWorkGuidance>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetWorkGuidanceQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getWorkGuidance>>> = ({ signal }) => getWorkGuidance({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getWorkGuidance>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetWorkGuidanceQueryResult = NonNullable<Awaited<ReturnType<typeof getWorkGuidance>>>
+export type GetWorkGuidanceQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Official student work-rule sources by country
+ */
+
+export function useGetWorkGuidance<TData = Awaited<ReturnType<typeof getWorkGuidance>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getWorkGuidance>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetWorkGuidanceQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListJobApplicationsUrl = () => {
+
+
+
+
+  return `/api/me/jobs`
+}
+
+/**
+ * @summary List the student's tracked jobs
+ */
+export const listJobApplications = async ( options?: Parameters<typeof customFetch>[1]): Promise<JobApplication[]> => {
+
+  return customFetch<JobApplication[]>(getListJobApplicationsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListJobApplicationsQueryKey = () => {
+    return [
+    `/api/me/jobs`
+    ] as const;
+    }
+
+
+export const getListJobApplicationsQueryOptions = <TData = Awaited<ReturnType<typeof listJobApplications>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listJobApplications>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListJobApplicationsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listJobApplications>>> = ({ signal }) => listJobApplications({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listJobApplications>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListJobApplicationsQueryResult = NonNullable<Awaited<ReturnType<typeof listJobApplications>>>
+export type ListJobApplicationsQueryError = ErrorType<void>
+
+
+/**
+ * @summary List the student's tracked jobs
+ */
+
+export function useListJobApplications<TData = Awaited<ReturnType<typeof listJobApplications>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listJobApplications>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListJobApplicationsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateJobApplicationUrl = () => {
+
+
+
+
+  return `/api/me/jobs`
+}
+
+/**
+ * @summary Track a job the student found
+ */
+export const createJobApplication = async (jobApplicationInput: JobApplicationInput, options?: Parameters<typeof customFetch>[1]): Promise<JobApplication> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<JobApplication>(getCreateJobApplicationUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(jobApplicationInput)
+  }
+);}
+
+
+
+
+
+export const getCreateJobApplicationMutationKey = () => ['createJobApplication'] as const;
+
+export const getCreateJobApplicationMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createJobApplication>>, TError,CreateJobApplicationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createJobApplication>>, TError,CreateJobApplicationMutationVariables, TContext> => {
+
+const mutationKey = getCreateJobApplicationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createJobApplication>>, CreateJobApplicationMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  createJobApplication(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateJobApplicationMutationResult = NonNullable<Awaited<ReturnType<typeof createJobApplication>>>
+    export type CreateJobApplicationMutationBody = BodyType<JobApplicationInput>
+    export type CreateJobApplicationMutationError = ErrorType<void>
+    export type CreateJobApplicationMutationVariables = {data: BodyType<JobApplicationInput>}
+
+    /**
+ * @summary Track a job the student found
+ */
+export const useCreateJobApplication = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createJobApplication>>, TError,CreateJobApplicationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createJobApplication>>,
+        TError,
+        CreateJobApplicationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreateJobApplicationMutationOptions(options));
+    }
+
+export const getUpdateJobApplicationUrl = (id: number,) => {
+
+
+
+
+  return `/api/me/jobs/${id}`
+}
+
+/**
+ * @summary Update a tracked job
+ */
+export const updateJobApplication = async (id: number,
+    jobApplicationInput: JobApplicationInput, options?: Parameters<typeof customFetch>[1]): Promise<JobApplication> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<JobApplication>(getUpdateJobApplicationUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(jobApplicationInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateJobApplicationMutationKey = () => ['updateJobApplication'] as const;
+
+export const getUpdateJobApplicationMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateJobApplication>>, TError,UpdateJobApplicationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateJobApplication>>, TError,UpdateJobApplicationMutationVariables, TContext> => {
+
+const mutationKey = getUpdateJobApplicationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateJobApplication>>, UpdateJobApplicationMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateJobApplication(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateJobApplicationMutationResult = NonNullable<Awaited<ReturnType<typeof updateJobApplication>>>
+    export type UpdateJobApplicationMutationBody = BodyType<JobApplicationInput>
+    export type UpdateJobApplicationMutationError = ErrorType<void>
+    export type UpdateJobApplicationMutationVariables = {id: number;data: BodyType<JobApplicationInput>}
+
+    /**
+ * @summary Update a tracked job
+ */
+export const useUpdateJobApplication = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateJobApplication>>, TError,UpdateJobApplicationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateJobApplication>>,
+        TError,
+        UpdateJobApplicationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateJobApplicationMutationOptions(options));
+    }
+
+export const getDeleteJobApplicationUrl = (id: number,) => {
+
+
+
+
+  return `/api/me/jobs/${id}`
+}
+
+/**
+ * @summary Delete a tracked job
+ */
+export const deleteJobApplication = async (id: number, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getDeleteJobApplicationUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteJobApplicationMutationKey = () => ['deleteJobApplication'] as const;
+
+export const getDeleteJobApplicationMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteJobApplication>>, TError,DeleteJobApplicationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteJobApplication>>, TError,DeleteJobApplicationMutationVariables, TContext> => {
+
+const mutationKey = getDeleteJobApplicationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteJobApplication>>, DeleteJobApplicationMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteJobApplication(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteJobApplicationMutationResult = NonNullable<Awaited<ReturnType<typeof deleteJobApplication>>>
+
+    export type DeleteJobApplicationMutationError = ErrorType<void>
+    export type DeleteJobApplicationMutationVariables = {id: number}
+
+    /**
+ * @summary Delete a tracked job
+ */
+export const useDeleteJobApplication = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteJobApplication>>, TError,DeleteJobApplicationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteJobApplication>>,
+        TError,
+        DeleteJobApplicationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDeleteJobApplicationMutationOptions(options));
     }
 
 export const getGetStudentDashboardUrl = () => {

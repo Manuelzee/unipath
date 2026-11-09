@@ -764,6 +764,142 @@ export interface ApplicationTask {
   createdAt: string;
 }
 
+export interface WorkGuidanceSource {
+  title: string;
+  url: string;
+  agency: string;
+  checkedAt: string;
+}
+
+export interface WorkGuidanceCountry {
+  code: string;
+  name: string;
+  sources: WorkGuidanceSource[];
+  topics: string[];
+  contact: string;
+}
+
+export interface WorkGuidance {
+  note: string;
+  countries: WorkGuidanceCountry[];
+}
+
+export type JobApplicationInputJobType = typeof JobApplicationInputJobType[keyof typeof JobApplicationInputJobType];
+
+
+export const JobApplicationInputJobType = {
+  on_campus: 'on_campus',
+  part_time: 'part_time',
+  internship: 'internship',
+  research_assistant: 'research_assistant',
+  teaching_assistant: 'teaching_assistant',
+  post_graduation: 'post_graduation',
+  other: 'other',
+} as const;
+
+export type JobApplicationInputSponsorshipClaim = typeof JobApplicationInputSponsorshipClaim[keyof typeof JobApplicationInputSponsorshipClaim];
+
+
+export const JobApplicationInputSponsorshipClaim = {
+  not_stated: 'not_stated',
+  advertised_unverified: 'advertised_unverified',
+  advertised_verified_official: 'advertised_verified_official',
+  not_offered: 'not_offered',
+} as const;
+
+export type JobApplicationInputStatus = typeof JobApplicationInputStatus[keyof typeof JobApplicationInputStatus];
+
+
+export const JobApplicationInputStatus = {
+  saved: 'saved',
+  applied: 'applied',
+  interviewing: 'interviewing',
+  offer: 'offer',
+  rejected: 'rejected',
+  withdrawn: 'withdrawn',
+} as const;
+
+export interface JobApplicationInput {
+  /**
+     * @minLength 1
+     * @maxLength 200
+     */
+  title: string;
+  /**
+     * @minLength 1
+     * @maxLength 200
+     */
+  employer: string;
+  jobType?: JobApplicationInputJobType;
+  /**
+     * @maxLength 200
+     * @nullable
+     */
+  location?: string | null;
+  /**
+     * @maxLength 2
+     * @nullable
+     */
+  countryCode?: string | null;
+  /**
+     * @maxLength 1000
+     * @nullable
+     */
+  sourceUrl?: string | null;
+  /** @nullable */
+  postedDate?: string | null;
+  sponsorshipClaim?: JobApplicationInputSponsorshipClaim;
+  /**
+     * @maxLength 1000
+     * @nullable
+     */
+  authorizationNote?: string | null;
+  status?: JobApplicationInputStatus;
+  /** @nullable */
+  appliedDate?: string | null;
+  /** @nullable */
+  interviewDate?: string | null;
+  /**
+     * @maxLength 1000
+     * @nullable
+     */
+  employerResponse?: string | null;
+  /**
+     * @maxLength 2000
+     * @nullable
+     */
+  notes?: string | null;
+}
+
+export interface JobApplication {
+  id: number;
+  title: string;
+  employer: string;
+  jobType: string;
+  /** @nullable */
+  location?: string | null;
+  /** @nullable */
+  countryCode?: string | null;
+  /** @nullable */
+  sourceUrl?: string | null;
+  /** @nullable */
+  postedDate?: string | null;
+  sponsorshipClaim: string;
+  /** @nullable */
+  authorizationNote?: string | null;
+  status: string;
+  /** @nullable */
+  appliedDate?: string | null;
+  /** @nullable */
+  interviewDate?: string | null;
+  /** @nullable */
+  employerResponse?: string | null;
+  /** @nullable */
+  notes?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface DashboardSummary {
   savedCount: number;
   openTasks: number;

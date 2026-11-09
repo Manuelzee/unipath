@@ -1,0 +1,40 @@
+{
+  "note": "Each entry is an official government source link. checkedAt is the time UniPath actually fetched the page and received HTTP 200. It confirms the link was reachable; it is not a legal review of the rules on the page.",
+  "countries": [
+    {
+      "code": "US", "name": "United States",
+      "sources": [
+        { "title": "Working in the United States | Study in the States (DHS)", "url": "https://studyinthestates.dhs.gov/students/work/working-in-the-united-states", "agency": "U.S. Department of Homeland Security", "checkedAt": "2026-11-09T23:19:46.507Z" },
+        { "title": "Students and Exchange Visitors | USCIS", "url": "https://www.uscis.gov/working-in-the-united-states/students-and-exchange-visitors", "agency": "U.S. Citizenship and Immigration Services", "checkedAt": "2026-11-09T23:19:46.903Z" },
+        { "title": "Practical Training | ICE (SEVP)", "url": "https://www.ice.gov/sevis/practical-training", "agency": "U.S. Immigration and Customs Enforcement", "checkedAt": "2026-11-09T23:19:47.039Z" }
+      ],
+      "topics": ["F-1", "J-1", "CPT", "OPT", "STEM OPT"],
+      "contact": "Your school's Designated School Official (DSO) for F-1, or Responsible Officer (RO) for J-1, must authorize or advise on practical training before you work."
+    },
+    {
+      "code": "CA", "name": "Canada",
+      "sources": [
+        { "title": "Working in Canada as an international student | Canada.ca", "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/study-canada/work.html", "agency": "Immigration, Refugees and Citizenship Canada", "checkedAt": "2026-11-09T23:19:49.885Z" }
+      ],
+      "topics": [],
+      "contact": "Your school's international student office."
+    },
+    {
+      "code": "GB", "name": "United Kingdom",
+      "sources": [
+        { "title": "Student visa | GOV.UK", "url": "https://www.gov.uk/student-visa", "agency": "UK Government", "checkedAt": "2026-11-09T23:19:50.852Z" }
+      ],
+      "topics": [],
+      "contact": "Your university's international student advice team."
+    },
+    {
+      "code": "AU", "name": "Australia",
+      "sources": [
+        { "title": "Student visa (subclass 500) | Home Affairs", "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/student-500", "agency": "Australian Department of Home Affairs", "checkedAt": "2026-11-09T23:19:51.191Z" },
+        { "title": "Check visa details and conditions (VEVO) | Home Affairs", "url": "https://immi.homeaffairs.gov.au/visas/already-have-a-visa/check-visa-details-and-conditions/see-your-visa-conditions?id=8105", "agency": "Australian Department of Home Affairs", "checkedAt": "2026-11-09T23:19:52.205Z" }
+      ],
+      "topics": [],
+      "contact": "Your institution's international student support office."
+    }
+  ]
+}

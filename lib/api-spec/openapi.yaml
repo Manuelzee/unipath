@@ -14,6 +14,8 @@ tags:
     description: International institution directory with source-limited coverage
   - name: student
     description: Signed-in student profile, saved schools, and application tasks
+  - name: jobs
+    description: Student employment guidance and job tracking
 paths:
   /universities/{id}/verification:
     get:
@@ -479,6 +481,79 @@ paths:
         "204": { description: Task deleted }
         "401": { description: Sign in required }
         "404": { description: Task not found }
+  /student-jobs/guidance:
+    get:
+      operationId: getWorkGuidance
+      tags: [jobs]
+      summary: Official student work-rule sources by country
+      responses:
+        "200":
+          description: Official sources with the time each link was last fetched
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WorkGuidance" }
+  /me/jobs:
+    get:
+      operationId: listJobApplications
+      tags: [jobs]
+      summary: List the student's tracked jobs
+      responses:
+        "200":
+          description: Jobs tracked by the signed-in student
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/JobApplication" }
+        "401": { description: Sign in required }
+    post:
+      operationId: createJobApplication
+      tags: [jobs]
+      summary: Track a job the student found
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/JobApplicationInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JobApplication" }
+        "400": { description: Invalid input }
+        "401": { description: Sign in required }
+  /me/jobs/{id}:
+    patch:
+      operationId: updateJobApplication
+      tags: [jobs]
+      summary: Update a tracked job
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/JobApplicationInput" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JobApplication" }
+        "400": { description: Invalid input }
+        "401": { description: Sign in required }
+        "404": { description: Not found }
+    delete:
+      operationId: deleteJobApplication
+      tags: [jobs]
+      summary: Delete a tracked job
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: integer } }
+      responses:
+        "204": { description: Deleted }
+        "401": { description: Sign in required }
+        "404": { description: Not found }
   /me/dashboard:
     get:
       operationId: getStudentDashboard
@@ -1037,6 +1112,74 @@ components:
         universityId: { type: string }
         completed: { type: boolean }
         createdAt: { type: string }
+    WorkGuidanceSource:
+      type: object
+      required: [title, url, agency, checkedAt]
+      properties:
+        title: { type: string }
+        url: { type: string }
+        agency: { type: string }
+        checkedAt: { type: string }
+    WorkGuidanceCountry:
+      type: object
+      required: [code, name, sources, topics, contact]
+      properties:
+        code: { type: string }
+        name: { type: string }
+        sources: { type: array, items: { $ref: "#/components/schemas/WorkGuidanceSource" } }
+        topics: { type: array, items: { type: string } }
+        contact: { type: string }
+    WorkGuidance:
+      type: object
+      required: [note, countries]
+      properties:
+        note: { type: string }
+        countries: { type: array, items: { $ref: "#/components/schemas/WorkGuidanceCountry" } }
+    JobApplicationInput:
+      type: object
+      required: [title, employer]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 200 }
+        employer: { type: string, minLength: 1, maxLength: 200 }
+        jobType:
+          type: string
+          enum: [on_campus, part_time, internship, research_assistant, teaching_assistant, post_graduation, other]
+        location: { type: [string, "null"], maxLength: 200 }
+        countryCode: { type: [string, "null"], maxLength: 2 }
+        sourceUrl: { type: [string, "null"], maxLength: 1000 }
+        postedDate: { type: [string, "null"] }
+        sponsorshipClaim:
+          type: string
+          enum: [not_stated, advertised_unverified, advertised_verified_official, not_offered]
+        authorizationNote: { type: [string, "null"], maxLength: 1000 }
+        status:
+          type: string
+          enum: [saved, applied, interviewing, offer, rejected, withdrawn]
+        appliedDate: { type: [string, "null"] }
+        interviewDate: { type: [string, "null"] }
+        employerResponse: { type: [string, "null"], maxLength: 1000 }
+        notes: { type: [string, "null"], maxLength: 2000 }
+    JobApplication:
+      type: object
+      required: [id, title, employer, jobType, sponsorshipClaim, status, createdAt, updatedAt]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        employer: { type: string }
+        jobType: { type: string }
+        location: { type: [string, "null"] }
+        countryCode: { type: [string, "null"] }
+        sourceUrl: { type: [string, "null"] }
+        postedDate: { type: [string, "null"] }
+        sponsorshipClaim: { type: string }
+        authorizationNote: { type: [string, "null"] }
+        status: { type: string }
+        appliedDate: { type: [string, "null"] }
+        interviewDate: { type: [string, "null"] }
+        employerResponse: { type: [string, "null"] }
+        notes: { type: [string, "null"] }
+        createdAt: { type: string }
+        updatedAt: { type: string }
     DashboardSummary:
       type: object
       required: [savedCount, openTasks, completedTasks, upcomingTasks]

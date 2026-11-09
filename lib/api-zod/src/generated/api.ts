@@ -1216,6 +1216,183 @@ export const DeleteApplicationTaskResponse = zod.void()
 
 
 /**
+ * @summary Official student work-rule sources by country
+ */
+export const GetWorkGuidanceResponse = zod.object({
+  "note": zod.string(),
+  "countries": zod.array(zod.object({
+  "code": zod.string(),
+  "name": zod.string(),
+  "sources": zod.array(zod.object({
+  "title": zod.string(),
+  "url": zod.string(),
+  "agency": zod.string(),
+  "checkedAt": zod.string()
+})),
+  "topics": zod.array(zod.string()),
+  "contact": zod.string()
+}))
+})
+
+
+/**
+ * @summary List the student's tracked jobs
+ */
+export const ListJobApplicationsResponseItem = zod.object({
+  "id": zod.number().int(),
+  "title": zod.string(),
+  "employer": zod.string(),
+  "jobType": zod.string(),
+  "location": zod.string().nullish(),
+  "countryCode": zod.string().nullish(),
+  "sourceUrl": zod.string().nullish(),
+  "postedDate": zod.string().nullish(),
+  "sponsorshipClaim": zod.string(),
+  "authorizationNote": zod.string().nullish(),
+  "status": zod.string(),
+  "appliedDate": zod.string().nullish(),
+  "interviewDate": zod.string().nullish(),
+  "employerResponse": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+export const ListJobApplicationsResponse = zod.array(ListJobApplicationsResponseItem)
+
+
+/**
+ * @summary Track a job the student found
+ */
+export const createJobApplicationBodyTitleMax = 200;
+
+export const createJobApplicationBodyEmployerMax = 200;
+
+export const createJobApplicationBodyLocationMax = 200;
+
+export const createJobApplicationBodyCountryCodeMax = 2;
+
+export const createJobApplicationBodySourceUrlMax = 1000;
+
+export const createJobApplicationBodyAuthorizationNoteMax = 1000;
+
+export const createJobApplicationBodyEmployerResponseMax = 1000;
+
+export const createJobApplicationBodyNotesMax = 2000;
+
+
+
+export const CreateJobApplicationBody = zod.object({
+  "title": zod.string().min(1).max(createJobApplicationBodyTitleMax),
+  "employer": zod.string().min(1).max(createJobApplicationBodyEmployerMax),
+  "jobType": zod.enum(['on_campus', 'part_time', 'internship', 'research_assistant', 'teaching_assistant', 'post_graduation', 'other']).optional(),
+  "location": zod.string().max(createJobApplicationBodyLocationMax).nullish(),
+  "countryCode": zod.string().max(createJobApplicationBodyCountryCodeMax).nullish(),
+  "sourceUrl": zod.string().max(createJobApplicationBodySourceUrlMax).nullish(),
+  "postedDate": zod.string().nullish(),
+  "sponsorshipClaim": zod.enum(['not_stated', 'advertised_unverified', 'advertised_verified_official', 'not_offered']).optional(),
+  "authorizationNote": zod.string().max(createJobApplicationBodyAuthorizationNoteMax).nullish(),
+  "status": zod.enum(['saved', 'applied', 'interviewing', 'offer', 'rejected', 'withdrawn']).optional(),
+  "appliedDate": zod.string().nullish(),
+  "interviewDate": zod.string().nullish(),
+  "employerResponse": zod.string().max(createJobApplicationBodyEmployerResponseMax).nullish(),
+  "notes": zod.string().max(createJobApplicationBodyNotesMax).nullish()
+})
+
+export const CreateJobApplicationResponse = zod.object({
+  "id": zod.number().int(),
+  "title": zod.string(),
+  "employer": zod.string(),
+  "jobType": zod.string(),
+  "location": zod.string().nullish(),
+  "countryCode": zod.string().nullish(),
+  "sourceUrl": zod.string().nullish(),
+  "postedDate": zod.string().nullish(),
+  "sponsorshipClaim": zod.string(),
+  "authorizationNote": zod.string().nullish(),
+  "status": zod.string(),
+  "appliedDate": zod.string().nullish(),
+  "interviewDate": zod.string().nullish(),
+  "employerResponse": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+
+
+/**
+ * @summary Update a tracked job
+ */
+export const UpdateJobApplicationParams = zod.object({
+  "id": zod.coerce.number().int()
+})
+
+export const updateJobApplicationBodyTitleMax = 200;
+
+export const updateJobApplicationBodyEmployerMax = 200;
+
+export const updateJobApplicationBodyLocationMax = 200;
+
+export const updateJobApplicationBodyCountryCodeMax = 2;
+
+export const updateJobApplicationBodySourceUrlMax = 1000;
+
+export const updateJobApplicationBodyAuthorizationNoteMax = 1000;
+
+export const updateJobApplicationBodyEmployerResponseMax = 1000;
+
+export const updateJobApplicationBodyNotesMax = 2000;
+
+
+
+export const UpdateJobApplicationBody = zod.object({
+  "title": zod.string().min(1).max(updateJobApplicationBodyTitleMax),
+  "employer": zod.string().min(1).max(updateJobApplicationBodyEmployerMax),
+  "jobType": zod.enum(['on_campus', 'part_time', 'internship', 'research_assistant', 'teaching_assistant', 'post_graduation', 'other']).optional(),
+  "location": zod.string().max(updateJobApplicationBodyLocationMax).nullish(),
+  "countryCode": zod.string().max(updateJobApplicationBodyCountryCodeMax).nullish(),
+  "sourceUrl": zod.string().max(updateJobApplicationBodySourceUrlMax).nullish(),
+  "postedDate": zod.string().nullish(),
+  "sponsorshipClaim": zod.enum(['not_stated', 'advertised_unverified', 'advertised_verified_official', 'not_offered']).optional(),
+  "authorizationNote": zod.string().max(updateJobApplicationBodyAuthorizationNoteMax).nullish(),
+  "status": zod.enum(['saved', 'applied', 'interviewing', 'offer', 'rejected', 'withdrawn']).optional(),
+  "appliedDate": zod.string().nullish(),
+  "interviewDate": zod.string().nullish(),
+  "employerResponse": zod.string().max(updateJobApplicationBodyEmployerResponseMax).nullish(),
+  "notes": zod.string().max(updateJobApplicationBodyNotesMax).nullish()
+})
+
+export const UpdateJobApplicationResponse = zod.object({
+  "id": zod.number().int(),
+  "title": zod.string(),
+  "employer": zod.string(),
+  "jobType": zod.string(),
+  "location": zod.string().nullish(),
+  "countryCode": zod.string().nullish(),
+  "sourceUrl": zod.string().nullish(),
+  "postedDate": zod.string().nullish(),
+  "sponsorshipClaim": zod.string(),
+  "authorizationNote": zod.string().nullish(),
+  "status": zod.string(),
+  "appliedDate": zod.string().nullish(),
+  "interviewDate": zod.string().nullish(),
+  "employerResponse": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+
+
+/**
+ * @summary Delete a tracked job
+ */
+export const DeleteJobApplicationParams = zod.object({
+  "id": zod.coerce.number().int()
+})
+
+export const DeleteJobApplicationResponse = zod.void()
+
+
+/**
  * @summary Get application dashboard summary
  */
 export const GetStudentDashboardResponse = zod.object({
