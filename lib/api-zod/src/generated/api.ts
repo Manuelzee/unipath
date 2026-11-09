@@ -1237,6 +1237,92 @@ export const GetWorkGuidanceResponse = zod.object({
 
 
 /**
+ * @summary Job listing providers and whether each is connected
+ */
+export const ListJobProvidersResponseItem = zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "configured": zod.boolean(),
+  "countries": zod.array(zod.string()),
+  "attribution": zod.object({
+  "text": zod.string(),
+  "url": zod.string()
+})
+})
+export const ListJobProvidersResponse = zod.array(ListJobProvidersResponseItem)
+
+
+/**
+ * @summary Search real job listings from a connected provider
+ */
+export const searchJobListingsQueryCountryMin = 2;
+export const searchJobListingsQueryCountryMax = 2;
+
+export const searchJobListingsQueryKeywordsMax = 120;
+
+export const searchJobListingsQueryCityMax = 120;
+
+export const searchJobListingsQueryUniversityMax = 160;
+
+export const searchJobListingsQueryCategoryMax = 80;
+
+export const searchJobListingsQuerySalaryMinMin = 0;
+
+export const searchJobListingsQueryPageDefault = 1;
+export const searchJobListingsQueryPageMax = 50;
+
+
+
+export const SearchJobListingsQueryParams = zod.object({
+  "provider": zod.coerce.string().optional(),
+  "country": zod.coerce.string().min(searchJobListingsQueryCountryMin).max(searchJobListingsQueryCountryMax),
+  "keywords": zod.coerce.string().max(searchJobListingsQueryKeywordsMax).optional(),
+  "city": zod.coerce.string().max(searchJobListingsQueryCityMax).optional(),
+  "university": zod.coerce.string().max(searchJobListingsQueryUniversityMax).optional(),
+  "category": zod.coerce.string().max(searchJobListingsQueryCategoryMax).optional(),
+  "salaryMin": zod.coerce.number().int().min(searchJobListingsQuerySalaryMinMin).optional(),
+  "jobType": zod.enum(['part_time', 'full_time', 'internship', 'graduate']).optional(),
+  "remote": zod.coerce.boolean().optional(),
+  "page": zod.coerce.number().int().min(1).max(searchJobListingsQueryPageMax).default(searchJobListingsQueryPageDefault)
+})
+
+export const SearchJobListingsResponse = zod.object({
+  "provider": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "configured": zod.boolean(),
+  "countries": zod.array(zod.string()),
+  "attribution": zod.object({
+  "text": zod.string(),
+  "url": zod.string()
+})
+}),
+  "listings": zod.array(zod.object({
+  "id": zod.string(),
+  "provider": zod.string(),
+  "providerName": zod.string(),
+  "title": zod.string(),
+  "employer": zod.string().nullish(),
+  "location": zod.string().nullish(),
+  "countryCode": zod.string(),
+  "category": zod.string().nullish(),
+  "contractTime": zod.string().nullish(),
+  "description": zod.string(),
+  "salaryMin": zod.number().nullish(),
+  "salaryMax": zod.number().nullish(),
+  "salaryCurrency": zod.string().nullish(),
+  "salaryIsEstimated": zod.boolean(),
+  "postedAt": zod.string().nullish(),
+  "applyUrl": zod.string(),
+  "sponsorship": zod.enum(['mentioned_unverified', 'not_mentioned']),
+  "lastCheckedAt": zod.string()
+})),
+  "total": zod.number().int().nullish(),
+  "page": zod.number().int()
+})
+
+
+/**
  * @summary List the student's tracked jobs
  */
 export const ListJobApplicationsResponseItem = zod.object({

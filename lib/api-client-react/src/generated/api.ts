@@ -42,6 +42,8 @@ import type {
   InstitutionLogoCoverage,
   JobApplication,
   JobApplicationInput,
+  JobProvider,
+  JobSearchResponse,
   ListAdminInstitutionsParams,
   ListUniversitiesParams,
   ListUniversitiesResult,
@@ -50,6 +52,7 @@ import type {
   RecommendationResult,
   SaveUniversityInput,
   SavedUniversity,
+  SearchJobListingsParams,
   StudentProfile,
   StudentProfileInput,
   StudentProfileResult,
@@ -2549,6 +2552,167 @@ export function useGetWorkGuidance<TData = Awaited<ReturnType<typeof getWorkGuid
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetWorkGuidanceQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListJobProvidersUrl = () => {
+
+
+
+
+  return `/api/student-jobs/providers`
+}
+
+/**
+ * @summary Job listing providers and whether each is connected
+ */
+export const listJobProviders = async ( options?: Parameters<typeof customFetch>[1]): Promise<JobProvider[]> => {
+
+  return customFetch<JobProvider[]>(getListJobProvidersUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListJobProvidersQueryKey = () => {
+    return [
+    `/api/student-jobs/providers`
+    ] as const;
+    }
+
+
+export const getListJobProvidersQueryOptions = <TData = Awaited<ReturnType<typeof listJobProviders>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listJobProviders>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListJobProvidersQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listJobProviders>>> = ({ signal }) => listJobProviders({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listJobProviders>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListJobProvidersQueryResult = NonNullable<Awaited<ReturnType<typeof listJobProviders>>>
+export type ListJobProvidersQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Job listing providers and whether each is connected
+ */
+
+export function useListJobProviders<TData = Awaited<ReturnType<typeof listJobProviders>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listJobProviders>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListJobProvidersQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSearchJobListingsUrl = (params: SearchJobListingsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/student-jobs/search?${stringifiedParams}` : `/api/student-jobs/search`
+}
+
+/**
+ * @summary Search real job listings from a connected provider
+ */
+export const searchJobListings = async (params: SearchJobListingsParams, options?: Parameters<typeof customFetch>[1]): Promise<JobSearchResponse> => {
+
+  return customFetch<JobSearchResponse>(getSearchJobListingsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getSearchJobListingsQueryKey = (params?: SearchJobListingsParams,) => {
+    return [
+    `/api/student-jobs/search`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getSearchJobListingsQueryOptions = <TData = Awaited<ReturnType<typeof searchJobListings>>, TError = ErrorType<void>>(params: SearchJobListingsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof searchJobListings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getSearchJobListingsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof searchJobListings>>> = ({ signal }) => searchJobListings(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof searchJobListings>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type SearchJobListingsQueryResult = NonNullable<Awaited<ReturnType<typeof searchJobListings>>>
+export type SearchJobListingsQueryError = ErrorType<void>
+
+
+/**
+ * @summary Search real job listings from a connected provider
+ */
+
+export function useSearchJobListings<TData = Awaited<ReturnType<typeof searchJobListings>>, TError = ErrorType<void>>(
+ params: SearchJobListingsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof searchJobListings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getSearchJobListingsQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

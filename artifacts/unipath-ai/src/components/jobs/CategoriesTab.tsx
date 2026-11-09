@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Info, Plus, Search } from 'lucide-react';
 
-const GROUPS: Array<[string, string[]]> = [
+export const GROUPS: Array<[string, string[]]> = [
   ['Campus employment', ['Library assistant', 'Student ambassador', 'Campus receptionist', 'Research assistant', 'Teaching assistant', 'Laboratory assistant', 'Campus dining assistant', 'University bookstore assistant', 'IT help desk assistant', 'Student event assistant']],
   ['Hospitality and retail', ['Barista', 'Restaurant server', 'Cashier', 'Retail sales associate', 'Hotel front desk assistant', 'Kitchen assistant', 'Customer service representative', 'Event staff']],
   ['Technology', ['Software engineering intern', 'Web developer intern', 'Data analyst intern', 'IT support technician', 'Cybersecurity intern', 'UX/UI design intern']],

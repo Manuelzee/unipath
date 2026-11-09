@@ -4,6 +4,9 @@ import { and, desc, eq } from "drizzle-orm";
 import { CreateJobApplicationBody, UpdateJobApplicationBody, UpdateJobApplicationParams } from "@workspace/api-zod";
 import { db, jobApplicationsTable } from "@workspace/db";
 import { requireAuth } from "../middlewares/requireAuth";
+import { SearchJobListingsQueryParams } from "@workspace/api-zod";
+import { getProvider, jobProviders, ProviderError, type JobProvider } from "../lib/jobProviders";
+import { logger } from "../lib/logger";
 import guidance from "../data/work-guidance.json";
 
 const router: IRouter = Router();
@@ -37,6 +40,37 @@ function values(input: ReturnType<typeof CreateJobApplicationBody.parse>) {
 }
 
 router.get("/student-jobs/guidance", (_req, res) => { res.json(guidance); });
+
+const describe = (p: JobProvider) => ({
+  id: p.id, name: p.name, configured: p.isConfigured(), countries: [...p.countries], attribution: p.attribution,
+});
+
+router.get("/student-jobs/providers", (_req, res) => { res.json(jobProviders.map(describe)); });
+
+router.get("/student-jobs/search", requireAuth, async (req, res) => {
+  const query = SearchJobListingsQueryParams.safeParse(req.query);
+  if (!query.success) { res.status(400).json({ error: "Check the search filters and try again." }); return; }
+  const { provider: providerId, country, ...filters } = query.data;
+  const provider = getProvider(providerId ?? "adzuna");
+  if (!provider) { res.status(400).json({ error: "Unknown job provider." }); return; }
+  if (!provider.isConfigured()) {
+    res.status(503).json({ error: provider.name + " is not connected yet. The site owner must add its API credentials." });
+    return;
+  }
+  const countryCode = country.toUpperCase();
+  if (!provider.countries.includes(countryCode)) {
+    res.status(400).json({ error: provider.name + " does not cover this country." });
+    return;
+  }
+  try {
+    const result = await provider.search({ ...filters, countryCode, page: filters.page ?? 1 });
+    res.json({ provider: describe(provider), ...result });
+  } catch (error) {
+    const status = error instanceof ProviderError ? error.status : 502;
+    logger.warn({ provider: provider.id, status }, "job provider search failed");
+    res.status(status).json({ error: error instanceof ProviderError ? error.message : "Job search is unavailable right now." });
+  }
+});
 
 router.get("/me/jobs", requireAuth, async (req, res) => {
   const rows = await db.select().from(jobApplicationsTable).where(eq(jobApplicationsTable.userId, userId(req))).orderBy(desc(jobApplicationsTable.updatedAt));

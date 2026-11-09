@@ -85,3 +85,15 @@
 .sj-el-additional_authorization_required { background:#fbf1de; color:#8a6420; }
 .sj-el-likely_restricted { background:#f6e6e4; color:#8f3834; }
 @media (max-width:767px) { .sj-two,.sj-filters { grid-template-columns:1fr; } }
+.sj-listing { display:grid; gap:10px; }
+.sj-badges { display:flex; flex-wrap:wrap; gap:6px; }
+.sj-est { font-style:normal; color:#8a6a1f; font-size:12px; }
+.sj-desc { margin:0; overflow-wrap:anywhere; }
+.sj-more { margin-left:6px; border:0; background:none; padding:0; color:#176b70; font:600 12px inherit; cursor:pointer; text-decoration:underline; }
+.sj-visa-line { margin:0; display:flex; gap:6px; align-items:flex-start; color:#7a5a12; background:#fbf5e6; border-radius:8px; padding:7px 10px; font-size:12px; line-height:1.45; }
+.sj-visa-line svg { flex:none; margin-top:2px; }
+.sj-listing-actions { flex-wrap:wrap; align-items:center; }
+.sj-attr { margin-left:auto; color:#617582; font-size:12px; }
+.sj-ok { margin:0; color:#176b70; font-size:12px; }
+.sj-pager { display:flex; align-items:center; justify-content:center; gap:12px; color:#4d6474; font-size:13px; }
+@media (max-width:520px) { .sj-listing-actions>.button { flex:1 1 100%; justify-content:center; } .sj-attr { margin-left:0; } }

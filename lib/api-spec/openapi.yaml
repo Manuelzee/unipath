@@ -492,6 +492,46 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/WorkGuidance" }
+  /student-jobs/providers:
+    get:
+      operationId: listJobProviders
+      tags: [jobs]
+      summary: Job listing providers and whether each is connected
+      responses:
+        "200":
+          description: Providers
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/JobProvider" }
+  /student-jobs/search:
+    get:
+      operationId: searchJobListings
+      tags: [jobs]
+      summary: Search real job listings from a connected provider
+      parameters:
+        - { in: query, name: provider, schema: { type: string } }
+        - { in: query, name: country, required: true, schema: { type: string, minLength: 2, maxLength: 2 } }
+        - { in: query, name: keywords, schema: { type: string, maxLength: 120 } }
+        - { in: query, name: city, schema: { type: string, maxLength: 120 } }
+        - { in: query, name: university, schema: { type: string, maxLength: 160 } }
+        - { in: query, name: category, schema: { type: string, maxLength: 80 } }
+        - { in: query, name: salaryMin, schema: { type: integer, minimum: 0 } }
+        - { in: query, name: jobType, schema: { type: string, enum: [part_time, full_time, internship, graduate] } }
+        - { in: query, name: remote, schema: { type: boolean } }
+        - { in: query, name: page, schema: { type: integer, minimum: 1, maximum: 50, default: 1 } }
+      responses:
+        "200":
+          description: Listings
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JobSearchResponse" }
+        "400": { description: Invalid search }
+        "401": { description: Sign in required }
+        "429": { description: Provider rate limit }
+        "502": { description: Provider error }
+        "503": { description: Provider not connected }
   /me/jobs:
     get:
       operationId: listJobApplications
@@ -1112,6 +1152,50 @@ components:
         universityId: { type: string }
         completed: { type: boolean }
         createdAt: { type: string }
+    JobProvider:
+      type: object
+      required: [id, name, configured, countries, attribution]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        configured: { type: boolean }
+        countries: { type: array, items: { type: string } }
+        attribution:
+          type: object
+          required: [text, url]
+          properties:
+            text: { type: string }
+            url: { type: string }
+    JobListing:
+      type: object
+      required: [id, provider, providerName, title, countryCode, description, salaryIsEstimated, applyUrl, sponsorship, lastCheckedAt]
+      properties:
+        id: { type: string }
+        provider: { type: string }
+        providerName: { type: string }
+        title: { type: string }
+        employer: { type: [string, "null"] }
+        location: { type: [string, "null"] }
+        countryCode: { type: string }
+        category: { type: [string, "null"] }
+        contractTime: { type: [string, "null"] }
+        description: { type: string }
+        salaryMin: { type: [number, "null"] }
+        salaryMax: { type: [number, "null"] }
+        salaryCurrency: { type: [string, "null"] }
+        salaryIsEstimated: { type: boolean }
+        postedAt: { type: [string, "null"] }
+        applyUrl: { type: string }
+        sponsorship: { type: string, enum: [mentioned_unverified, not_mentioned] }
+        lastCheckedAt: { type: string }
+    JobSearchResponse:
+      type: object
+      required: [provider, listings, page]
+      properties:
+        provider: { $ref: "#/components/schemas/JobProvider" }
+        listings: { type: array, items: { $ref: "#/components/schemas/JobListing" } }
+        total: { type: [integer, "null"] }
+        page: { type: integer }
     WorkGuidanceSource:
       type: object
       required: [title, url, agency, checkedAt]

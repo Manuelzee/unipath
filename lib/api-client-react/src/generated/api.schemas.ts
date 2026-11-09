@@ -764,6 +764,64 @@ export interface ApplicationTask {
   createdAt: string;
 }
 
+export type JobProviderAttribution = {
+  text: string;
+  url: string;
+};
+
+export interface JobProvider {
+  id: string;
+  name: string;
+  configured: boolean;
+  countries: string[];
+  attribution: JobProviderAttribution;
+}
+
+export type JobListingSponsorship = typeof JobListingSponsorship[keyof typeof JobListingSponsorship];
+
+
+export const JobListingSponsorship = {
+  mentioned_unverified: 'mentioned_unverified',
+  not_mentioned: 'not_mentioned',
+} as const;
+
+export interface JobListing {
+  id: string;
+  provider: string;
+  providerName: string;
+  title: string;
+  /** @nullable */
+  employer?: string | null;
+  /** @nullable */
+  location?: string | null;
+  countryCode: string;
+  /** @nullable */
+  category?: string | null;
+  /** @nullable */
+  contractTime?: string | null;
+  description: string;
+  /** @nullable */
+  salaryMin?: number | null;
+  /** @nullable */
+  salaryMax?: number | null;
+  /** @nullable */
+  salaryCurrency?: string | null;
+  salaryIsEstimated: boolean;
+  /** @nullable */
+  postedAt?: string | null;
+  applyUrl: string;
+  sponsorship: JobListingSponsorship;
+  lastCheckedAt: string;
+}
+
+export interface JobSearchResponse {
+  provider: JobProvider;
+  listings: JobListing[];
+  /** @nullable */
+  total?: number | null;
+  page: number;
+}
+
 export interface WorkGuidanceSource {
   title: string;
   url: string;
@@ -994,5 +1052,51 @@ export const ListUniversityFactsKind = {
   program: 'program',
   admissions: 'admissions',
   funding: 'funding',
+} as const;
+
+export type SearchJobListingsParams = {
+provider?: string;
+/**
+ * @minLength 2
+ * @maxLength 2
+ */
+country: string;
+/**
+ * @maxLength 120
+ */
+keywords?: string;
+/**
+ * @maxLength 120
+ */
+city?: string;
+/**
+ * @maxLength 160
+ */
+university?: string;
+/**
+ * @maxLength 80
+ */
+category?: string;
+/**
+ * @minimum 0
+ */
+salaryMin?: number;
+jobType?: SearchJobListingsJobType;
+remote?: boolean;
+/**
+ * @minimum 1
+ * @maximum 50
+ */
+page?: number;
+};
+
+export type SearchJobListingsJobType = typeof SearchJobListingsJobType[keyof typeof SearchJobListingsJobType];
+
+
+export const SearchJobListingsJobType = {
+  part_time: 'part_time',
+  full_time: 'full_time',
+  internship: 'internship',
+  graduate: 'graduate',
 } as const;
 
