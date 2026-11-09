@@ -771,7 +771,16 @@ export interface WorkGuidanceSource {
   checkedAt: string;
 }
 
+export type WorkGuidanceCountryCoverage = typeof WorkGuidanceCountryCoverage[keyof typeof WorkGuidanceCountryCoverage];
+
+
+export const WorkGuidanceCountryCoverage = {
+  work_pages: 'work_pages',
+  entry_points: 'entry_points',
+} as const;
+
 export interface WorkGuidanceCountry {
+  coverage: WorkGuidanceCountryCoverage;
   code: string;
   name: string;
   sources: WorkGuidanceSource[];
@@ -805,6 +814,16 @@ export const JobApplicationInputSponsorshipClaim = {
   advertised_unverified: 'advertised_unverified',
   advertised_verified_official: 'advertised_verified_official',
   not_offered: 'not_offered',
+} as const;
+
+export type JobApplicationInputEligibilityStatus = typeof JobApplicationInputEligibilityStatus[keyof typeof JobApplicationInputEligibilityStatus];
+
+
+export const JobApplicationInputEligibilityStatus = {
+  unknown: 'unknown',
+  potentially_eligible_unverified: 'potentially_eligible_unverified',
+  additional_authorization_required: 'additional_authorization_required',
+  likely_restricted: 'likely_restricted',
 } as const;
 
 export type JobApplicationInputStatus = typeof JobApplicationInputStatus[keyof typeof JobApplicationInputStatus];
@@ -854,6 +873,7 @@ export interface JobApplicationInput {
      * @nullable
      */
   authorizationNote?: string | null;
+  eligibilityStatus?: JobApplicationInputEligibilityStatus;
   status?: JobApplicationInputStatus;
   /** @nullable */
   appliedDate?: string | null;
@@ -887,6 +907,7 @@ export interface JobApplication {
   sponsorshipClaim: string;
   /** @nullable */
   authorizationNote?: string | null;
+  eligibilityStatus?: string;
   status: string;
   /** @nullable */
   appliedDate?: string | null;

@@ -19,6 +19,8 @@ export function WorkRulesTab() {
         <label className="field sj-country"><span>Country</span>
           <select value={current.code} onChange={e => setCode(e.target.value)} data-testid="select-guidance-country">{countries.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}</select>
         </label>
+        {current.coverage === 'entry_points' ? <div className="sj-warn" role="note" data-testid="status-coverage"><AlertTriangle size={18} /><p>We only found the agency's home or study page. UniPath has not confirmed it states student work rules - use the site's search for student work conditions.</p></div>
+          : <p className="sj-muted" data-testid="status-coverage">These links point to official pages about student work.</p>}
         <div className="sj-card">
           <h2 className="sj-h2">Official sources for {current.name}</h2>
           <ul className="sj-sources">{current.sources.map((s, i) => <li key={s.url} data-testid={`row-source-${i}`}>
@@ -35,6 +37,6 @@ export function WorkRulesTab() {
         </div>}
         {current.contact && <div className="sj-card"><h2 className="sj-h2">Who to ask</h2><p className="sj-body" data-testid="text-guidance-contact">{current.contact}</p></div>}
       </>}
-    <p className="sj-muted" data-testid="text-coverage">Covered so far: United States, Canada, United Kingdom, and Australia. Other countries are not yet covered.</p>
+    <p className="sj-muted" data-testid="text-coverage">Only the countries in the selector are covered. France and other countries are not listed yet because no official page could be verified.</p>
   </div>;
 }

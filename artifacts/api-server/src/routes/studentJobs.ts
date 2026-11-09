@@ -30,7 +30,7 @@ function values(input: ReturnType<typeof CreateJobApplicationBody.parse>) {
     title: input.title.trim(), employer: input.employer.trim(), jobType: input.jobType ?? "other",
     location: input.location?.trim() || null, countryCode: input.countryCode?.trim().toUpperCase() || null,
     sourceUrl, postedDate: input.postedDate || null, sponsorshipClaim: input.sponsorshipClaim ?? "not_stated",
-    authorizationNote: input.authorizationNote?.trim() || null, status: input.status ?? "saved",
+    authorizationNote: input.authorizationNote?.trim() || null, eligibilityStatus: input.eligibilityStatus ?? "unknown", status: input.status ?? "saved",
     appliedDate: input.appliedDate || null, interviewDate: input.interviewDate || null,
     employerResponse: input.employerResponse?.trim() || null, notes: input.notes?.trim() || null,
   };

@@ -1122,8 +1122,9 @@ components:
         checkedAt: { type: string }
     WorkGuidanceCountry:
       type: object
-      required: [code, name, sources, topics, contact]
+      required: [code, name, sources, topics, contact, coverage]
       properties:
+        coverage: { type: string, enum: [work_pages, entry_points] }
         code: { type: string }
         name: { type: string }
         sources: { type: array, items: { $ref: "#/components/schemas/WorkGuidanceSource" } }
@@ -1152,6 +1153,9 @@ components:
           type: string
           enum: [not_stated, advertised_unverified, advertised_verified_official, not_offered]
         authorizationNote: { type: [string, "null"], maxLength: 1000 }
+        eligibilityStatus:
+          type: string
+          enum: [unknown, potentially_eligible_unverified, additional_authorization_required, likely_restricted]
         status:
           type: string
           enum: [saved, applied, interviewing, offer, rejected, withdrawn]
@@ -1173,6 +1177,7 @@ components:
         postedDate: { type: [string, "null"] }
         sponsorshipClaim: { type: string }
         authorizationNote: { type: [string, "null"] }
+        eligibilityStatus: { type: string }
         status: { type: string }
         appliedDate: { type: [string, "null"] }
         interviewDate: { type: [string, "null"] }

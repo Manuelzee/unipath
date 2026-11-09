@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { JobApplicationInputEligibilityStatus } from './jobApplicationInputEligibilityStatus';
 import type { JobApplicationInputJobType } from './jobApplicationInputJobType';
 import type { JobApplicationInputSponsorshipClaim } from './jobApplicationInputSponsorshipClaim';
 import type { JobApplicationInputStatus } from './jobApplicationInputStatus';
@@ -44,6 +45,7 @@ export interface JobApplicationInput {
      * @nullable
      */
   authorizationNote?: string | null;
+  eligibilityStatus?: JobApplicationInputEligibilityStatus;
   status?: JobApplicationInputStatus;
   /** @nullable */
   appliedDate?: string | null;

@@ -13,6 +13,7 @@ export const jobApplicationsTable = pgTable("job_applications", {
   postedDate: date("posted_date", { mode: "string" }),
   sponsorshipClaim: text("sponsorship_claim").notNull().default("not_stated"),
   authorizationNote: text("authorization_note"),
+  eligibilityStatus: text("eligibility_status").notNull().default("unknown"),
   status: text("status").notNull().default("saved"),
   appliedDate: date("applied_date", { mode: "string" }),
   interviewDate: date("interview_date", { mode: "string" }),

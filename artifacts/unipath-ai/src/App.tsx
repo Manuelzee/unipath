@@ -75,7 +75,7 @@ const navItems = [
   { href: '/dashboard', label: 'My plan', icon: LayoutDashboard },
   { href: '/profile', label: 'My profile', icon: UserRound },
   { href: '/recommendations', label: 'Matches', icon: GraduationCap },
-  { href: '/jobs', label: 'Student Jobs', icon: Briefcase },
+  { href: '/jobs', label: 'Global Student Jobs', icon: Briefcase, testId: 'nav-student-jobs' },
   { href: '/assistant', label: 'Guidance', icon: MessageCircle },
   { href: '/plans', label: 'Plans', icon: Sparkles },
 ];
@@ -116,7 +116,7 @@ function Shell({ children }: { children: ReactNode }) {
       <Brand inverse />
       <p className="side-label">YOUR SPACE</p>
       <nav className="side-nav">
-        {navItems.map(item => { const Icon = item.icon; return <Link key={item.href} href={item.href} data-testid={`nav-${item.label.toLowerCase().replaceAll(' ', '-')}`} className={cn('side-link', location === item.href && 'side-link-active')}><Icon size={18}/><span>{item.label}</span>{item.label === 'Guidance' && <span className="side-new">DEMO</span>}</Link>; })}
+        {navItems.map(item => { const Icon = item.icon; return <Link key={item.href} href={item.href} data-testid={'testId' in item ? item.testId : `nav-${item.label.toLowerCase().replaceAll(' ', '-')}`} className={cn('side-link', location === item.href && 'side-link-active')}><Icon size={18}/><span>{item.label}</span>{item.label === 'Guidance' && <span className="side-new">DEMO</span>}</Link>; })}
       </nav>
       {adminAccess.data?.isAdmin && <Link href="/admin" data-testid="nav-admin" className={cn('side-link', location.startsWith('/admin') && 'side-link-active')} style={{marginTop:5}}><ShieldCheck size={18}/><span>Admin</span></Link>}
       <div className="sidebar-note"><div className="note-icon"><Globe2 size={17}/></div><strong>Your world is wide open.</strong><span>One step at a time, we’ll help you find your way.</span><Link href="/discover">Explore universities <ArrowRight size={14}/></Link></div>

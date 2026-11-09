@@ -22,6 +22,7 @@ export interface JobApplication {
   sponsorshipClaim: string;
   /** @nullable */
   authorizationNote?: string | null;
+  eligibilityStatus?: string;
   status: string;
   /** @nullable */
   appliedDate?: string | null;

@@ -24,3 +24,9 @@ export function errorMessage(err: unknown, fallback: string) {
   if (data && typeof data.error === 'string') return data.error;
   return fallback;
 }
+export const ELIGIBILITY: Record<string, string> = {
+  unknown: 'Eligibility unknown',
+  potentially_eligible_unverified: 'Potentially eligible - authorization still needs verification',
+  additional_authorization_required: 'Additional authorization required',
+  likely_restricted: 'Likely restricted',
+};

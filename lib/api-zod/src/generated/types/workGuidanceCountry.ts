@@ -5,9 +5,11 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { WorkGuidanceCountryCoverage } from './workGuidanceCountryCoverage';
 import type { WorkGuidanceSource } from './workGuidanceSource';
 
 export interface WorkGuidanceCountry {
+  coverage: WorkGuidanceCountryCoverage;
   code: string;
   name: string;
   sources: WorkGuidanceSource[];

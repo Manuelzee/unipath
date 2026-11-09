@@ -1221,6 +1221,7 @@ export const DeleteApplicationTaskResponse = zod.void()
 export const GetWorkGuidanceResponse = zod.object({
   "note": zod.string(),
   "countries": zod.array(zod.object({
+  "coverage": zod.enum(['work_pages', 'entry_points']),
   "code": zod.string(),
   "name": zod.string(),
   "sources": zod.array(zod.object({
@@ -1249,6 +1250,7 @@ export const ListJobApplicationsResponseItem = zod.object({
   "postedDate": zod.string().nullish(),
   "sponsorshipClaim": zod.string(),
   "authorizationNote": zod.string().nullish(),
+  "eligibilityStatus": zod.string().optional(),
   "status": zod.string(),
   "appliedDate": zod.string().nullish(),
   "interviewDate": zod.string().nullish(),
@@ -1291,6 +1293,7 @@ export const CreateJobApplicationBody = zod.object({
   "postedDate": zod.string().nullish(),
   "sponsorshipClaim": zod.enum(['not_stated', 'advertised_unverified', 'advertised_verified_official', 'not_offered']).optional(),
   "authorizationNote": zod.string().max(createJobApplicationBodyAuthorizationNoteMax).nullish(),
+  "eligibilityStatus": zod.enum(['unknown', 'potentially_eligible_unverified', 'additional_authorization_required', 'likely_restricted']).optional(),
   "status": zod.enum(['saved', 'applied', 'interviewing', 'offer', 'rejected', 'withdrawn']).optional(),
   "appliedDate": zod.string().nullish(),
   "interviewDate": zod.string().nullish(),
@@ -1309,6 +1312,7 @@ export const CreateJobApplicationResponse = zod.object({
   "postedDate": zod.string().nullish(),
   "sponsorshipClaim": zod.string(),
   "authorizationNote": zod.string().nullish(),
+  "eligibilityStatus": zod.string().optional(),
   "status": zod.string(),
   "appliedDate": zod.string().nullish(),
   "interviewDate": zod.string().nullish(),
@@ -1354,6 +1358,7 @@ export const UpdateJobApplicationBody = zod.object({
   "postedDate": zod.string().nullish(),
   "sponsorshipClaim": zod.enum(['not_stated', 'advertised_unverified', 'advertised_verified_official', 'not_offered']).optional(),
   "authorizationNote": zod.string().max(updateJobApplicationBodyAuthorizationNoteMax).nullish(),
+  "eligibilityStatus": zod.enum(['unknown', 'potentially_eligible_unverified', 'additional_authorization_required', 'likely_restricted']).optional(),
   "status": zod.enum(['saved', 'applied', 'interviewing', 'offer', 'rejected', 'withdrawn']).optional(),
   "appliedDate": zod.string().nullish(),
   "interviewDate": zod.string().nullish(),
@@ -1372,6 +1377,7 @@ export const UpdateJobApplicationResponse = zod.object({
   "postedDate": zod.string().nullish(),
   "sponsorshipClaim": zod.string(),
   "authorizationNote": zod.string().nullish(),
+  "eligibilityStatus": zod.string().optional(),
   "status": zod.string(),
   "appliedDate": zod.string().nullish(),
   "interviewDate": zod.string().nullish(),

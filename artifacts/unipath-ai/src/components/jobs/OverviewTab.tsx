@@ -1,8 +1,11 @@
 import { Link } from 'wouter';
-import { ArrowRight, Clock3, Info, UserRound } from 'lucide-react';
+import { ArrowRight, CircleSlash, Clock3, Info, ListChecks, MessagesSquare, UserRound } from 'lucide-react';
 import { getGetStudentProfileQueryKey, useGetStudentProfile } from '@workspace/api-client-react';
 import type { TabId } from './JobsView';
 
+const NOT_YET = ['Live job listings', 'AI job matching', 'AI resume and cover letter writing', 'Scam reporting', 'Local currency and language options'];
+const CHECKLIST = ['Confirm your work authorization with your DSO or international office', 'Check where the posting came from and when it was posted', "Verify any sponsorship claim on the employer's official page", 'Tailor your resume to the role, using only true information', 'Note the application deadline', 'Prepare your references', 'Record your interview date in your tracker'];
+const INTERVIEW = ['Reread the posting and match your examples to its stated duties.', 'Prepare two or three short stories about real work, study, or volunteer experience.', 'Have honest, accurate answers ready about your work authorization; do not guess.', 'Write down questions to ask about hours, schedule, and start date.', 'Test your connection and setting ahead of time for online interviews.', 'Send a brief thank-you note after the interview.'];
 const PLANNED = ['On-campus jobs', 'Part-time jobs', 'Internships', 'Research assistant roles', 'Teaching assistant roles', 'Post-graduation roles'];
 
 function ProfileSummary() {
@@ -35,6 +38,16 @@ export function OverviewTab({ go }: { go: (t: TabId) => void }) {
       <h2 className="sj-h2">Job categories</h2>
       <ul className="sj-planned">{PLANNED.map(c => <li key={c} data-testid={`text-category-${c.toLowerCase().replace(/\s/g, '-')}`}><span>{c}</span><em className="pp-status pp-planned"><Clock3 size={12} /> Planned</em></li>)}</ul>
       <p className="sj-muted">Job matching and resume tailoring are not live. Nothing on this page is AI-generated.</p>
+    </div>
+    <div className="sj-card" data-testid="card-not-available">
+      <h2 className="sj-h2"><CircleSlash size={16} /> Not available yet</h2>
+      <ul className="sj-list">{NOT_YET.map(t => <li key={t}>{t}</li>)}</ul>
+    </div>
+    <div className="sj-two">
+      <div className="sj-card" data-testid="card-checklist"><h2 className="sj-h2"><ListChecks size={16} /> Application checklist</h2>
+        <ol className="sj-list">{CHECKLIST.map(t => <li key={t}>{t}</li>)}</ol><p className="sj-muted">A general checklist, not legal or immigration advice.</p></div>
+      <div className="sj-card" data-testid="card-interview-prep"><h2 className="sj-h2"><MessagesSquare size={16} /> Interview preparation</h2>
+        <ul className="sj-list">{INTERVIEW.map(t => <li key={t}>{t}</li>)}</ul><p className="sj-muted">General tips written by UniPath, not AI-generated.</p></div>
     </div>
     <div className="sj-card">
       <h2 className="sj-h2">Sponsorship is not the same as authorization</h2>

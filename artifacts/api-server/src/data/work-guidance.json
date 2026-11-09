@@ -1,40 +1,200 @@
 {
-  "note": "Each entry is an official government source link. checkedAt is the time UniPath actually fetched the page and received HTTP 200. It confirms the link was reachable; it is not a legal review of the rules on the page.",
+  "note": "Each entry is an official government source link. checkedAt is the time UniPath actually fetched the page and received HTTP 200. It confirms the link was reachable; it is not a legal review of the rules on the page. coverage \"work_pages\" means the source is the agency page for student work conditions. \"entry_points\" means only the agency home or study page was reachable; UniPath has not confirmed that page states student work rules, so use its search for student work conditions. France is not yet listed because no official page could be reached.",
   "countries": [
     {
-      "code": "US", "name": "United States",
+      "code": "US",
+      "name": "United States",
       "sources": [
-        { "title": "Working in the United States | Study in the States (DHS)", "url": "https://studyinthestates.dhs.gov/students/work/working-in-the-united-states", "agency": "U.S. Department of Homeland Security", "checkedAt": "2026-11-09T23:19:46.507Z" },
-        { "title": "Students and Exchange Visitors | USCIS", "url": "https://www.uscis.gov/working-in-the-united-states/students-and-exchange-visitors", "agency": "U.S. Citizenship and Immigration Services", "checkedAt": "2026-11-09T23:19:46.903Z" },
-        { "title": "Practical Training | ICE (SEVP)", "url": "https://www.ice.gov/sevis/practical-training", "agency": "U.S. Immigration and Customs Enforcement", "checkedAt": "2026-11-09T23:19:47.039Z" }
+        {
+          "title": "Working in the United States | Study in the States (DHS)",
+          "url": "https://studyinthestates.dhs.gov/students/work/working-in-the-united-states",
+          "agency": "U.S. Department of Homeland Security",
+          "checkedAt": "2026-11-09T23:19:46.507Z"
+        },
+        {
+          "title": "Students and Exchange Visitors | USCIS",
+          "url": "https://www.uscis.gov/working-in-the-united-states/students-and-exchange-visitors",
+          "agency": "U.S. Citizenship and Immigration Services",
+          "checkedAt": "2026-11-09T23:19:46.903Z"
+        },
+        {
+          "title": "Practical Training | ICE (SEVP)",
+          "url": "https://www.ice.gov/sevis/practical-training",
+          "agency": "U.S. Immigration and Customs Enforcement",
+          "checkedAt": "2026-11-09T23:19:47.039Z"
+        }
       ],
-      "topics": ["F-1", "J-1", "CPT", "OPT", "STEM OPT"],
-      "contact": "Your school's Designated School Official (DSO) for F-1, or Responsible Officer (RO) for J-1, must authorize or advise on practical training before you work."
+      "topics": [
+        "F-1",
+        "J-1",
+        "CPT",
+        "OPT",
+        "STEM OPT"
+      ],
+      "contact": "Your school's Designated School Official (DSO) for F-1, or Responsible Officer (RO) for J-1, must authorize or advise on practical training before you work.",
+      "coverage": "work_pages"
     },
     {
-      "code": "CA", "name": "Canada",
+      "code": "CA",
+      "name": "Canada",
       "sources": [
-        { "title": "Working in Canada as an international student | Canada.ca", "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/study-canada/work.html", "agency": "Immigration, Refugees and Citizenship Canada", "checkedAt": "2026-11-09T23:19:49.885Z" }
+        {
+          "title": "Working in Canada as an international student | Canada.ca",
+          "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/study-canada/work.html",
+          "agency": "Immigration, Refugees and Citizenship Canada",
+          "checkedAt": "2026-11-09T23:19:49.885Z"
+        }
       ],
       "topics": [],
-      "contact": "Your school's international student office."
+      "contact": "Your school's international student office.",
+      "coverage": "work_pages"
     },
     {
-      "code": "GB", "name": "United Kingdom",
+      "code": "GB",
+      "name": "United Kingdom",
       "sources": [
-        { "title": "Student visa | GOV.UK", "url": "https://www.gov.uk/student-visa", "agency": "UK Government", "checkedAt": "2026-11-09T23:19:50.852Z" }
+        {
+          "title": "Student visa | GOV.UK",
+          "url": "https://www.gov.uk/student-visa",
+          "agency": "UK Government",
+          "checkedAt": "2026-11-09T23:19:50.852Z"
+        }
       ],
       "topics": [],
-      "contact": "Your university's international student advice team."
+      "contact": "Your university's international student advice team.",
+      "coverage": "work_pages"
     },
     {
-      "code": "AU", "name": "Australia",
+      "code": "AU",
+      "name": "Australia",
       "sources": [
-        { "title": "Student visa (subclass 500) | Home Affairs", "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/student-500", "agency": "Australian Department of Home Affairs", "checkedAt": "2026-11-09T23:19:51.191Z" },
-        { "title": "Check visa details and conditions (VEVO) | Home Affairs", "url": "https://immi.homeaffairs.gov.au/visas/already-have-a-visa/check-visa-details-and-conditions/see-your-visa-conditions?id=8105", "agency": "Australian Department of Home Affairs", "checkedAt": "2026-11-09T23:19:52.205Z" }
+        {
+          "title": "Student visa (subclass 500) | Home Affairs",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/student-500",
+          "agency": "Australian Department of Home Affairs",
+          "checkedAt": "2026-11-09T23:19:51.191Z"
+        },
+        {
+          "title": "Check visa details and conditions (VEVO) | Home Affairs",
+          "url": "https://immi.homeaffairs.gov.au/visas/already-have-a-visa/check-visa-details-and-conditions/see-your-visa-conditions?id=8105",
+          "agency": "Australian Department of Home Affairs",
+          "checkedAt": "2026-11-09T23:19:52.205Z"
+        }
       ],
       "topics": [],
-      "contact": "Your institution's international student support office."
+      "contact": "Your institution's international student support office.",
+      "coverage": "work_pages"
+    },
+    {
+      "code": "IE",
+      "name": "Ireland",
+      "sources": [
+        {
+          "title": "Coming to study in Ireland | Immigration Service Delivery",
+          "url": "https://www.irishimmigration.ie/coming-to-study-in-ireland/",
+          "agency": "Immigration Service Delivery, Ireland",
+          "checkedAt": "2026-11-09T23:37:00.000Z"
+        }
+      ],
+      "topics": [],
+      "contact": "Your institution's international office.",
+      "coverage": "entry_points"
+    },
+    {
+      "code": "NL",
+      "name": "Netherlands",
+      "sources": [
+        {
+          "title": "Study | IND",
+          "url": "https://ind.nl/en/study",
+          "agency": "Immigration and Naturalisation Service (IND)",
+          "checkedAt": "2026-11-09T23:37:00.000Z"
+        }
+      ],
+      "topics": [],
+      "contact": "Your institution's international office.",
+      "coverage": "entry_points"
+    },
+    {
+      "code": "JP",
+      "name": "Japan",
+      "sources": [
+        {
+          "title": "Immigration Services Agency of Japan",
+          "url": "https://www.isa.go.jp/en/applications/procedures/16-8.html",
+          "agency": "Immigration Services Agency of Japan",
+          "checkedAt": "2026-11-09T23:37:00.000Z"
+        }
+      ],
+      "topics": [],
+      "contact": "Your institution's international student office.",
+      "coverage": "entry_points"
+    },
+    {
+      "code": "SG",
+      "name": "Singapore",
+      "sources": [
+        {
+          "title": "Work passes | Ministry of Manpower",
+          "url": "https://www.mom.gov.sg/passes-and-permits",
+          "agency": "Ministry of Manpower, Singapore",
+          "checkedAt": "2026-11-09T23:37:00.000Z"
+        }
+      ],
+      "topics": [],
+      "contact": "Your institution's international student office.",
+      "coverage": "entry_points"
+    },
+    {
+      "code": "DE",
+      "name": "Germany",
+      "sources": [
+        {
+          "title": "Visa & Service | Federal Foreign Office",
+          "url": "https://www.auswaertiges-amt.de/en/visa-service",
+          "agency": "German Federal Foreign Office",
+          "checkedAt": "2026-11-09T23:37:00.000Z"
+        }
+      ],
+      "topics": [],
+      "contact": "Your institution's international office.",
+      "coverage": "entry_points"
+    },
+    {
+      "code": "AE",
+      "name": "United Arab Emirates",
+      "sources": [
+        {
+          "title": "Federal Authority for Identity, Citizenship, Customs & Port Security (ICP)",
+          "url": "https://icp.gov.ae/en/",
+          "agency": "UAE ICP",
+          "checkedAt": "2026-11-09T23:37:00.000Z"
+        },
+        {
+          "title": "Education | UAE Government portal",
+          "url": "https://u.ae/en/information-and-services/education",
+          "agency": "UAE Government",
+          "checkedAt": "2026-11-09T23:37:00.000Z"
+        }
+      ],
+      "topics": [],
+      "contact": "Your institution's international student office.",
+      "coverage": "entry_points"
+    },
+    {
+      "code": "NZ",
+      "name": "New Zealand",
+      "sources": [
+        {
+          "title": "Immigration New Zealand",
+          "url": "https://www.immigration.govt.nz/",
+          "agency": "Immigration New Zealand",
+          "checkedAt": "2026-11-09T23:37:00.000Z"
+        }
+      ],
+      "topics": [],
+      "contact": "Your institution's international student office.",
+      "coverage": "entry_points"
     }
   ]
 }
