@@ -10,16 +10,18 @@ import { FundingFinder } from '@/components/directory/FundingFinder';
 import { SourceBadge } from '@/components/directory/SchoolCard';
 import { InstitutionLogo, LinkedInstitutionLogo } from '@/components/directory/InstitutionLogo';
 import { schoolLocation } from '@/components/directory/format';
-import { PreferenceFields, thisYear } from '@/components/profile/PreferenceFields';
+import { PreferenceFields, invalidLivingExpenses, thisYear } from '@/components/profile/PreferenceFields';
 import { AdminDashboardView, AdminSetupView } from '@/components/admin/AdminViews';
 import { PlansView } from '@/components/plans/PlansView';
 import { JobsView } from '@/components/jobs/JobsView';
 import { RecommendationsView } from '@/components/recommendations/RecommendationsView';
-import { AdminBillingView, BillingView } from '@/components/billing/BillingViews';
+import { BillingView } from '@/components/billing/BillingViews';
+import { AdminBillingView } from '@/components/billing/AdminBillingView';
+import { OnboardingView } from '@/components/profile/OnboardingView';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import {
-  getGetStudentDashboardQueryKey, getGetStudentProfileQueryKey, getGetStudentRecommendationsQueryKey,
+  getGetBudgetSettingsQueryKey, getGetStudentDashboardQueryKey, getGetStudentProfileQueryKey, getGetStudentRecommendationsQueryKey,
   getGetUniversityFilterOptionsQueryKey, getGetUniversityQueryKey,
   getListApplicationTasksQueryKey, getListSavedUniversitiesQueryKey,
   getListUniversitiesQueryKey, getGetAdminAccessQueryKey, useGetAdminAccess, useCreateApplicationTask, useDeleteApplicationTask,
@@ -198,8 +200,8 @@ function Profile() {
   const [initialized,setInitialized]=useState(false);
   useEffect(()=>{if(profile&&!initialized){const { updatedAt: _u, ...rest } = profile; void _u; setForm({...profileDefaults,...rest});setInitialized(true);}},[profile,initialized]);
   const update=(key:keyof StudentProfileInput,value:string|number)=>setForm(current=>({...current,[key]:value} as StudentProfileInput));
-  const customInvalid=form.budgetChoice==='custom'&&!(Number(form.customBudget)>0); const pastYear=form.startYear!=null&&form.startYear<thisYear;
-  const submit=(e:FormEvent)=>{e.preventDefault(); if(customInvalid||pastYear)return; const data:StudentProfileInput={...form,annualBudgetUsd:Number(form.annualBudgetUsd)||0,customBudget:form.budgetChoice==='custom'?Math.floor(Number(form.customBudget)):null,topPriorities:(form.topPriorities??[]).slice(0,3)}; if(!data.applicantStatus)delete data.applicantStatus; save.mutate({data},{onSuccess:()=>{void qc.invalidateQueries({queryKey:getGetStudentProfileQueryKey()});void qc.invalidateQueries({queryKey:getGetStudentRecommendationsQueryKey()});}});};
+  const customInvalid=(form.budgetChoice==='custom'&&!(Number(form.customBudget)>0&&Number(form.customBudget)<=1e9))||invalidLivingExpenses(form.livingExpenses); const pastYear=form.startYear!=null&&form.startYear<thisYear;
+  const submit=(e:FormEvent)=>{e.preventDefault(); if(customInvalid||pastYear)return; const data:StudentProfileInput={...form,annualBudgetUsd:Number(form.annualBudgetUsd)||0,customBudget:form.budgetChoice==='custom'?Math.floor(Number(form.customBudget)):null,topPriorities:(form.topPriorities??[]).slice(0,3)}; if(!data.applicantStatus)delete data.applicantStatus; save.mutate({data},{onSuccess:()=>{void qc.invalidateQueries({queryKey:getGetStudentProfileQueryKey()});void qc.invalidateQueries({queryKey:getGetStudentRecommendationsQueryKey()});void qc.invalidateQueries({queryKey:getGetBudgetSettingsQueryKey()});}});};
   return <Shell><div className="page page-enter"><PageHeading kicker="START WITH YOU" title="Your story, your way." body="Share a little about what you’re looking for. You can change any of this whenever you like."/>
     {profileQuery.isLoading?<LoadingState/>:profileQuery.isError?<ErrorState retry={()=>void profileQuery.refetch()}/>:<div className="profile-layout"><form className="profile-form content-panel" onSubmit={submit}>
       <div className="form-section-title"><div className="profile-icon"><UserRound size={20}/></div><div><h2>About you</h2><p>These details help keep your plans grounded in what matters.</p></div></div>
@@ -244,7 +246,7 @@ function Assistant() {
 function Plans() { return <Shell><PlansView/></Shell>; }
 
 function AuthPage({ kind }: { kind:'sign-in'|'sign-up' }) {
-  return <div className="auth-page"><div className="auth-side"><Brand inverse/><div><span className="eyebrow">YOUR JOURNEY STARTS HERE</span><h1>Make room for<br/><em>what’s next.</em></h1><p>Keep your plans, school shortlist, and next steps together in one calm place.</p><div className="auth-world"><Globe2 size={68}/><span>Where will curiosity take you?</span></div></div><span className="auth-legal">A supportive place to plan your next chapter.</span></div><div className="auth-panel"><Link href="/" className="auth-back"><ArrowLeft size={15}/> Back to UniPath AI</Link><div className="auth-form-wrap">{kind==='sign-in'?<SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`}/>:<SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`}/>}</div><p className="auth-footnote">By continuing, you agree to use university information as a starting point and verify all application details directly with the institution.</p></div></div>;
+  return <div className="auth-page"><div className="auth-side"><Brand inverse/><div><span className="eyebrow">YOUR JOURNEY STARTS HERE</span><h1>Make room for<br/><em>what’s next.</em></h1><p>Keep your plans, school shortlist, and next steps together in one calm place.</p><div className="auth-world"><Globe2 size={68}/><span>Where will curiosity take you?</span></div></div><span className="auth-legal">A supportive place to plan your next chapter.</span></div><div className="auth-panel"><Link href="/" className="auth-back"><ArrowLeft size={15}/> Back to UniPath AI</Link><div className="auth-form-wrap">{kind==='sign-in'?<SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`}/>:<SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} forceRedirectUrl={`${basePath}/onboarding`}/>}</div><p className="auth-footnote">By continuing, you agree to use university information as a starting point and verify all application details directly with the institution.</p></div></div>;
 }
 function Protected({ children }: { children: ReactNode }) {
   return <><Show when="signed-in">{children}</Show><Show when="signed-out"><Redirect to="/"/></Show></>;
@@ -276,6 +278,7 @@ function ClerkRoutes() {
       <Route path="/jobs">{()=><Protected><Shell><JobsView/></Shell></Protected>}</Route>
       <Route path="/assistant">{()=><Protected><Assistant/></Protected>}</Route>
       <Route path="/plans" component={Plans}/>
+      <Route path="/onboarding">{()=><Protected><Shell><OnboardingView/></Shell></Protected>}</Route>
       <Route path="/billing">{()=><Protected><Shell><BillingView/></Shell></Protected>}</Route>
       <Route path="/admin/billing">{()=><Protected><Shell><AdminBillingView/></Shell></Protected>}</Route>
       <Route path="/admin/setup">{()=><Protected><Shell><AdminSetupView/></Shell></Protected>}</Route>

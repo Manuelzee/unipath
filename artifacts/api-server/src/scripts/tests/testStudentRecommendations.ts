@@ -13,6 +13,7 @@ async function run() {
   const rows = await db.select().from(matchingEvidenceTable).where(eq(matchingEvidenceTable.institutionId, school.id));
   assert.ok(rows.length >= 6, "At least six independently verified pilot evidence records");
   const profile = {
+    livingExpenses: {},
     userId: "unit-fixture-not-persisted", residenceCountry: "United States", citizenship: "United States",
     studyCountry: "United States", degreeLevel: "Bachelor", major: "", grades: "", annualBudgetUsd: 0,
     preferredLanguage: "", englishTest: "", englishScore: "", budgetChoice: "custom", budgetCurrency: "USD",

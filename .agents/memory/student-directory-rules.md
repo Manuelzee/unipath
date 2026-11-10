@@ -19,6 +19,16 @@ program intakes, admission conditions and award eligibility remain unknown;
 an application priority date is not a final deadline or proof that admissions
 have closed. A preference score is not an admission or funding probability.
 
+Treat saved budget limits and personal living-expense estimates as private
+planning information, not customer revenue or an administrator's financial report.
+
+**Why:** The student budget UI promises privacy. A request for customer-management
+layouts does not authorize exposing students' own financial limits.
+
+**How to apply:** Customer management can show account references and profile
+coverage while financial reporting uses actual provider records only. Never
+turn a student's budget maximum into tuition data or projected revenue.
+
 Use official sources and identify the source and last-updated date. Never invent missing information. Link to official school admissions and financial aid pages when supplied; otherwise clearly label the official-homepage fallback.
 
 **Why:** Scorecard does not contain complete current admissions requirements or scholarship opportunities, and the user requires honest coverage.

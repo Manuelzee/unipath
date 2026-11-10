@@ -21,6 +21,7 @@ import type {
 
 import type {
   AdminAccess,
+  AdminCustomerList,
   AdminDatabaseStatus,
   AdminInstitutionDetail,
   AdminInstitutionList,
@@ -32,6 +33,8 @@ import type {
   ApplicationTaskInput,
   ApplicationTaskUpdate,
   BillingAvailability,
+  BudgetPreferences,
+  BudgetSettings,
   DashboardSummary,
   DirectoryCoverage,
   ExchangeRate,
@@ -48,10 +51,12 @@ import type {
   JobProvider,
   JobSearchError,
   JobSearchResponse,
+  ListAdminCustomersParams,
   ListAdminInstitutionsParams,
   ListUniversitiesParams,
   ListUniversitiesResult,
   ListUniversityFactsParams,
+  PaymentsUnavailable,
   PublicInstitutionVerification,
   RecommendationResult,
   SaveUniversityInput,
@@ -1416,6 +1421,385 @@ export function useGetBillingStatus<TData = Awaited<ReturnType<typeof getBilling
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetBillingStatusQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getRequestCheckoutUrl = () => {
+
+
+
+
+  return `/api/billing/checkout`
+}
+
+/**
+ * @summary Closed payment gate. No checkout or charge is created.
+ */
+export const requestCheckout = async ( options?: Parameters<typeof customFetch>[1]): Promise<unknown> => {
+
+  return customFetch<unknown>(getRequestCheckoutUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getRequestCheckoutMutationKey = () => ['requestCheckout'] as const;
+
+export const getRequestCheckoutMutationOptions = <TError = ErrorType<void | PaymentsUnavailable>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestCheckout>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof requestCheckout>>, TError,void, TContext> => {
+
+const mutationKey = getRequestCheckoutMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestCheckout>>, void> = () => {
+
+
+          return  requestCheckout(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RequestCheckoutMutationResult = NonNullable<Awaited<ReturnType<typeof requestCheckout>>>
+
+    export type RequestCheckoutMutationError = ErrorType<void | PaymentsUnavailable>
+
+
+    /**
+ * @summary Closed payment gate. No checkout or charge is created.
+ */
+export const useRequestCheckout = <TError = ErrorType<void | PaymentsUnavailable>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestCheckout>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof requestCheckout>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getRequestCheckoutMutationOptions(options));
+    }
+
+export const getRequestCryptoCheckoutUrl = () => {
+
+
+
+
+  return `/api/billing/crypto/checkout`
+}
+
+/**
+ * @summary Closed crypto gate. No wallet address or transfer is created.
+ */
+export const requestCryptoCheckout = async ( options?: Parameters<typeof customFetch>[1]): Promise<unknown> => {
+
+  return customFetch<unknown>(getRequestCryptoCheckoutUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getRequestCryptoCheckoutMutationKey = () => ['requestCryptoCheckout'] as const;
+
+export const getRequestCryptoCheckoutMutationOptions = <TError = ErrorType<void | PaymentsUnavailable>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestCryptoCheckout>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof requestCryptoCheckout>>, TError,void, TContext> => {
+
+const mutationKey = getRequestCryptoCheckoutMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestCryptoCheckout>>, void> = () => {
+
+
+          return  requestCryptoCheckout(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RequestCryptoCheckoutMutationResult = NonNullable<Awaited<ReturnType<typeof requestCryptoCheckout>>>
+
+    export type RequestCryptoCheckoutMutationError = ErrorType<void | PaymentsUnavailable>
+
+
+    /**
+ * @summary Closed crypto gate. No wallet address or transfer is created.
+ */
+export const useRequestCryptoCheckout = <TError = ErrorType<void | PaymentsUnavailable>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestCryptoCheckout>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof requestCryptoCheckout>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getRequestCryptoCheckoutMutationOptions(options));
+    }
+
+export const getGetBudgetSettingsUrl = () => {
+
+
+
+
+  return `/api/me/budget`
+}
+
+export const getBudgetSettings = async ( options?: Parameters<typeof customFetch>[1]): Promise<BudgetSettings> => {
+
+  return customFetch<BudgetSettings>(getGetBudgetSettingsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetBudgetSettingsQueryKey = () => {
+    return [
+    `/api/me/budget`
+    ] as const;
+    }
+
+
+export const getGetBudgetSettingsQueryOptions = <TData = Awaited<ReturnType<typeof getBudgetSettings>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getBudgetSettings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetBudgetSettingsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getBudgetSettings>>> = ({ signal }) => getBudgetSettings({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getBudgetSettings>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetBudgetSettingsQueryResult = NonNullable<Awaited<ReturnType<typeof getBudgetSettings>>>
+export type GetBudgetSettingsQueryError = ErrorType<void>
+
+
+
+export function useGetBudgetSettings<TData = Awaited<ReturnType<typeof getBudgetSettings>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getBudgetSettings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetBudgetSettingsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSaveBudgetSettingsUrl = () => {
+
+
+
+
+  return `/api/me/budget`
+}
+
+export const saveBudgetSettings = async (budgetPreferences: BudgetPreferences, options?: Parameters<typeof customFetch>[1]): Promise<BudgetSettings> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<BudgetSettings>(getSaveBudgetSettingsUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(budgetPreferences)
+  }
+);}
+
+
+
+
+
+export const getSaveBudgetSettingsMutationKey = () => ['saveBudgetSettings'] as const;
+
+export const getSaveBudgetSettingsMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveBudgetSettings>>, TError,SaveBudgetSettingsMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof saveBudgetSettings>>, TError,SaveBudgetSettingsMutationVariables, TContext> => {
+
+const mutationKey = getSaveBudgetSettingsMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof saveBudgetSettings>>, SaveBudgetSettingsMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  saveBudgetSettings(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SaveBudgetSettingsMutationResult = NonNullable<Awaited<ReturnType<typeof saveBudgetSettings>>>
+    export type SaveBudgetSettingsMutationBody = BodyType<BudgetPreferences>
+    export type SaveBudgetSettingsMutationError = ErrorType<void>
+    export type SaveBudgetSettingsMutationVariables = {data: BodyType<BudgetPreferences>}
+
+    export const useSaveBudgetSettings = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveBudgetSettings>>, TError,SaveBudgetSettingsMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof saveBudgetSettings>>,
+        TError,
+        SaveBudgetSettingsMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSaveBudgetSettingsMutationOptions(options));
+    }
+
+export const getListAdminCustomersUrl = (params?: ListAdminCustomersParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/customers?${stringifiedParams}` : `/api/admin/customers`
+}
+
+export const listAdminCustomers = async (params?: ListAdminCustomersParams, options?: Parameters<typeof customFetch>[1]): Promise<AdminCustomerList> => {
+
+  return customFetch<AdminCustomerList>(getListAdminCustomersUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAdminCustomersQueryKey = (params?: ListAdminCustomersParams,) => {
+    return [
+    `/api/admin/customers`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListAdminCustomersQueryOptions = <TData = Awaited<ReturnType<typeof listAdminCustomers>>, TError = ErrorType<void>>(params?: ListAdminCustomersParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminCustomers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAdminCustomersQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAdminCustomers>>> = ({ signal }) => listAdminCustomers(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAdminCustomers>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAdminCustomersQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminCustomers>>>
+export type ListAdminCustomersQueryError = ErrorType<void>
+
+
+
+export function useListAdminCustomers<TData = Awaited<ReturnType<typeof listAdminCustomers>>, TError = ErrorType<void>>(
+ params?: ListAdminCustomersParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminCustomers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAdminCustomersQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

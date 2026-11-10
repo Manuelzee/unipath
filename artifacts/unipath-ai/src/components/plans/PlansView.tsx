@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getGetBillingStatusQueryKey, useGetBillingStatus } from '@workspace/api-client-react';
-import { CURRENCIES } from '@/components/profile/PreferenceFields';
-import { RateNote, fmtMoney, useUsdRate } from '@/components/money/currency';
+import { CurrencySelect } from '@/components/profile/PreferenceFields';
+import { RateNote, fmtMoney, usePreferredCurrency, useUsdRate } from '@/components/money/currency';
 import '@/components/money/money.css';
 import { Link } from 'wouter';
 import { useUser } from '@clerk/react';
@@ -45,10 +45,9 @@ export function PlansView() {
   const [pkg, setPkg] = useState(PACKAGES[0].id);
   const selected = PACKAGES.find(p => p.id === pkg)!;
   const billing = useGetBillingStatus({ query: { queryKey: getGetBillingStatusQueryKey() } });
-  const [currency, setCurrency] = useState('USD');
+  const [currency, setCurrency] = usePreferredCurrency();
   const { rate } = useUsdRate(currency);
   const conv = (price: string) => { if (currency === 'USD' || !rate) return null; const nums = price.match(/[\d.]+/g)?.map(Number) ?? []; if (!nums.length || nums.every(n => n === 0)) return null; return 'about ' + nums.map(n => fmtMoney(n * rate, currency)).join(' – '); };
-  const options = billing.data?.displayCurrencies?.length ? billing.data.displayCurrencies : CURRENCIES;
 
   return <div className="page page-enter pp">
     <header className="pp-hero">
@@ -59,7 +58,7 @@ export function PlansView() {
 
     <div className="plans-callout" data-testid="status-billing"><ShieldCheck size={17} /><span><strong>Nothing is charged today.</strong> Payment processing is not configured, so no checkout or subscription can be started. Every tool that works today stays free while billing is unavailable. No hidden fees: prices shown are in USD, before any applicable tax.</span></div>
 
-    <div className="pp-currency"><label htmlFor="pp-cur">Show estimates in</label><select id="pp-cur" value={currency} onChange={e => setCurrency(e.target.value)} data-testid="select-plans-currency">{options.map(c => <option key={c}>{c}</option>)}</select><span style={{fontSize:12,color:'#5d7081'}}>Prices are set and would be charged in USD.</span></div>
+    <div className="pp-currency"><label htmlFor="pp-cur">Show estimates in</label><CurrencySelect id="pp-cur" value={currency} onChange={setCurrency} testId="select-plans-currency"/><span style={{fontSize:12,color:'#5d7081'}}>Prices are set in USD. Paid checkout, receipts, refunds and subscription management: Not available yet.</span></div>
     <RateNote currency={currency} testId="text-plans-rate"/>
     {billing.isError ? <p className="fx-note fx-warn">Billing status could not be loaded. Payments remain unavailable.</p> : billing.data && <p className="fx-note" data-testid="text-billing-status">{billing.data.message}</p>}
 

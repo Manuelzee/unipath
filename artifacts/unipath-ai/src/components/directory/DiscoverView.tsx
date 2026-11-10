@@ -8,8 +8,8 @@ import {
 } from '@workspace/api-client-react';
 import type { ListUniversitiesParams, University } from '@workspace/api-client-react';
 import { ArrowLeft, ArrowRight, Scale, ShieldCheck, X } from 'lucide-react';
-import { CURRENCIES } from '@/components/profile/PreferenceFields';
-import { RateNote, useUsdRate } from '@/components/money/currency';
+import { CurrencySelect, budgetLabel } from '@/components/profile/PreferenceFields';
+import { RateNote, usePreferredCurrency, useUsdRate } from '@/components/money/currency';
 import { ComparePanel, type Picked } from './TuitionCompare';
 import { CoveragePanel } from './CoveragePanel';
 import { DiscoverFilters, EMPTY_FILTERS, type DiscoverFilterState } from './DiscoverFilters';
@@ -25,7 +25,7 @@ export function DiscoverView() {
   const branding = useGetInstitutionBrandingCoverage({ query: { queryKey: getGetInstitutionBrandingCoverageQueryKey(), staleTime: 30_000, refetchInterval: 60_000 } });
   const [filters, setFilters] = useState<DiscoverFilterState>(EMPTY_FILTERS);
   const [page, setPage] = useState(1);
-  const [maxTuition, setMaxTuition] = useState(''); const [tuitionCurrency, setTuitionCurrency] = useState('USD');
+  const [maxTuition, setMaxTuition] = useState(''); const [tuitionCurrency, setTuitionCurrency, savedBudget] = usePreferredCurrency(); const [applyMsg, setApplyMsg] = useState('');
   const [tuitionRate, setTuitionRate] = useState<'in_state' | 'out_of_state' | 'international'>('out_of_state');
   const [picked, setPicked] = useState<Picked[]>([]); const [showCompare, setShowCompare] = useState(false);
   const fx = useUsdRate(tuitionCurrency);
@@ -34,6 +34,15 @@ export function DiscoverView() {
   const budgetActive = maxNum != null && !maxInvalid;
   const fxBlocked = budgetActive && tuitionCurrency !== 'USD' && !fx.rate;
   const searchBlocked = maxInvalid || fxBlocked;
+  const CEIL: Record<string, number> = { under_5000: 5000, '5000_10000': 10000, '10000_20000': 20000, '20000_35000': 35000, '35000_50000': 50000 };
+  const applySaved = () => {
+    const b = savedBudget; if (!b) return;
+    if (b.budgetScope === 'total') { setApplyMsg('Your saved budget covers total cost, so it cannot be used as a tuition-only maximum. Enter a tuition amount yourself.'); return; }
+    const ceil = b.budgetChoice === 'custom' ? b.customBudget : CEIL[b.budgetChoice];
+    if (ceil == null) { setApplyMsg(`"${budgetLabel(b.budgetChoice, b.budgetCurrency)}" has no upper limit, so it cannot be applied as a maximum.`); return; }
+    setMaxTuition(String(ceil)); setTuitionCurrency(b.budgetCurrency); setPage(1);
+    setApplyMsg(`Applied ${budgetLabel(b.budgetChoice, b.budgetCurrency)}${b.budgetChoice === 'custom' ? '' : ' (using its upper limit)'} as a tuition maximum.`);
+  };
   const togglePick = (s: University) => setPicked(p => p.some(x => x.id === s.id) ? p.filter(x => x.id !== s.id) : p.length >= 4 ? p : [...p, { id: s.id, name: s.name }]);
   const { isSignedIn } = useUser(); const [, setLocation] = useLocation(); const qc = useQueryClient();
   const options = useGetUniversityFilterOptions({ query: { queryKey: getGetUniversityFilterOptionsQueryKey() } });
@@ -104,10 +113,11 @@ export function DiscoverView() {
     {options.isError && <div className="inline-warning" role="alert">Filter options could not be loaded. Institution data may be temporarily unavailable. <button onClick={() => void options.refetch()} data-testid="button-retry-filters">Retry</button></div>}
     <DiscoverFilters filters={filters} options={options.data} onChange={update}/>
     <div className="tu-filter" data-testid="panel-tuition-filter">
-      <div className="tu-filter-head"><strong>Annual tuition budget (optional)</strong><span style={{fontSize:11,color:'#687b8c'}}>Leave blank to include every school</span></div>
+      <div className="tu-filter-head"><strong>Annual tuition budget (optional)</strong><span style={{fontSize:11,color:'#687b8c'}}>Leave blank to include every school</span>{savedBudget && savedBudget.budgetChoice !== 'none' && <button type="button" className="pref-skip" onClick={applySaved} data-testid="button-apply-saved-budget">Apply my saved budget</button>}</div>
+      {applyMsg && <p className="fx-note" role="status" data-testid="text-apply-budget">{applyMsg}</p>}
       <div className="tu-filter-grid">
         <label>MAXIMUM PER YEAR<input inputMode="decimal" value={maxTuition} onChange={e => { setMaxTuition(e.target.value); setPage(1); }} placeholder="e.g. 25000" aria-invalid={maxInvalid} data-testid="input-max-tuition"/></label>
-        <label>CURRENCY<select value={tuitionCurrency} onChange={e => { setTuitionCurrency(e.target.value); setPage(1); }} data-testid="select-tuition-currency">{CURRENCIES.map(c => <option key={c}>{c}</option>)}</select></label>
+        <label>CURRENCY<CurrencySelect value={tuitionCurrency} onChange={v => { setTuitionCurrency(v); setPage(1); }} testId="select-tuition-currency"/></label>
         <label>COMPARE AGAINST<select value={tuitionRate} onChange={e => { setTuitionRate(e.target.value as typeof tuitionRate); setPage(1); }} data-testid="select-tuition-rate"><option value="out_of_state">Out-of-state (not international)</option><option value="in_state">In-state</option><option value="international">Verified international</option></select></label>
       </div>
       {maxInvalid && <p className="tu-error" role="alert">Enter a number from 0 to 1,000,000,000,000. Search is paused until this is corrected.</p>}

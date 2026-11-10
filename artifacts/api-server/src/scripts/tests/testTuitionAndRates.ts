@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import type { InstitutionDirectoryRecord } from "@workspace/db";
 import { universityTuition } from "../../lib/tuition";
 import { DISPLAY_CURRENCIES, getReferenceRate } from "../../lib/exchangeRates";
-import { ListUniversitiesQueryParams } from "@workspace/api-zod";
+import { ListUniversitiesQueryParams, SaveBudgetSettingsBody } from "@workspace/api-zod";
 
 let passed = 0;
 const check = (name: string, fn: () => void) => { fn(); passed++; process.stdout.write(`PASS ${name}\n`); };
@@ -47,6 +47,24 @@ check("numeric API boundary rejects invalid budgets", () => {
 check("all requested currencies are in the allowlist", () => {
   for (const c of ["USD", "CAD", "GBP", "EUR", "AUD", "NGN", "INR", "CNY", "AED"])
     assert.ok(DISPLAY_CURRENCIES.includes(c));
+});
+check("worldwide fiat preference coverage excludes crypto and accounting units", () => {
+  assert.ok(DISPLAY_CURRENCIES.length > 100);
+  for (const c of ["KES", "ZAR", "BDT", "TRY", "SAR"]) assert.ok(DISPLAY_CURRENCIES.includes(c));
+  for (const c of ["BTC", "ETH", "USDC", "USDT", "XDR", "XSU"]) assert.ok(!DISPLAY_CURRENCIES.includes(c));
+});
+const budget = { budgetChoice: "custom", budgetCurrency: "JPY", budgetScope: "tuition", customBudget: 18500,
+  livingExpenses: { accommodation: 12000, food: 0, transport: null } };
+check("saved budget and optional living estimates validate", () => {
+  assert.equal(SaveBudgetSettingsBody.safeParse(budget).success, true);
+});
+check("invalid living estimates are rejected at the server boundary", () => {
+  for (const accommodation of [-1, Infinity, 1000000001])
+    assert.equal(SaveBudgetSettingsBody.safeParse({ ...budget, livingExpenses: { accommodation } }).success, false);
+});
+check("invalid custom maximum is rejected at the server boundary", () => {
+  for (const customBudget of [0, -1, Infinity, 1000000001])
+    assert.equal(SaveBudgetSettingsBody.safeParse({ ...budget, customBudget }).success, false);
 });
 
 const originalFetch = globalThis.fetch;

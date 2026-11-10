@@ -26,6 +26,7 @@ import {
 } from "@workspace/db";
 import { findUniversities, findUniversity } from "../lib/universities";
 import { requireAuth } from "../middlewares/requireAuth";
+import { DISPLAY_CURRENCIES } from "../lib/exchangeRates";
 
 const router: IRouter = Router();
 
@@ -52,6 +53,7 @@ function profileResponse(profile: typeof studentProfilesTable.$inferSelect) {
     budgetChoice: profile.budgetChoice ?? (profile.annualBudgetUsd > 0 ? "custom" : "none"),
     budgetCurrency: profile.budgetCurrency, budgetScope: profile.budgetScope,
     customBudget: profile.customBudget ?? (profile.budgetChoice === null && profile.annualBudgetUsd > 0 ? profile.annualBudgetUsd : null),
+    livingExpenses: profile.livingExpenses,
     startTerm: profile.startTerm, startYear: profile.startYear,
     priorities: profile.priorities, topPriorities: profile.topPriorities,
     preferredLocation: profile.preferredLocation, residenceRegion: profile.residenceRegion,
@@ -89,7 +91,7 @@ router.put("/me/profile", requireAuth, async (req, res): Promise<void> => {
   if ((p.priorities && (new Set(p.priorities).size !== p.priorities.length || p.priorities.some(v => !PRIORITIES.has(v)))) ||
     (p.topPriorities && (new Set(p.topPriorities).size !== p.topPriorities.length || p.topPriorities.some(v => !PRIORITIES.has(v)))) ||
     (p.topPriorities && p.priorities && p.topPriorities.some(v => !p.priorities!.includes(v))) ||
-    (p.budgetCurrency && !Intl.supportedValuesOf("currency").includes(p.budgetCurrency)) ||
+    (p.budgetCurrency && !DISPLAY_CURRENCIES.includes(p.budgetCurrency)) ||
     (p.budgetChoice === "custom" && (!p.customBudget || p.customBudget <= 0)) ||
     (p.startYear && (p.startYear < new Date().getFullYear() || p.startYear > new Date().getFullYear() + 15))) {
     res.status(400).json({ error: "Check your budget, start year, currency, and ranked priorities." });

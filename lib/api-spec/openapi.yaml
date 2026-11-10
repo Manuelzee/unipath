@@ -288,6 +288,72 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/BillingAvailability" }
+  /billing/checkout:
+    post:
+      operationId: requestCheckout
+      summary: Closed payment gate. No checkout or charge is created.
+      responses:
+        "409":
+          description: Payments are not available yet.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PaymentsUnavailable" }
+        "401": { description: Sign in required }
+  /billing/crypto/checkout:
+    post:
+      operationId: requestCryptoCheckout
+      summary: Closed crypto gate. No wallet address or transfer is created.
+      responses:
+        "409":
+          description: Cryptocurrency payments are not available yet.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PaymentsUnavailable" }
+        "401": { description: Sign in required }
+  /me/budget:
+    get:
+      operationId: getBudgetSettings
+      responses:
+        "200":
+          description: Private budget and annual living-expense preferences.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BudgetSettings" }
+        "401": { description: Sign in required }
+    put:
+      operationId: saveBudgetSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BudgetPreferences" }
+      responses:
+        "200":
+          description: Saved without overwriting other profile details.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BudgetSettings" }
+        "400": { description: Invalid budget preferences }
+        "401": { description: Sign in required }
+  /admin/customers:
+    get:
+      operationId: listAdminCustomers
+      parameters:
+        - in: query
+          name: search
+          schema: { type: string, maxLength: 100 }
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, maximum: 100000, default: 1 }
+      responses:
+        "200":
+          description: Real saved-profile account references. Private budgets and authentication data are not exposed.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminCustomerList" }
+        "400": { description: Invalid search or page }
+        "401": { description: Sign in required }
+        "403": { description: Administrator access required }
   /me/billing:
     get:
       operationId: getMyBilling
@@ -972,6 +1038,55 @@ components:
         baseCurrency: { type: string, enum: [USD] }
         displayCurrencies: { type: array, items: { type: string } }
         message: { type: string }
+    PaymentsUnavailable:
+      type: object
+      required: [error, code]
+      properties:
+        error: { type: string }
+        code: { type: string, enum: [PAYMENTS_DISABLED] }
+    AnnualLivingExpenses:
+      type: object
+      additionalProperties: false
+      properties:
+        accommodation: { type: [number, "null"], minimum: 0, maximum: 1000000000 }
+        food: { type: [number, "null"], minimum: 0, maximum: 1000000000 }
+        transport: { type: [number, "null"], minimum: 0, maximum: 1000000000 }
+        other: { type: [number, "null"], minimum: 0, maximum: 1000000000 }
+    BudgetPreferences:
+      type: object
+      required: [budgetChoice, budgetCurrency, budgetScope, customBudget, livingExpenses]
+      properties:
+        budgetChoice:
+          type: string
+          enum: [under_5000, "5000_10000", "10000_20000", "20000_35000", "35000_50000", "50000_plus", aid_needed, none, custom]
+        budgetCurrency: { type: string, pattern: "^[A-Z]{3}$" }
+        budgetScope: { type: string, enum: [tuition, total] }
+        customBudget: { type: [number, "null"], minimum: 1, maximum: 1000000000 }
+        livingExpenses: { $ref: "#/components/schemas/AnnualLivingExpenses" }
+    BudgetSettings:
+      type: object
+      required: [budget, hasProfile]
+      properties:
+        budget: { $ref: "#/components/schemas/BudgetPreferences" }
+        hasProfile: { type: boolean }
+    AdminCustomer:
+      type: object
+      required: [accountReference, studyCountry, degreeLevel, accessPlan, updatedAt]
+      properties:
+        accountReference: { type: string }
+        studyCountry: { type: string }
+        degreeLevel: { type: string }
+        accessPlan: { type: string, enum: [Free] }
+        updatedAt: { type: string }
+    AdminCustomerList:
+      type: object
+      required: [items, total, page, pageSize, note]
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/AdminCustomer" } }
+        total: { type: integer }
+        page: { type: integer }
+        pageSize: { type: integer }
+        note: { type: string }
     CountryOption:
       type: object
       required: [code, name, count]
@@ -1176,6 +1291,7 @@ components:
         budgetCurrency: { type: string, pattern: "^[A-Z]{3}$" }
         budgetScope: { type: string, enum: [tuition, total] }
         customBudget: { type: [number, "null"], minimum: 1, maximum: 1000000000 }
+        livingExpenses: { $ref: "#/components/schemas/AnnualLivingExpenses" }
         startTerm: { type: string, enum: [spring, summer, fall, winter, flexible] }
         startYear: { type: [integer, "null"], minimum: 2026, maximum: 2100 }
         priorities:

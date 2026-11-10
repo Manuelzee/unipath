@@ -401,6 +401,110 @@ export interface BillingAvailability {
   message: string;
 }
 
+export type PaymentsUnavailableCode = typeof PaymentsUnavailableCode[keyof typeof PaymentsUnavailableCode];
+
+
+export const PaymentsUnavailableCode = {
+  PAYMENTS_DISABLED: 'PAYMENTS_DISABLED',
+} as const;
+
+export interface PaymentsUnavailable {
+  error: string;
+  code: PaymentsUnavailableCode;
+}
+
+export interface AnnualLivingExpenses {
+  /**
+     * @minimum 0
+     * @maximum 1000000000
+     * @nullable
+     */
+  accommodation?: number | null;
+  /**
+     * @minimum 0
+     * @maximum 1000000000
+     * @nullable
+     */
+  food?: number | null;
+  /**
+     * @minimum 0
+     * @maximum 1000000000
+     * @nullable
+     */
+  transport?: number | null;
+  /**
+     * @minimum 0
+     * @maximum 1000000000
+     * @nullable
+     */
+  other?: number | null;
+}
+
+export type BudgetPreferencesBudgetChoice = typeof BudgetPreferencesBudgetChoice[keyof typeof BudgetPreferencesBudgetChoice];
+
+
+export const BudgetPreferencesBudgetChoice = {
+  under_5000: 'under_5000',
+  '5000_10000': '5000_10000',
+  '10000_20000': '10000_20000',
+  '20000_35000': '20000_35000',
+  '35000_50000': '35000_50000',
+  '50000_plus': '50000_plus',
+  aid_needed: 'aid_needed',
+  none: 'none',
+  custom: 'custom',
+} as const;
+
+export type BudgetPreferencesBudgetScope = typeof BudgetPreferencesBudgetScope[keyof typeof BudgetPreferencesBudgetScope];
+
+
+export const BudgetPreferencesBudgetScope = {
+  tuition: 'tuition',
+  total: 'total',
+} as const;
+
+export interface BudgetPreferences {
+  budgetChoice: BudgetPreferencesBudgetChoice;
+  /** @pattern ^[A-Z]{3}$ */
+  budgetCurrency: string;
+  budgetScope: BudgetPreferencesBudgetScope;
+  /**
+     * @minimum 1
+     * @maximum 1000000000
+     * @nullable
+     */
+  customBudget: number | null;
+  livingExpenses: AnnualLivingExpenses;
+}
+
+export interface BudgetSettings {
+  budget: BudgetPreferences;
+  hasProfile: boolean;
+}
+
+export type AdminCustomerAccessPlan = typeof AdminCustomerAccessPlan[keyof typeof AdminCustomerAccessPlan];
+
+
+export const AdminCustomerAccessPlan = {
+  Free: 'Free',
+} as const;
+
+export interface AdminCustomer {
+  accountReference: string;
+  studyCountry: string;
+  degreeLevel: string;
+  accessPlan: AdminCustomerAccessPlan;
+  updatedAt: string;
+}
+
+export interface AdminCustomerList {
+  items: AdminCustomer[];
+  total: number;
+  page: number;
+  pageSize: number;
+  note: string;
+}
+
 export interface CountryCoverage {
   countryCode: string;
   country: string;
@@ -770,6 +874,7 @@ export interface StudentProfileInput {
      * @nullable
      */
   customBudget?: number | null;
+  livingExpenses?: AnnualLivingExpenses;
   startTerm?: StudentProfileInputStartTerm;
   /**
      * @minimum 2026
@@ -1159,6 +1264,18 @@ export type GetExchangeRateParams = {
  * @pattern ^[A-Z]{3}$
  */
 currency: string;
+};
+
+export type ListAdminCustomersParams = {
+/**
+ * @maxLength 100
+ */
+search?: string;
+/**
+ * @minimum 1
+ * @maximum 100000
+ */
+page?: number;
 };
 
 export type ListUniversityFactsParams = {

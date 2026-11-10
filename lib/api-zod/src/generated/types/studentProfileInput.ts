@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { AnnualLivingExpenses } from './annualLivingExpenses';
 import type { StudentProfileInputAdmissionTrack } from './studentProfileInputAdmissionTrack';
 import type { StudentProfileInputApplicantStatus } from './studentProfileInputApplicantStatus';
 import type { StudentProfileInputBudgetChoice } from './studentProfileInputBudgetChoice';
@@ -32,6 +33,7 @@ export interface StudentProfileInput {
      * @nullable
      */
   customBudget?: number | null;
+  livingExpenses?: AnnualLivingExpenses;
   startTerm?: StudentProfileInputStartTerm;
   /**
      * @minimum 2026

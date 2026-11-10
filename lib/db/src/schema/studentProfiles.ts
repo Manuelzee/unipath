@@ -1,4 +1,4 @@
-import { pgTable, real, doublePrecision, text, timestamp, integer } from "drizzle-orm/pg-core";
+import { pgTable, real, doublePrecision, text, timestamp, integer, jsonb } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
 export const studentProfilesTable = pgTable("student_profiles", {
@@ -17,6 +17,10 @@ export const studentProfilesTable = pgTable("student_profiles", {
   budgetCurrency: text("budget_currency").notNull().default("USD"),
   budgetScope: text("budget_scope").notNull().default("tuition"),
   customBudget: doublePrecision("custom_budget"),
+  livingExpenses: jsonb("living_expenses").$type<{
+    accommodation?: number | null; food?: number | null;
+    transport?: number | null; other?: number | null;
+  }>().notNull().default({}),
   startTerm: text("start_term").notNull().default("flexible"),
   startYear: integer("start_year"),
   priorities: text("priorities").array().notNull().default(sql`'{}'::text[]`),

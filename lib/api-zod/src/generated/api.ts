@@ -454,6 +454,143 @@ export const GetBillingStatusResponse = zod.object({
 })
 
 
+/**
+ * @summary Closed payment gate. No checkout or charge is created.
+ */
+export const RequestCheckoutResponse = zod.void()
+
+
+/**
+ * @summary Closed crypto gate. No wallet address or transfer is created.
+ */
+export const RequestCryptoCheckoutResponse = zod.void()
+
+
+export const getBudgetSettingsResponseBudgetBudgetCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const getBudgetSettingsResponseBudgetCustomBudgetMax = 1000000000;
+
+export const getBudgetSettingsResponseBudgetLivingExpensesAccommodationMin = 0;
+export const getBudgetSettingsResponseBudgetLivingExpensesAccommodationMax = 1000000000;
+
+export const getBudgetSettingsResponseBudgetLivingExpensesFoodMin = 0;
+export const getBudgetSettingsResponseBudgetLivingExpensesFoodMax = 1000000000;
+
+export const getBudgetSettingsResponseBudgetLivingExpensesTransportMin = 0;
+export const getBudgetSettingsResponseBudgetLivingExpensesTransportMax = 1000000000;
+
+export const getBudgetSettingsResponseBudgetLivingExpensesOtherMin = 0;
+export const getBudgetSettingsResponseBudgetLivingExpensesOtherMax = 1000000000;
+
+
+
+export const GetBudgetSettingsResponse = zod.object({
+  "budget": zod.object({
+  "budgetChoice": zod.enum(['under_5000', '5000_10000', '10000_20000', '20000_35000', '35000_50000', '50000_plus', 'aid_needed', 'none', 'custom']),
+  "budgetCurrency": zod.string().regex(getBudgetSettingsResponseBudgetBudgetCurrencyRegExp),
+  "budgetScope": zod.enum(['tuition', 'total']),
+  "customBudget": zod.number().min(1).max(getBudgetSettingsResponseBudgetCustomBudgetMax).nullable(),
+  "livingExpenses": zod.object({
+  "accommodation": zod.number().min(getBudgetSettingsResponseBudgetLivingExpensesAccommodationMin).max(getBudgetSettingsResponseBudgetLivingExpensesAccommodationMax).nullish(),
+  "food": zod.number().min(getBudgetSettingsResponseBudgetLivingExpensesFoodMin).max(getBudgetSettingsResponseBudgetLivingExpensesFoodMax).nullish(),
+  "transport": zod.number().min(getBudgetSettingsResponseBudgetLivingExpensesTransportMin).max(getBudgetSettingsResponseBudgetLivingExpensesTransportMax).nullish(),
+  "other": zod.number().min(getBudgetSettingsResponseBudgetLivingExpensesOtherMin).max(getBudgetSettingsResponseBudgetLivingExpensesOtherMax).nullish()
+})
+}),
+  "hasProfile": zod.boolean()
+})
+
+
+export const saveBudgetSettingsBodyBudgetCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const saveBudgetSettingsBodyCustomBudgetMax = 1000000000;
+
+export const saveBudgetSettingsBodyLivingExpensesAccommodationMin = 0;
+export const saveBudgetSettingsBodyLivingExpensesAccommodationMax = 1000000000;
+
+export const saveBudgetSettingsBodyLivingExpensesFoodMin = 0;
+export const saveBudgetSettingsBodyLivingExpensesFoodMax = 1000000000;
+
+export const saveBudgetSettingsBodyLivingExpensesTransportMin = 0;
+export const saveBudgetSettingsBodyLivingExpensesTransportMax = 1000000000;
+
+export const saveBudgetSettingsBodyLivingExpensesOtherMin = 0;
+export const saveBudgetSettingsBodyLivingExpensesOtherMax = 1000000000;
+
+
+
+export const SaveBudgetSettingsBody = zod.object({
+  "budgetChoice": zod.enum(['under_5000', '5000_10000', '10000_20000', '20000_35000', '35000_50000', '50000_plus', 'aid_needed', 'none', 'custom']),
+  "budgetCurrency": zod.string().regex(saveBudgetSettingsBodyBudgetCurrencyRegExp),
+  "budgetScope": zod.enum(['tuition', 'total']),
+  "customBudget": zod.number().min(1).max(saveBudgetSettingsBodyCustomBudgetMax).nullable(),
+  "livingExpenses": zod.object({
+  "accommodation": zod.number().min(saveBudgetSettingsBodyLivingExpensesAccommodationMin).max(saveBudgetSettingsBodyLivingExpensesAccommodationMax).nullish(),
+  "food": zod.number().min(saveBudgetSettingsBodyLivingExpensesFoodMin).max(saveBudgetSettingsBodyLivingExpensesFoodMax).nullish(),
+  "transport": zod.number().min(saveBudgetSettingsBodyLivingExpensesTransportMin).max(saveBudgetSettingsBodyLivingExpensesTransportMax).nullish(),
+  "other": zod.number().min(saveBudgetSettingsBodyLivingExpensesOtherMin).max(saveBudgetSettingsBodyLivingExpensesOtherMax).nullish()
+})
+})
+
+export const saveBudgetSettingsResponseBudgetBudgetCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const saveBudgetSettingsResponseBudgetCustomBudgetMax = 1000000000;
+
+export const saveBudgetSettingsResponseBudgetLivingExpensesAccommodationMin = 0;
+export const saveBudgetSettingsResponseBudgetLivingExpensesAccommodationMax = 1000000000;
+
+export const saveBudgetSettingsResponseBudgetLivingExpensesFoodMin = 0;
+export const saveBudgetSettingsResponseBudgetLivingExpensesFoodMax = 1000000000;
+
+export const saveBudgetSettingsResponseBudgetLivingExpensesTransportMin = 0;
+export const saveBudgetSettingsResponseBudgetLivingExpensesTransportMax = 1000000000;
+
+export const saveBudgetSettingsResponseBudgetLivingExpensesOtherMin = 0;
+export const saveBudgetSettingsResponseBudgetLivingExpensesOtherMax = 1000000000;
+
+
+
+export const SaveBudgetSettingsResponse = zod.object({
+  "budget": zod.object({
+  "budgetChoice": zod.enum(['under_5000', '5000_10000', '10000_20000', '20000_35000', '35000_50000', '50000_plus', 'aid_needed', 'none', 'custom']),
+  "budgetCurrency": zod.string().regex(saveBudgetSettingsResponseBudgetBudgetCurrencyRegExp),
+  "budgetScope": zod.enum(['tuition', 'total']),
+  "customBudget": zod.number().min(1).max(saveBudgetSettingsResponseBudgetCustomBudgetMax).nullable(),
+  "livingExpenses": zod.object({
+  "accommodation": zod.number().min(saveBudgetSettingsResponseBudgetLivingExpensesAccommodationMin).max(saveBudgetSettingsResponseBudgetLivingExpensesAccommodationMax).nullish(),
+  "food": zod.number().min(saveBudgetSettingsResponseBudgetLivingExpensesFoodMin).max(saveBudgetSettingsResponseBudgetLivingExpensesFoodMax).nullish(),
+  "transport": zod.number().min(saveBudgetSettingsResponseBudgetLivingExpensesTransportMin).max(saveBudgetSettingsResponseBudgetLivingExpensesTransportMax).nullish(),
+  "other": zod.number().min(saveBudgetSettingsResponseBudgetLivingExpensesOtherMin).max(saveBudgetSettingsResponseBudgetLivingExpensesOtherMax).nullish()
+})
+}),
+  "hasProfile": zod.boolean()
+})
+
+
+export const listAdminCustomersQuerySearchMax = 100;
+
+export const listAdminCustomersQueryPageDefault = 1;
+export const listAdminCustomersQueryPageMax = 100000;
+
+
+
+export const ListAdminCustomersQueryParams = zod.object({
+  "search": zod.coerce.string().max(listAdminCustomersQuerySearchMax).optional(),
+  "page": zod.coerce.number().int().min(1).max(listAdminCustomersQueryPageMax).default(listAdminCustomersQueryPageDefault)
+})
+
+export const ListAdminCustomersResponse = zod.object({
+  "items": zod.array(zod.object({
+  "accountReference": zod.string(),
+  "studyCountry": zod.string(),
+  "degreeLevel": zod.string(),
+  "accessPlan": zod.enum(['Free']),
+  "updatedAt": zod.string()
+})),
+  "total": zod.number().int(),
+  "page": zod.number().int(),
+  "pageSize": zod.number().int(),
+  "note": zod.string()
+})
+
+
 export const GetMyBillingResponse = zod.object({
   "provider": zod.string(),
   "providerConfigured": zod.boolean(),
@@ -931,6 +1068,18 @@ export const GetStudentRecommendationsResponse = zod.object({
 export const getStudentProfileResponseProfileOneOneBudgetCurrencyRegExp = new RegExp('^[A-Z]{3}$');
 export const getStudentProfileResponseProfileOneOneCustomBudgetMax = 1000000000;
 
+export const getStudentProfileResponseProfileOneOneLivingExpensesAccommodationMin = 0;
+export const getStudentProfileResponseProfileOneOneLivingExpensesAccommodationMax = 1000000000;
+
+export const getStudentProfileResponseProfileOneOneLivingExpensesFoodMin = 0;
+export const getStudentProfileResponseProfileOneOneLivingExpensesFoodMax = 1000000000;
+
+export const getStudentProfileResponseProfileOneOneLivingExpensesTransportMin = 0;
+export const getStudentProfileResponseProfileOneOneLivingExpensesTransportMax = 1000000000;
+
+export const getStudentProfileResponseProfileOneOneLivingExpensesOtherMin = 0;
+export const getStudentProfileResponseProfileOneOneLivingExpensesOtherMax = 1000000000;
+
 export const getStudentProfileResponseProfileOneOneStartYearMin = 2026;
 export const getStudentProfileResponseProfileOneOneStartYearMax = 2100;
 
@@ -960,6 +1109,12 @@ export const GetStudentProfileResponse = zod.object({
   "budgetCurrency": zod.string().regex(getStudentProfileResponseProfileOneOneBudgetCurrencyRegExp).optional(),
   "budgetScope": zod.enum(['tuition', 'total']).optional(),
   "customBudget": zod.number().min(1).max(getStudentProfileResponseProfileOneOneCustomBudgetMax).nullish(),
+  "livingExpenses": zod.object({
+  "accommodation": zod.number().min(getStudentProfileResponseProfileOneOneLivingExpensesAccommodationMin).max(getStudentProfileResponseProfileOneOneLivingExpensesAccommodationMax).nullish(),
+  "food": zod.number().min(getStudentProfileResponseProfileOneOneLivingExpensesFoodMin).max(getStudentProfileResponseProfileOneOneLivingExpensesFoodMax).nullish(),
+  "transport": zod.number().min(getStudentProfileResponseProfileOneOneLivingExpensesTransportMin).max(getStudentProfileResponseProfileOneOneLivingExpensesTransportMax).nullish(),
+  "other": zod.number().min(getStudentProfileResponseProfileOneOneLivingExpensesOtherMin).max(getStudentProfileResponseProfileOneOneLivingExpensesOtherMax).nullish()
+}).optional(),
   "startTerm": zod.enum(['spring', 'summer', 'fall', 'winter', 'flexible']).optional(),
   "startYear": zod.number().int().min(getStudentProfileResponseProfileOneOneStartYearMin).max(getStudentProfileResponseProfileOneOneStartYearMax).nullish(),
   "priorities": zod.array(zod.string()).max(getStudentProfileResponseProfileOneOnePrioritiesMax).optional(),
@@ -979,6 +1134,18 @@ export const GetStudentProfileResponse = zod.object({
  */
 export const saveStudentProfileBodyBudgetCurrencyRegExp = new RegExp('^[A-Z]{3}$');
 export const saveStudentProfileBodyCustomBudgetMax = 1000000000;
+
+export const saveStudentProfileBodyLivingExpensesAccommodationMin = 0;
+export const saveStudentProfileBodyLivingExpensesAccommodationMax = 1000000000;
+
+export const saveStudentProfileBodyLivingExpensesFoodMin = 0;
+export const saveStudentProfileBodyLivingExpensesFoodMax = 1000000000;
+
+export const saveStudentProfileBodyLivingExpensesTransportMin = 0;
+export const saveStudentProfileBodyLivingExpensesTransportMax = 1000000000;
+
+export const saveStudentProfileBodyLivingExpensesOtherMin = 0;
+export const saveStudentProfileBodyLivingExpensesOtherMax = 1000000000;
 
 export const saveStudentProfileBodyStartYearMin = 2026;
 export const saveStudentProfileBodyStartYearMax = 2100;
@@ -1008,6 +1175,12 @@ export const SaveStudentProfileBody = zod.object({
   "budgetCurrency": zod.string().regex(saveStudentProfileBodyBudgetCurrencyRegExp).optional(),
   "budgetScope": zod.enum(['tuition', 'total']).optional(),
   "customBudget": zod.number().min(1).max(saveStudentProfileBodyCustomBudgetMax).nullish(),
+  "livingExpenses": zod.object({
+  "accommodation": zod.number().min(saveStudentProfileBodyLivingExpensesAccommodationMin).max(saveStudentProfileBodyLivingExpensesAccommodationMax).nullish(),
+  "food": zod.number().min(saveStudentProfileBodyLivingExpensesFoodMin).max(saveStudentProfileBodyLivingExpensesFoodMax).nullish(),
+  "transport": zod.number().min(saveStudentProfileBodyLivingExpensesTransportMin).max(saveStudentProfileBodyLivingExpensesTransportMax).nullish(),
+  "other": zod.number().min(saveStudentProfileBodyLivingExpensesOtherMin).max(saveStudentProfileBodyLivingExpensesOtherMax).nullish()
+}).optional(),
   "startTerm": zod.enum(['spring', 'summer', 'fall', 'winter', 'flexible']).optional(),
   "startYear": zod.number().int().min(saveStudentProfileBodyStartYearMin).max(saveStudentProfileBodyStartYearMax).nullish(),
   "priorities": zod.array(zod.string()).max(saveStudentProfileBodyPrioritiesMax).optional(),
@@ -1020,6 +1193,18 @@ export const SaveStudentProfileBody = zod.object({
 
 export const saveStudentProfileResponseOneBudgetCurrencyRegExp = new RegExp('^[A-Z]{3}$');
 export const saveStudentProfileResponseOneCustomBudgetMax = 1000000000;
+
+export const saveStudentProfileResponseOneLivingExpensesAccommodationMin = 0;
+export const saveStudentProfileResponseOneLivingExpensesAccommodationMax = 1000000000;
+
+export const saveStudentProfileResponseOneLivingExpensesFoodMin = 0;
+export const saveStudentProfileResponseOneLivingExpensesFoodMax = 1000000000;
+
+export const saveStudentProfileResponseOneLivingExpensesTransportMin = 0;
+export const saveStudentProfileResponseOneLivingExpensesTransportMax = 1000000000;
+
+export const saveStudentProfileResponseOneLivingExpensesOtherMin = 0;
+export const saveStudentProfileResponseOneLivingExpensesOtherMax = 1000000000;
 
 export const saveStudentProfileResponseOneStartYearMin = 2026;
 export const saveStudentProfileResponseOneStartYearMax = 2100;
@@ -1049,6 +1234,12 @@ export const SaveStudentProfileResponse = zod.object({
   "budgetCurrency": zod.string().regex(saveStudentProfileResponseOneBudgetCurrencyRegExp).optional(),
   "budgetScope": zod.enum(['tuition', 'total']).optional(),
   "customBudget": zod.number().min(1).max(saveStudentProfileResponseOneCustomBudgetMax).nullish(),
+  "livingExpenses": zod.object({
+  "accommodation": zod.number().min(saveStudentProfileResponseOneLivingExpensesAccommodationMin).max(saveStudentProfileResponseOneLivingExpensesAccommodationMax).nullish(),
+  "food": zod.number().min(saveStudentProfileResponseOneLivingExpensesFoodMin).max(saveStudentProfileResponseOneLivingExpensesFoodMax).nullish(),
+  "transport": zod.number().min(saveStudentProfileResponseOneLivingExpensesTransportMin).max(saveStudentProfileResponseOneLivingExpensesTransportMax).nullish(),
+  "other": zod.number().min(saveStudentProfileResponseOneLivingExpensesOtherMin).max(saveStudentProfileResponseOneLivingExpensesOtherMax).nullish()
+}).optional(),
   "startTerm": zod.enum(['spring', 'summer', 'fall', 'winter', 'flexible']).optional(),
   "startYear": zod.number().int().min(saveStudentProfileResponseOneStartYearMin).max(saveStudentProfileResponseOneStartYearMax).nullish(),
   "priorities": zod.array(zod.string()).max(saveStudentProfileResponseOnePrioritiesMax).optional(),

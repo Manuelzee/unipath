@@ -111,6 +111,7 @@ function likePattern(value: string) {
 
 export async function searchUniversities(
   filters: ListUniversitiesParams,
+  database: Pick<typeof db, "select"> = db,
 ) {
   const conditions: SQL[] = [eq(institutionDirectoryTable.isActive, true)];
   if (filters.maxAnnualTuition !== undefined) {
@@ -187,11 +188,11 @@ export async function searchUniversities(
   const page = filters.page ?? 1;
   const pageSize = filters.pageSize ?? 24;
   const [countResult, rows] = await Promise.all([
-    db
+    database
       .select({ total: sql<number>`count(*)::int` })
       .from(institutionDirectoryTable)
       .where(where),
-    db
+    database
       .select()
       .from(institutionDirectoryTable)
       .where(where)

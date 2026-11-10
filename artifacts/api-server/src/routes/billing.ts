@@ -2,7 +2,10 @@ import { Router, type IRouter } from "express";
 import {
   GetAdminBillingResponse, GetBillingStatusResponse, GetExchangeRateQueryParams,
   GetExchangeRateResponse, GetMyBillingResponse,
+  ListAdminCustomersQueryParams, ListAdminCustomersResponse,
 } from "@workspace/api-zod";
+import { db, studentProfilesTable as profiles } from "@workspace/db";
+import { desc, ilike, or, sql } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
 import { requireAdministrator } from "../lib/admin/security";
 import { DISPLAY_CURRENCIES, getReferenceRate } from "../lib/exchangeRates";
@@ -38,4 +41,30 @@ router.get("/admin/billing", requireAuth, requireAdministrator, (_req, res): voi
   res.setHeader("Cache-Control", "no-store");
   res.json(GetAdminBillingResponse.parse(availability()));
 });
+router.get("/admin/customers", requireAuth, requireAdministrator, async (req, res): Promise<void> => {
+  const input = ListAdminCustomersQueryParams.safeParse(req.query);
+  if (!input.success) { res.status(400).json({ error: "Use a valid account search and page." }); return; }
+  const search = input.data.search?.trim();
+  const pattern = `%${(search ?? "").replace(/[\\%_]/g, "\\$&")}%`;
+  const where = search ? or(ilike(profiles.userId, pattern), ilike(profiles.studyCountry, pattern)) : undefined;
+  const page = input.data.page ?? 1;
+  const [items, [count]] = await Promise.all([
+    db.select({ accountReference: profiles.userId, studyCountry: profiles.studyCountry,
+      degreeLevel: profiles.degreeLevel, updatedAt: profiles.updatedAt })
+      .from(profiles).where(where).orderBy(desc(profiles.updatedAt), profiles.userId).limit(20).offset((page - 1) * 20),
+    db.select({ total: sql<number>`count(*)::int` }).from(profiles).where(where),
+  ]);
+  res.setHeader("Cache-Control", "no-store");
+  res.json(ListAdminCustomersResponse.parse({ items: items.map(p => ({
+    ...p, updatedAt: p.updatedAt.toISOString(), accessPlan: "Free",
+  })), total: count.total, page, pageSize: 20,
+  note: "Students with a saved profile only, not all registered accounts or paying customers. All working tools currently have Free access. Private budgets, credentials, and payment information are not included." }));
+});
+for (const path of ["/billing/checkout", "/billing/crypto/checkout"]) {
+  router.post(path, requireAuth, (_req, res): void => {
+    // This route has no provider SDK, wallet generation, payment information
+    // storage, or subscription activation. It stays closed even if UI is altered.
+    res.status(409).json({ code: "PAYMENTS_DISABLED", error: "Not available yet. No payment, wallet address, or subscription was created." });
+  });
+}
 export default router;

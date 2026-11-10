@@ -31,6 +31,9 @@ checkout, refund management or a transaction history.
 **Why:** The Annual Tuition Budget & Global Payments requirements require
 sandbox testing first and explicit owner approval before live payments or publishing.
 
-**How to apply:** Request a secure provider connection when implementation is
-resumed. Never infer merchant/customer crypto eligibility or recurring payment
-support from a processor's general marketing.
+**How to apply:** Continue provider-independent development without requiring a
+payment connection when requested. Future-crypto controls may be prepared but
+must remain disabled: no wallet generation, transfer requests or payment-data
+collection. Request a secure provider connection only when the owner resumes
+provider work. Never infer merchant/customer crypto eligibility or recurring
+payment support from a processor's general marketing.

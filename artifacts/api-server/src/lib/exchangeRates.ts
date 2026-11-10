@@ -1,6 +1,8 @@
 import { GetExchangeRateResponse } from "@workspace/api-zod";
 
-export const DISPLAY_CURRENCIES = ["USD", "CAD", "GBP", "EUR", "AUD", "NGN", "INR", "CNY", "AED", "JPY", "KRW", "BRL", "MXN", "PKR", "VND", "PHP", "SGD", "CHF"];
+// ISO fiat currencies recognized by this runtime. Display preference support
+// does not imply that a current reference rate or payment method is available.
+export const DISPLAY_CURRENCIES = Intl.supportedValuesOf("currency").filter(c => !["XDR", "XSU"].includes(c));
 type Rate = typeof GetExchangeRateResponse._output;
 const cache = new Map<string, { value: Rate; expires: number }>();
 const pending = new Map<string, Promise<Rate>>();
