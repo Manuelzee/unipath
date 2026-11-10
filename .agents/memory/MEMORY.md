@@ -1,4 +1,5 @@
 - [External data retrieval](external-data-retrieval.md) — when shell egress is blocked, public source files may still be retrievable through CodeExecution.
+- [Adzuna response interpretation](adzuna-response-interpretation.md) — a provider 503 does not establish that credentials were accepted; distinguish it from AUTH_FAIL.
 - [Scorecard reporting years](scorecard-reporting-years.md) — use year-qualified metrics and small field batches; latest-only values lack reliable per-metric reporting years.
 - [Student directory rules](student-directory-rules.md) — student-owned budget input is allowed; school annual figures stay hidden, and missing match evidence stays unknown.
 - [Global source permissions](global-source-permissions.md) — Canada-first expansion; permission-first imports and separate recognition, DLI, and program-availability claims.

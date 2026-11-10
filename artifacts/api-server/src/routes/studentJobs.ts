@@ -54,7 +54,8 @@ router.get("/student-jobs/search", requireAuth, async (req, res) => {
   const provider = getProvider(providerId ?? "adzuna");
   if (!provider) { res.status(400).json({ error: "Unknown job provider." }); return; }
   if (!provider.isConfigured()) {
-    res.status(503).json({ error: provider.name + " is not connected yet. The site owner must add its API credentials." });
+    res.status(503).json({ error: provider.name + " is not connected yet. The site owner must add its API credentials.",
+      code: "ADZUNA_NOT_CONFIGURED", retryable: false });
     return;
   }
   const countryCode = country.toUpperCase();
@@ -67,8 +68,13 @@ router.get("/student-jobs/search", requireAuth, async (req, res) => {
     res.json({ provider: describe(provider), ...result });
   } catch (error) {
     const status = error instanceof ProviderError ? error.status : 502;
-    logger.warn({ provider: provider.id, status }, "job provider search failed");
-    res.status(status).json({ error: error instanceof ProviderError ? error.message : "Job search is unavailable right now." });
+    const code = error instanceof ProviderError ? error.code : "PROVIDER_ERROR";
+    const upstreamStatus = error instanceof ProviderError ? error.upstreamStatus : undefined;
+    logger.warn({ provider: provider.id, status, code, upstreamStatus }, "job provider search failed");
+    res.status(status).json({
+      error: error instanceof ProviderError ? error.message : "Job search is unavailable right now.",
+      code, upstreamStatus, retryable: error instanceof ProviderError && error.retryable,
+    });
   }
 });
 

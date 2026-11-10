@@ -529,9 +529,21 @@ paths:
               schema: { $ref: "#/components/schemas/JobSearchResponse" }
         "400": { description: Invalid search }
         "401": { description: Sign in required }
-        "429": { description: Provider rate limit }
-        "502": { description: Provider error }
-        "503": { description: Provider not connected }
+        "429":
+          description: Provider rate limit
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JobSearchError" }
+        "502":
+          description: Upstream authentication failure or rejected or invalid provider response
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JobSearchError" }
+        "503":
+          description: Missing or malformed configuration or temporary provider outage
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JobSearchError" }
   /me/jobs:
     get:
       operationId: listJobApplications
@@ -1152,6 +1164,14 @@ components:
         universityId: { type: string }
         completed: { type: boolean }
         createdAt: { type: string }
+    JobSearchError:
+      type: object
+      required: [error, code, retryable]
+      properties:
+        error: { type: string }
+        code: { type: string }
+        upstreamStatus: { type: integer }
+        retryable: { type: boolean }
     JobProvider:
       type: object
       required: [id, name, configured, countries, attribution]

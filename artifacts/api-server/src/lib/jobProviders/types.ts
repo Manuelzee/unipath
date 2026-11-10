@@ -49,7 +49,13 @@ export interface JobProvider {
 }
 
 export class ProviderError extends Error {
-  constructor(message: string, readonly status = 502) {
+  constructor(
+    message: string,
+    readonly status = 502,
+    readonly code = "PROVIDER_ERROR",
+    readonly upstreamStatus?: number,
+    readonly retryable = false,
+  ) {
     super(message);
   }
 }

@@ -101,8 +101,15 @@ function Results({ params, provider, setPage }: { params: SearchJobListingsParam
   const page = params.page ?? 1;
   if (q.isLoading) return <div className="loading-stack" aria-busy="true"><div className="skeleton skeleton-card" /><div className="skeleton skeleton-card" /><div className="skeleton skeleton-card" /></div>;
   if (q.isError) {
-    if (status(q.error) === 503) return <NotConnected />;
-    return <div className="state-card" role="alert" data-testid="status-search-error"><h3>{status(q.error) === 429 ? 'Too many searches right now' : 'The job provider did not respond'}</h3><p>{errorMessage(q.error, 'Please try again in a moment.')}</p><button className="button button-primary button-small" onClick={() => void q.refetch()} data-testid="button-retry-search">Try again</button></div>;
+    const detail = (q.error as { data?: { code?: string; retryable?: boolean } }).data;
+    if (detail?.code === 'ADZUNA_NOT_CONFIGURED') return <NotConnected />;
+    const authentication = detail?.code === 'ADZUNA_AUTH_FAILED';
+    const configuration = detail?.code === 'ADZUNA_CONFIGURATION_ERROR';
+    const title = authentication ? 'Adzuna authentication failed' : configuration ? 'Adzuna credentials need attention'
+      : status(q.error) === 429 ? 'Too many searches right now'
+      : detail?.code === 'ADZUNA_UNAVAILABLE' || detail?.code === 'ADZUNA_NETWORK_ERROR'
+        ? 'Adzuna is temporarily unavailable' : 'Job search could not be completed';
+    return <div className="state-card" role="alert" data-testid="status-search-error"><h3>{title}</h3><p>{errorMessage(q.error, 'Please try again in a moment.')}</p>{!authentication && !configuration && <button className="button button-primary button-small" onClick={() => void q.refetch()} data-testid="button-retry-search">Try again</button>}</div>;
   }
   const d = q.data!;
   const prov = d.provider ?? provider;

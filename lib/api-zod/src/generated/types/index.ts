@@ -55,6 +55,7 @@ export * from './jobListing';
 export * from './jobListingSponsorship';
 export * from './jobProvider';
 export * from './jobProviderAttribution';
+export * from './jobSearchError';
 export * from './jobSearchResponse';
 export * from './listAdminInstitutionsParams';
 export * from './listUniversitiesApplicantStatus';

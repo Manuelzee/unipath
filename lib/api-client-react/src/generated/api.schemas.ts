@@ -764,6 +764,13 @@ export interface ApplicationTask {
   createdAt: string;
 }
 
+export interface JobSearchError {
+  error: string;
+  code: string;
+  upstreamStatus?: number;
+  retryable: boolean;
+}
+
 export type JobProviderAttribution = {
   text: string;
   url: string;

@@ -7,6 +7,7 @@
  */
 import { adzunaProvider } from "../lib/jobProviders/adzuna";
 import { ProviderError } from "../lib/jobProviders/types";
+import { auditAdzunaCredentials, readAdzunaCredentials } from "../lib/jobProviders/adzunaCredentials";
 
 const emit = (value: unknown) => process.stdout.write(`${JSON.stringify(value)}\n`);
 const credentialsPresent = {
@@ -14,10 +15,46 @@ const credentialsPresent = {
   ADZUNA_APP_KEY: Boolean(process.env.ADZUNA_APP_KEY),
 };
 emit({ check: "server_environment", present: credentialsPresent });
+emit({ check: "credential_format", ...auditAdzunaCredentials() });
 if (!adzunaProvider.isConfigured()) {
   emit({ result: "blocked", error: "Required Adzuna secrets are missing." });
   process.exitCode = 1;
 } else {
+  // Explicit diagnostic: submit the saved credentials to the official endpoint
+  // even if the format audit fails. Never "repair" embedded whitespace or swap
+  // credentials. Two documentation-supported JSON formats are compared.
+  const credentials = readAdzunaCredentials();
+  for (const format of ["accept_header", "content_type_query"] as const) {
+    const query = new URLSearchParams({
+      app_id: credentials.appId,
+      app_key: credentials.appKey,
+      results_per_page: "1",
+    });
+    if (format === "content_type_query") query.set("content-type", "application/json");
+    try {
+      const response = await fetch(`https://api.adzuna.com/v1/api/jobs/us/search/1?${query}`, {
+        headers: { Accept: "application/json" },
+        signal: AbortSignal.timeout(12000),
+        redirect: "error",
+      });
+      const safe: Record<string, unknown> = {
+        check: "minimal_official_request", country: "us", format,
+        status: response.status,
+      };
+      try {
+        const body = await response.json() as Record<string, unknown>;
+        if (body.exception === "AUTH_FAIL") safe.exception = "AUTH_FAIL";
+        if (body.display === "Authorisation failed") safe.display = "Authorisation failed";
+        if (response.ok && Array.isArray(body.results)) {
+          safe.returned = body.results.length;
+        }
+      } catch { /* Suppress raw bodies: no reflected credentials may be logged. */ }
+      emit(safe);
+    } catch {
+      emit({ check: "minimal_official_request", format, result: "network_or_redirect_error",
+        error: "Request failed or timed out; raw exception suppressed." });
+    }
+  }
   const originalFetch = globalThis.fetch;
   const responses: Array<{ status: number; exception?: string; display?: string }> = [];
   // Observe the actual provider request without logging its credential-bearing URL.
@@ -60,6 +97,8 @@ if (!adzunaProvider.isConfigured()) {
     }
   } catch (error) {
     emit({ check: "real_us_part_time_student_search", result: "failed", responses,
+      code: error instanceof ProviderError ? error.code : "UNKNOWN",
+      upstreamStatus: error instanceof ProviderError ? error.upstreamStatus : undefined,
       error: error instanceof ProviderError ? error.message : "Unexpected provider failure (details suppressed to protect credentials)." });
     process.exitCode = 1;
   } finally {

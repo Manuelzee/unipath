@@ -43,6 +43,7 @@ import type {
   JobApplication,
   JobApplicationInput,
   JobProvider,
+  JobSearchError,
   JobSearchResponse,
   ListAdminInstitutionsParams,
   ListUniversitiesParams,
@@ -2681,7 +2682,7 @@ export const getSearchJobListingsQueryKey = (params?: SearchJobListingsParams,) 
     }
 
 
-export const getSearchJobListingsQueryOptions = <TData = Awaited<ReturnType<typeof searchJobListings>>, TError = ErrorType<void>>(params: SearchJobListingsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof searchJobListings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getSearchJobListingsQueryOptions = <TData = Awaited<ReturnType<typeof searchJobListings>>, TError = ErrorType<void | JobSearchError>>(params: SearchJobListingsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof searchJobListings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -2700,14 +2701,14 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type SearchJobListingsQueryResult = NonNullable<Awaited<ReturnType<typeof searchJobListings>>>
-export type SearchJobListingsQueryError = ErrorType<void>
+export type SearchJobListingsQueryError = ErrorType<void | JobSearchError>
 
 
 /**
  * @summary Search real job listings from a connected provider
  */
 
-export function useSearchJobListings<TData = Awaited<ReturnType<typeof searchJobListings>>, TError = ErrorType<void>>(
+export function useSearchJobListings<TData = Awaited<ReturnType<typeof searchJobListings>>, TError = ErrorType<void | JobSearchError>>(
  params: SearchJobListingsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof searchJobListings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
