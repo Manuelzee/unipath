@@ -3,25 +3,18 @@ name: Student directory rules
 description: Product rules for UniPath AI's student-facing college directory and official information.
 ---
 
-"Do not display annual tuition or annual cost figures anywhere in the student-facing app." Keep the existing UniPath AI design and subscription plans.
+The user now requests student-facing annual tuition comparisons, budget
+filters, preferred-currency estimates and optional total annual cost estimates.
+Keep the existing UniPath AI design and subscription prices.
 
-**Why:** The user explicitly requested this change, superseding the earlier tuition display and budget-filter requirements.
+**Why:** The explicit Annual Tuition Budget & Global Payments requirements
+uploaded on 2026-11-10 supersede the earlier ban on school tuition displays.
 
-**How to apply:** Do not add school-price displays to cards, details,
-discovery, profiles, recommendations or guidance. Subscription pricing
-remains unchanged.
-
-The user's later instruction explicitly permits the **student's own annual
-tuition/education budget** as a private input on their profile and matching
-questionnaire, in a chosen currency, while keeping institutional annual
-tuition and cost figures hidden from student-facing pages.
-
-**Why:** A student setting a private maximum is different from publishing a
-school's source-reported annual price. The latest request restored this
-planning input without withdrawing the ban on displayed school prices.
-
-**How to apply:** Compare verified institutional figures internally only when
-source year, student category and currency are appropriate. Missing costs,
+**How to apply:** Display only source-backed figures with their period, source,
+reporting date and domestic/international category. Currency conversions must
+have verified rates and timestamps. Mark missing or outdated data explicitly;
+do not invent worldwide tuition coverage or guaranteed scholarship funding.
+Preserve skippable private student budget inputs. Missing costs,
 program intakes, admission conditions and award eligibility remain unknown;
 an application priority date is not a final deadline or proof that admissions
 have closed. A preference score is not an admission or funding probability.
