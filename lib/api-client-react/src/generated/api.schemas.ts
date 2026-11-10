@@ -154,7 +154,51 @@ export const UniversityLogoVerificationStatus = {
   error: 'error',
 } as const;
 
+export type UniversityTuitionCurrency = typeof UniversityTuitionCurrency[keyof typeof UniversityTuitionCurrency];
+
+
+export const UniversityTuitionCurrency = {
+  USD: 'USD',
+} as const;
+
+export type UniversityTuitionPeriod = typeof UniversityTuitionPeriod[keyof typeof UniversityTuitionPeriod];
+
+
+export const UniversityTuitionPeriod = {
+  year: 'year',
+} as const;
+
+export type UniversityTuitionStatus = typeof UniversityTuitionStatus[keyof typeof UniversityTuitionStatus];
+
+
+export const UniversityTuitionStatus = {
+  missing: 'missing',
+  source_reported: 'source_reported',
+  outdated: 'outdated',
+} as const;
+
+export interface UniversityTuition {
+  /** @nullable */
+  inStateAmount: number | null;
+  /** @nullable */
+  outOfStateAmount: number | null;
+  /** @nullable */
+  internationalAmount: number | null;
+  /** @nullable */
+  inStateYear: number | null;
+  /** @nullable */
+  outOfStateYear: number | null;
+  currency: UniversityTuitionCurrency;
+  period: UniversityTuitionPeriod;
+  /** @nullable */
+  sourceUrl: string | null;
+  recordUpdatedAt: string;
+  status: UniversityTuitionStatus;
+  note: string;
+}
+
 export interface University {
+  tuition?: UniversityTuition;
   id: string;
   name: string;
   country: string;
@@ -302,6 +346,59 @@ export interface UniversityFilterOptions {
   ownerships: string[];
   degreeLevels: string[];
   majors: string[];
+}
+
+export interface TuitionSearchError {
+  error: string;
+  code?: string;
+}
+
+export type ExchangeRateBase = typeof ExchangeRateBase[keyof typeof ExchangeRateBase];
+
+
+export const ExchangeRateBase = {
+  USD: 'USD',
+} as const;
+
+export type ExchangeRateStatus = typeof ExchangeRateStatus[keyof typeof ExchangeRateStatus];
+
+
+export const ExchangeRateStatus = {
+  identity: 'identity',
+  available: 'available',
+  stale: 'stale',
+  unavailable: 'unavailable',
+} as const;
+
+export interface ExchangeRate {
+  base: ExchangeRateBase;
+  currency: string;
+  /** @nullable */
+  rate: number | null;
+  /** @nullable */
+  asOf: string | null;
+  fetchedAt: string;
+  sourceUrl: string;
+  status: ExchangeRateStatus;
+  note: string;
+}
+
+export type BillingAvailabilityBaseCurrency = typeof BillingAvailabilityBaseCurrency[keyof typeof BillingAvailabilityBaseCurrency];
+
+
+export const BillingAvailabilityBaseCurrency = {
+  USD: 'USD',
+} as const;
+
+export interface BillingAvailability {
+  provider: string;
+  providerConfigured: boolean;
+  livePaymentsEnabled: boolean;
+  cryptoEnabled: boolean;
+  historyAvailable: boolean;
+  baseCurrency: BillingAvailabilityBaseCurrency;
+  displayCurrencies: string[];
+  message: string;
 }
 
 export interface CountryCoverage {
@@ -1006,6 +1103,16 @@ page?: number;
 
 export type ListUniversitiesParams = {
 /**
+ * @minimum 0
+ * @maximum 1000000000000
+ */
+maxAnnualTuition?: number;
+/**
+ * @pattern ^[A-Z]{3}$
+ */
+tuitionCurrency?: string;
+tuitionRate?: ListUniversitiesTuitionRate;
+/**
  * @pattern ^[A-Z]{2}$
  */
 countryCode?: string;
@@ -1030,6 +1137,15 @@ page?: number;
 pageSize?: number;
 };
 
+export type ListUniversitiesTuitionRate = typeof ListUniversitiesTuitionRate[keyof typeof ListUniversitiesTuitionRate];
+
+
+export const ListUniversitiesTuitionRate = {
+  in_state: 'in_state',
+  out_of_state: 'out_of_state',
+  international: 'international',
+} as const;
+
 export type ListUniversitiesApplicantStatus = typeof ListUniversitiesApplicantStatus[keyof typeof ListUniversitiesApplicantStatus];
 
 
@@ -1037,6 +1153,13 @@ export const ListUniversitiesApplicantStatus = {
   Domestic: 'Domestic',
   International: 'International',
 } as const;
+
+export type GetExchangeRateParams = {
+/**
+ * @pattern ^[A-Z]{3}$
+ */
+currency: string;
+};
 
 export type ListUniversityFactsParams = {
 institutionId: string;

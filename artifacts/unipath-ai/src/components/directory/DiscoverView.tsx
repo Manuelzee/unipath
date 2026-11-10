@@ -7,7 +7,10 @@ import {
   useGetUniversityFilterOptions, useListSavedUniversities, useListUniversities, useRemoveSavedUniversity, useSaveUniversity,
 } from '@workspace/api-client-react';
 import type { ListUniversitiesParams, University } from '@workspace/api-client-react';
-import { ArrowLeft, ArrowRight, ShieldCheck, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Scale, ShieldCheck, X } from 'lucide-react';
+import { CURRENCIES } from '@/components/profile/PreferenceFields';
+import { RateNote, useUsdRate } from '@/components/money/currency';
+import { ComparePanel, type Picked } from './TuitionCompare';
 import { CoveragePanel } from './CoveragePanel';
 import { DiscoverFilters, EMPTY_FILTERS, type DiscoverFilterState } from './DiscoverFilters';
 import { SchoolCard } from './SchoolCard';
@@ -22,6 +25,16 @@ export function DiscoverView() {
   const branding = useGetInstitutionBrandingCoverage({ query: { queryKey: getGetInstitutionBrandingCoverageQueryKey(), staleTime: 30_000, refetchInterval: 60_000 } });
   const [filters, setFilters] = useState<DiscoverFilterState>(EMPTY_FILTERS);
   const [page, setPage] = useState(1);
+  const [maxTuition, setMaxTuition] = useState(''); const [tuitionCurrency, setTuitionCurrency] = useState('USD');
+  const [tuitionRate, setTuitionRate] = useState<'in_state' | 'out_of_state' | 'international'>('out_of_state');
+  const [picked, setPicked] = useState<Picked[]>([]); const [showCompare, setShowCompare] = useState(false);
+  const fx = useUsdRate(tuitionCurrency);
+  const maxTrim = maxTuition.trim(); const maxNum = maxTrim === '' ? null : Number(maxTrim);
+  const maxInvalid = maxNum != null && (!Number.isFinite(maxNum) || maxNum < 0 || maxNum > 1_000_000_000_000);
+  const budgetActive = maxNum != null && !maxInvalid;
+  const fxBlocked = budgetActive && tuitionCurrency !== 'USD' && !fx.rate;
+  const searchBlocked = maxInvalid || fxBlocked;
+  const togglePick = (s: University) => setPicked(p => p.some(x => x.id === s.id) ? p.filter(x => x.id !== s.id) : p.length >= 4 ? p : [...p, { id: s.id, name: s.name }]);
   const { isSignedIn } = useUser(); const [, setLocation] = useLocation(); const qc = useQueryClient();
   const options = useGetUniversityFilterOptions({ query: { queryKey: getGetUniversityFilterOptionsQueryKey() } });
 
@@ -52,17 +65,18 @@ export function DiscoverView() {
     if (filters.language) p.language = filters.language;
     if (filters.applicantStatus) p.applicantStatus = filters.applicantStatus;
     if (filters.fundingOnly) p.fundingOnly = true;
+    if (budgetActive && !fxBlocked) { p.maxAnnualTuition = maxNum as number; p.tuitionCurrency = tuitionCurrency; p.tuitionRate = tuitionRate; }
     return p;
-  }, [filters, page]);
+  }, [filters, page, budgetActive, fxBlocked, maxNum, tuitionCurrency, tuitionRate]);
 
-  const results = useListUniversities(params, { query: { queryKey: getListUniversitiesQueryKey(params), staleTime: 30_000, refetchInterval: 60_000 } });
+  const results = useListUniversities(params, { query: { queryKey: getListUniversitiesQueryKey(params), enabled: !searchBlocked, staleTime: 30_000, refetchInterval: 60_000 } });
   const saved = useListSavedUniversities({ query: { enabled: !!isSignedIn, queryKey: getListSavedUniversitiesQueryKey() } });
   const save = useSaveUniversity(); const remove = useRemoveSavedUniversity();
   const savedIds = new Set((saved.data || []).map(s => s.universityId));
   const pendingId = save.isPending ? save.variables?.data.universityId : remove.isPending ? remove.variables?.universityId : undefined;
   const total = results.data?.total ?? 0; const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const active = JSON.stringify(filters) !== JSON.stringify(EMPTY_FILTERS);
-  const clear = () => { setFilters(EMPTY_FILTERS); setPage(1); };
+  const active = JSON.stringify(filters) !== JSON.stringify(EMPTY_FILTERS) || maxTrim !== '';
+  const clear = () => { setFilters(EMPTY_FILTERS); setMaxTuition(''); setPage(1); };
 
   const toggleSave = (school: University) => {
     if (!isSignedIn) { setLocation('/sign-up'); return; }
@@ -89,10 +103,25 @@ export function DiscoverView() {
     </> : branding.isError ? <span>Branding coverage counts could not be loaded. This is not a zero count.</span> : <span>Loading branding coverage counts...</span>}</div>
     {options.isError && <div className="inline-warning" role="alert">Filter options could not be loaded. Institution data may be temporarily unavailable. <button onClick={() => void options.refetch()} data-testid="button-retry-filters">Retry</button></div>}
     <DiscoverFilters filters={filters} options={options.data} onChange={update}/>
-    <div className="results-header"><div><h2>{countryName ? `Institutions in ${countryName}` : 'Institutions'}</h2><p data-testid="text-result-count">{results.isLoading ? 'Searching...' : results.isError ? 'Institution search is unavailable—not a zero-record result.' : `${total.toLocaleString()} matching imported records`}</p></div>{active && <button className="clear-filters" onClick={clear} data-testid="button-clear-filters"><X size={13}/> Clear filters</button>}</div>
-    {results.isLoading ? <LoadingBlock/> : results.isError ? <ErrorBlock retry={() => void results.refetch()} title="Institution search couldn’t load" body="We could not retrieve institution records. The database or connection may be unavailable. This is not a confirmed zero-results search; please try again."/> : results.data?.items.length
-      ? <div className="school-grid" aria-busy={results.isFetching}>{results.data.items.map(s => <SchoolCard key={s.id} school={s} saved={savedIds.has(s.id)} saving={pendingId === s.id} onSave={() => toggleSave(s)}/>)}</div>
-      : <EmptyBlock testId="empty-results" title="No records match these filters" body={filters.language || filters.applicantStatus || filters.fundingOnly ? 'Many sources do not report language, applicant status, or funding. Those schools are unknown here, not excluded by the school itself. Try removing those filters.' : 'Try a broader search or clear your filters to browse every imported record.'} action="Clear search and filters" onAction={clear}/>}
-    {total > 0 && <div className="pagination-bar"><button className="button button-outline button-small" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1 || results.isFetching} data-testid="button-prev-page"><ArrowLeft size={14}/> Previous</button><span>Page {page} of {totalPages}</span><button className="button button-outline button-small" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages || results.isFetching} data-testid="button-next-page">Next <ArrowRight size={14}/></button></div>}
+    <div className="tu-filter" data-testid="panel-tuition-filter">
+      <div className="tu-filter-head"><strong>Annual tuition budget (optional)</strong><span style={{fontSize:11,color:'#687b8c'}}>Leave blank to include every school</span></div>
+      <div className="tu-filter-grid">
+        <label>MAXIMUM PER YEAR<input inputMode="decimal" value={maxTuition} onChange={e => { setMaxTuition(e.target.value); setPage(1); }} placeholder="e.g. 25000" aria-invalid={maxInvalid} data-testid="input-max-tuition"/></label>
+        <label>CURRENCY<select value={tuitionCurrency} onChange={e => { setTuitionCurrency(e.target.value); setPage(1); }} data-testid="select-tuition-currency">{CURRENCIES.map(c => <option key={c}>{c}</option>)}</select></label>
+        <label>COMPARE AGAINST<select value={tuitionRate} onChange={e => { setTuitionRate(e.target.value as typeof tuitionRate); setPage(1); }} data-testid="select-tuition-rate"><option value="out_of_state">Out-of-state (not international)</option><option value="in_state">In-state</option><option value="international">Verified international</option></select></label>
+      </div>
+      {maxInvalid && <p className="tu-error" role="alert">Enter a number from 0 to 1,000,000,000,000. Search is paused until this is corrected.</p>}
+      {fxBlocked && <p className="tu-error" role="alert" data-testid="text-fx-blocked">{fx.q.isLoading ? `Loading the ${tuitionCurrency} reference rate. Search will resume once it loads.` : `No current ${tuitionCurrency} reference rate. Search is paused; switch to USD or clear the budget to continue.`}</p>}
+      <RateNote currency={tuitionCurrency}/>
+      <p className="filter-footnote" style={{marginTop:8}}>{budgetActive ? 'Only schools with a source-reported, year-labelled figure for this rate are shown. Schools with unknown tuition are left out, not judged unaffordable.' : 'Tuition coverage is very limited. Many schools have no imported figure.'} Out-of-state tuition is not verified international tuition.{tuitionRate === 'international' ? ' Verified international figures are almost never in the source, so expect few or no matches; that is not evidence that no school fits your budget.' : ''}</p>
+    </div>
+    <div className="results-header"><div><h2>{countryName ? `Institutions in ${countryName}` : 'Institutions'}</h2><p data-testid="text-result-count">{searchBlocked ? 'Search paused — no budget-filtered result is available.' : results.isLoading ? 'Searching...' : results.isError ? 'Institution search is unavailable—not a zero-record result.' : `${total.toLocaleString()} matching imported records`}</p></div>{active && <button className="clear-filters" onClick={clear} data-testid="button-clear-filters"><X size={13}/> Clear filters</button>}</div>
+    {searchBlocked ? <p className="tu-warn" role="status">Correct the budget or load a current reference rate before viewing matching schools. Unfiltered schools are not presented as budget matches.</p> : results.isLoading ? <LoadingBlock/> : results.isError ? <ErrorBlock retry={() => void results.refetch()} title="Institution search couldn’t load" body="We could not apply this search. If a currency rate is unavailable, choose USD or clear the budget. This is not a confirmed zero-results search."/> : results.data?.items.length
+      ? <div className="school-grid" aria-busy={results.isFetching}>{results.data.items.map(s => { const on = picked.some(x => x.id === s.id); return <div key={s.id} className="cmp-card-wrap"><SchoolCard school={s} saved={savedIds.has(s.id)} saving={pendingId === s.id} onSave={() => toggleSave(s)}/><button className={'cmp-pick' + (on ? ' is-on' : '')} disabled={!on && picked.length >= 4} onClick={() => togglePick(s)} aria-pressed={on} data-testid={`button-compare-${s.id}`}><Scale size={13}/> {on ? 'Selected to compare' : picked.length >= 4 ? 'Compare limit reached (4)' : 'Compare tuition'}</button></div>; })}</div>
+      : <EmptyBlock testId="empty-results" title="No records match these filters" body={budgetActive ? 'No school has a source-reported tuition figure for this rate within your budget. Unknown tuition is excluded, so this does not mean no school is affordable. Try another rate or clear the budget.' : filters.language || filters.applicantStatus || filters.fundingOnly ? 'Many sources do not report language, applicant status, or funding. Those schools are unknown here, not excluded by the school itself. Try removing those filters.' : 'Try a broader search or clear your filters to browse every imported record.'} action="Clear search and filters" onAction={clear}/>}
+    {!searchBlocked && !results.isError && total > 0 && <div className="pagination-bar"><button className="button button-outline button-small" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1 || results.isFetching} data-testid="button-prev-page"><ArrowLeft size={14}/> Previous</button><span>Page {page} of {totalPages}</span><button className="button button-outline button-small" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages || results.isFetching} data-testid="button-next-page">Next <ArrowRight size={14}/></button></div>}
+    {picked.length > 0 && <div className="cmp-tray" data-testid="tray-compare"><strong style={{fontSize:13}}>{picked.length} of 4 selected</strong>{picked.map(p => <span key={p.id} className="cmp-chip">{p.name}<button onClick={() => setPicked(x => x.filter(y => y.id !== p.id))} aria-label={`Remove ${p.name}`} data-testid={`button-unpick-${p.id}`}><X size={12}/></button></span>)}
+      <div className="cmp-actions"><button className="button button-light button-small" disabled={picked.length < 2} onClick={() => setShowCompare(v => !v)} data-testid="button-open-compare">{picked.length < 2 ? 'Pick at least 2' : showCompare ? 'Hide comparison' : 'Compare tuition'}</button><button className="button button-outline button-small" style={{color:'#eef3f6'}} onClick={() => { setPicked([]); setShowCompare(false); }} data-testid="button-clear-compare">Clear</button></div></div>}
+    {showCompare && picked.length >= 2 && <ComparePanel picked={picked} rate={fx.rate} currency={tuitionCurrency} onRemove={id => setPicked(x => x.filter(y => y.id !== id))}/>}
   </div>;
 }

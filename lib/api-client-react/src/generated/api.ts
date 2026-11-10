@@ -31,11 +31,14 @@ import type {
   ApplicationTask,
   ApplicationTaskInput,
   ApplicationTaskUpdate,
+  BillingAvailability,
   DashboardSummary,
   DirectoryCoverage,
+  ExchangeRate,
   FundingFinderOptions,
   FundingMatchResponse,
   FundingStudentProfileInput,
+  GetExchangeRateParams,
   HealthStatus,
   InstitutionBrandingCoverage,
   InstitutionFactPage,
@@ -57,6 +60,7 @@ import type {
   StudentProfile,
   StudentProfileInput,
   StudentProfileResult,
+  TuitionSearchError,
   University,
   UniversityFilterOptions,
   WorkGuidance
@@ -1154,7 +1158,7 @@ export const getListUniversitiesQueryKey = (params?: ListUniversitiesParams,) =>
     }
 
 
-export const getListUniversitiesQueryOptions = <TData = Awaited<ReturnType<typeof listUniversities>>, TError = ErrorType<unknown>>(params?: ListUniversitiesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listUniversities>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getListUniversitiesQueryOptions = <TData = Awaited<ReturnType<typeof listUniversities>>, TError = ErrorType<TuitionSearchError>>(params?: ListUniversitiesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listUniversities>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -1173,14 +1177,14 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ListUniversitiesQueryResult = NonNullable<Awaited<ReturnType<typeof listUniversities>>>
-export type ListUniversitiesQueryError = ErrorType<unknown>
+export type ListUniversitiesQueryError = ErrorType<TuitionSearchError>
 
 
 /**
  * @summary Search imported institutions worldwide
  */
 
-export function useListUniversities<TData = Awaited<ReturnType<typeof listUniversities>>, TError = ErrorType<unknown>>(
+export function useListUniversities<TData = Awaited<ReturnType<typeof listUniversities>>, TError = ErrorType<TuitionSearchError>>(
  params?: ListUniversitiesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listUniversities>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
@@ -1263,6 +1267,297 @@ export function useGetUniversityFilterOptions<TData = Awaited<ReturnType<typeof 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetUniversityFilterOptionsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetExchangeRateUrl = (params: GetExchangeRateParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/exchange-rates?${stringifiedParams}` : `/api/exchange-rates`
+}
+
+export const getExchangeRate = async (params: GetExchangeRateParams, options?: Parameters<typeof customFetch>[1]): Promise<ExchangeRate> => {
+
+  return customFetch<ExchangeRate>(getGetExchangeRateUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetExchangeRateQueryKey = (params?: GetExchangeRateParams,) => {
+    return [
+    `/api/exchange-rates`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetExchangeRateQueryOptions = <TData = Awaited<ReturnType<typeof getExchangeRate>>, TError = ErrorType<void>>(params: GetExchangeRateParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getExchangeRate>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetExchangeRateQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getExchangeRate>>> = ({ signal }) => getExchangeRate(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getExchangeRate>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetExchangeRateQueryResult = NonNullable<Awaited<ReturnType<typeof getExchangeRate>>>
+export type GetExchangeRateQueryError = ErrorType<void>
+
+
+
+export function useGetExchangeRate<TData = Awaited<ReturnType<typeof getExchangeRate>>, TError = ErrorType<void>>(
+ params: GetExchangeRateParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getExchangeRate>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetExchangeRateQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetBillingStatusUrl = () => {
+
+
+
+
+  return `/api/billing/status`
+}
+
+export const getBillingStatus = async ( options?: Parameters<typeof customFetch>[1]): Promise<BillingAvailability> => {
+
+  return customFetch<BillingAvailability>(getGetBillingStatusUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetBillingStatusQueryKey = () => {
+    return [
+    `/api/billing/status`
+    ] as const;
+    }
+
+
+export const getGetBillingStatusQueryOptions = <TData = Awaited<ReturnType<typeof getBillingStatus>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getBillingStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetBillingStatusQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getBillingStatus>>> = ({ signal }) => getBillingStatus({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getBillingStatus>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetBillingStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getBillingStatus>>>
+export type GetBillingStatusQueryError = ErrorType<unknown>
+
+
+
+export function useGetBillingStatus<TData = Awaited<ReturnType<typeof getBillingStatus>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getBillingStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetBillingStatusQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetMyBillingUrl = () => {
+
+
+
+
+  return `/api/me/billing`
+}
+
+export const getMyBilling = async ( options?: Parameters<typeof customFetch>[1]): Promise<BillingAvailability> => {
+
+  return customFetch<BillingAvailability>(getGetMyBillingUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMyBillingQueryKey = () => {
+    return [
+    `/api/me/billing`
+    ] as const;
+    }
+
+
+export const getGetMyBillingQueryOptions = <TData = Awaited<ReturnType<typeof getMyBilling>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMyBilling>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMyBillingQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyBilling>>> = ({ signal }) => getMyBilling({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMyBilling>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetMyBillingQueryResult = NonNullable<Awaited<ReturnType<typeof getMyBilling>>>
+export type GetMyBillingQueryError = ErrorType<void>
+
+
+
+export function useGetMyBilling<TData = Awaited<ReturnType<typeof getMyBilling>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMyBilling>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetMyBillingQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetAdminBillingUrl = () => {
+
+
+
+
+  return `/api/admin/billing`
+}
+
+export const getAdminBilling = async ( options?: Parameters<typeof customFetch>[1]): Promise<BillingAvailability> => {
+
+  return customFetch<BillingAvailability>(getGetAdminBillingUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminBillingQueryKey = () => {
+    return [
+    `/api/admin/billing`
+    ] as const;
+    }
+
+
+export const getGetAdminBillingQueryOptions = <TData = Awaited<ReturnType<typeof getAdminBilling>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminBilling>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminBillingQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminBilling>>> = ({ signal }) => getAdminBilling({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminBilling>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAdminBillingQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminBilling>>>
+export type GetAdminBillingQueryError = ErrorType<void>
+
+
+
+export function useGetAdminBilling<TData = Awaited<ReturnType<typeof getAdminBilling>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminBilling>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAdminBillingQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

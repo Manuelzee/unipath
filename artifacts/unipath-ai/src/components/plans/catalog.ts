@@ -32,7 +32,7 @@ export const PLANS: Plan[] = [
     id: 'student-plus', name: 'Student Plus', price: '$9.99', period: '/month', audience: 'For students who want deeper comparisons and better planning.', cta: 'Upgrade to Student Plus', popular: true,
     features: [
       { label: 'Everything in Free', status: 'available', note: 'All current Free tools.' },
-      { label: 'Advanced university comparisons', status: 'planned', note: 'Side-by-side comparison is not built yet.' },
+      { label: 'Advanced university comparisons', status: 'limited', note: 'Tuition-only side-by-side view is available, but tuition data is not imported yet. Broader comparisons are planned.' },
       { label: 'Personalized university recommendations', status: 'available', note: 'Free while billing is unavailable.' },
       { label: 'Enhanced scholarship discovery', status: 'planned', note: 'Today only the current source links are available.' },
       { label: 'Application planning tools', status: 'available', note: 'Your personal task checklist. Free while billing is unavailable.' },

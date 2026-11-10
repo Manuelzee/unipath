@@ -15,6 +15,7 @@ import { AdminDashboardView, AdminSetupView } from '@/components/admin/AdminView
 import { PlansView } from '@/components/plans/PlansView';
 import { JobsView } from '@/components/jobs/JobsView';
 import { RecommendationsView } from '@/components/recommendations/RecommendationsView';
+import { AdminBillingView, BillingView } from '@/components/billing/BillingViews';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import {
@@ -30,7 +31,7 @@ import {
 import type { ApplicationTask, StudentProfileInput, University } from '@workspace/api-client-react';
 import {
   ArrowDownRight, ArrowLeft, ArrowRight, Bookmark, Briefcase, Check, CheckCircle2, ChevronDown,
-  Circle, Compass, ExternalLink, Globe2, GraduationCap, LayoutDashboard,
+  Circle, Compass, CreditCard, ExternalLink, Globe2, GraduationCap, LayoutDashboard,
   LoaderCircle, Menu, MessageCircle, Plus, Search, ShieldCheck, Sparkles, Trash2,
   UserRound, X,
 } from 'lucide-react';
@@ -78,6 +79,7 @@ const navItems = [
   { href: '/jobs', label: 'Global Student Jobs', icon: Briefcase, testId: 'nav-student-jobs' },
   { href: '/assistant', label: 'Guidance', icon: MessageCircle },
   { href: '/plans', label: 'Plans', icon: Sparkles },
+  { href: '/billing', label: 'Billing & Payments', icon: CreditCard, testId: 'nav-billing' },
 ];
 
 function Brand({ inverse = false }: { inverse?: boolean }) {
@@ -217,7 +219,7 @@ function Profile() {
       <PreferenceFields form={form} setForm={setForm}/>
       <div className="form-footer"><span>{profile?.updatedAt?`Last updated ${new Date(profile.updatedAt).toLocaleDateString()}`:'Your information stays yours.'}</span><button className="button button-primary" disabled={save.isPending||customInvalid||pastYear} data-testid="button-save-profile">{save.isPending?<><LoaderCircle size={16} className="spin"/> Saving…</>:save.isSuccess?<><Check size={16}/> Saved</>:<>Save my profile <ArrowRight size={16}/></>}</button></div>
       {save.isError&&<p className="form-error" role="alert">We couldn’t save your profile. Please try again.</p>}{pastYear&&<p className="form-error" role="alert">Your saved start year has passed. Choose a future year before saving.</p>}{customInvalid&&<p className="form-error" role="alert">Enter a positive custom budget amount, or choose another option.</p>}{save.isSuccess&&<p className="form-footer-note"><Link href="/recommendations" className="text-link" data-testid="link-see-matches">See your matches <ArrowRight size={14}/></Link></p>}
-      </form><aside className="profile-side"><div className="profile-note"><div className="note-icon"><ShieldCheck size={19}/></div><h3>Your plan should fit your life.</h3><p>Your interests and budget can help focus your exploration. Nothing here locks you into a choice.</p><Link href="/discover">Explore schools <ArrowRight size={14}/></Link></div><div className="profile-note pale"><Globe2 size={19}/><h3>Still figuring it out?</h3><p>That’s a perfectly good place to be. You can leave any field blank.</p></div></aside></div>}
+      </form><aside className="profile-side"><div className="profile-note"><div className="note-icon"><ShieldCheck size={19}/></div><h3>Your plan should fit your life.</h3><p>Your interests and budget can help focus your exploration. Nothing here locks you into a choice.</p><Link href="/discover">Explore schools <ArrowRight size={14}/></Link><Link href="/billing" data-testid="link-profile-billing">Billing &amp; Payments <ArrowRight size={14}/></Link></div><div className="profile-note pale"><Globe2 size={19}/><h3>Still figuring it out?</h3><p>That’s a perfectly good place to be. You can leave any field blank.</p></div></aside></div>}
   </div></Shell>;
 }
 
@@ -235,7 +237,7 @@ function Assistant() {
       <div className="prompt-list">{prompts.map((prompt,i)=><button className={cn('prompt-button',selected===i&&'prompt-selected')} onClick={()=>setSelected(i)} key={prompt} data-testid={`button-prompt-${i}`}><span>{prompt}</span><ArrowRight size={17}/></button>)}</div>
       {selected!==null&&<div className="assistant-answer page-enter"><div className="answer-label"><Sparkles size={15}/> SAMPLE RESPONSE</div><p>{answers[selected]}</p><span className="answer-caveat">Example only · not live AI advice</span></div>}
       <div className="assistant-input-ghost"><span>Live AI guidance is not available in this demo.</span><button disabled aria-label="Send message"><ArrowRight size={17}/></button></div>
-    </section><aside className="assistant-sidebar"><div className="assistant-side-card"><span className="eyebrow">KEEP IN MIND</span><ul><li><Check size={15}/> Requirements vary by university.</li><li><Check size={15}/> Tuition and admissions details are not in this directory.</li><li><Check size={15}/> You are responsible for reviewing every document.</li></ul><Link href="/discover">Search the directory <ArrowRight size={14}/></Link></div><div className="assistant-side-note"><ShieldCheck size={18}/><p>For accurate application guidance, contact the university’s admissions office.</p></div></aside></div>
+    </section><aside className="assistant-sidebar"><div className="assistant-side-card"><span className="eyebrow">KEEP IN MIND</span><ul><li><Check size={15}/> Requirements vary by university.</li><li><Check size={15}/> Tuition figures are limited and may be outdated; confirm costs with each school.</li><li><Check size={15}/> You are responsible for reviewing every document.</li></ul><Link href="/discover">Search the directory <ArrowRight size={14}/></Link></div><div className="assistant-side-note"><ShieldCheck size={18}/><p>For accurate application guidance, contact the university’s admissions office.</p></div></aside></div>
   </div></Shell>;
 }
 
@@ -274,6 +276,8 @@ function ClerkRoutes() {
       <Route path="/jobs">{()=><Protected><Shell><JobsView/></Shell></Protected>}</Route>
       <Route path="/assistant">{()=><Protected><Assistant/></Protected>}</Route>
       <Route path="/plans" component={Plans}/>
+      <Route path="/billing">{()=><Protected><Shell><BillingView/></Shell></Protected>}</Route>
+      <Route path="/admin/billing">{()=><Protected><Shell><AdminBillingView/></Shell></Protected>}</Route>
       <Route path="/admin/setup">{()=><Protected><Shell><AdminSetupView/></Shell></Protected>}</Route>
       <Route path="/admin">{()=><Protected><Shell><AdminDashboardView/></Shell></Protected>}</Route>
       <Route><div className="not-found"><Brand/><div className="state-icon"><Compass size={22}/></div><h1>That path isn’t on the map.</h1><p>The page may have moved. Let’s find your way back.</p><Link href="/" className="button button-primary">Go home <ArrowRight size={15}/></Link></div></Route>

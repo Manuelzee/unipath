@@ -272,6 +272,12 @@ export const HealthCheckResponse = zod.object({
 /**
  * @summary Search imported institutions worldwide
  */
+export const listUniversitiesQueryMaxAnnualTuitionMin = 0;
+export const listUniversitiesQueryMaxAnnualTuitionMax = 1000000000000;
+
+export const listUniversitiesQueryTuitionCurrencyDefault = `USD`;
+export const listUniversitiesQueryTuitionCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const listUniversitiesQueryTuitionRateDefault = `out_of_state`;
 export const listUniversitiesQueryCountryCodeRegExp = new RegExp('^[A-Z]{2}$');
 export const listUniversitiesQueryFundingOnlyDefault = false;
 export const listUniversitiesQueryPageDefault = 1;
@@ -282,6 +288,9 @@ export const listUniversitiesQueryPageSizeMax = 100;
 
 
 export const ListUniversitiesQueryParams = zod.object({
+  "maxAnnualTuition": zod.coerce.number().min(listUniversitiesQueryMaxAnnualTuitionMin).max(listUniversitiesQueryMaxAnnualTuitionMax).optional(),
+  "tuitionCurrency": zod.coerce.string().regex(listUniversitiesQueryTuitionCurrencyRegExp).default(listUniversitiesQueryTuitionCurrencyDefault),
+  "tuitionRate": zod.enum(['in_state', 'out_of_state', 'international']).default(listUniversitiesQueryTuitionRateDefault),
   "countryCode": zod.coerce.string().regex(listUniversitiesQueryCountryCodeRegExp).optional(),
   "city": zod.coerce.string().optional(),
   "language": zod.coerce.string().optional(),
@@ -303,6 +312,19 @@ export const listUniversitiesResponseItemsItemSecondaryColorHexRegExp = new RegE
 
 export const ListUniversitiesResponse = zod.object({
   "items": zod.array(zod.object({
+  "tuition": zod.object({
+  "inStateAmount": zod.number().nullable(),
+  "outOfStateAmount": zod.number().nullable(),
+  "internationalAmount": zod.number().nullable(),
+  "inStateYear": zod.number().int().nullable(),
+  "outOfStateYear": zod.number().int().nullable(),
+  "currency": zod.enum(['USD']),
+  "period": zod.enum(['year']),
+  "sourceUrl": zod.string().nullable(),
+  "recordUpdatedAt": zod.string(),
+  "status": zod.enum(['missing', 'source_reported', 'outdated']),
+  "note": zod.string()
+}).optional(),
   "id": zod.string(),
   "name": zod.string(),
   "country": zod.string(),
@@ -398,6 +420,61 @@ export const GetUniversityFilterOptionsResponse = zod.object({
   "ownerships": zod.array(zod.string()),
   "degreeLevels": zod.array(zod.string()),
   "majors": zod.array(zod.string())
+})
+
+
+export const getExchangeRateQueryCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+
+
+export const GetExchangeRateQueryParams = zod.object({
+  "currency": zod.coerce.string().regex(getExchangeRateQueryCurrencyRegExp)
+})
+
+export const GetExchangeRateResponse = zod.object({
+  "base": zod.enum(['USD']),
+  "currency": zod.string(),
+  "rate": zod.number().nullable(),
+  "asOf": zod.string().nullable(),
+  "fetchedAt": zod.string(),
+  "sourceUrl": zod.string(),
+  "status": zod.enum(['identity', 'available', 'stale', 'unavailable']),
+  "note": zod.string()
+})
+
+
+export const GetBillingStatusResponse = zod.object({
+  "provider": zod.string(),
+  "providerConfigured": zod.boolean(),
+  "livePaymentsEnabled": zod.boolean(),
+  "cryptoEnabled": zod.boolean(),
+  "historyAvailable": zod.boolean(),
+  "baseCurrency": zod.enum(['USD']),
+  "displayCurrencies": zod.array(zod.string()),
+  "message": zod.string()
+})
+
+
+export const GetMyBillingResponse = zod.object({
+  "provider": zod.string(),
+  "providerConfigured": zod.boolean(),
+  "livePaymentsEnabled": zod.boolean(),
+  "cryptoEnabled": zod.boolean(),
+  "historyAvailable": zod.boolean(),
+  "baseCurrency": zod.enum(['USD']),
+  "displayCurrencies": zod.array(zod.string()),
+  "message": zod.string()
+})
+
+
+export const GetAdminBillingResponse = zod.object({
+  "provider": zod.string(),
+  "providerConfigured": zod.boolean(),
+  "livePaymentsEnabled": zod.boolean(),
+  "cryptoEnabled": zod.boolean(),
+  "historyAvailable": zod.boolean(),
+  "baseCurrency": zod.enum(['USD']),
+  "displayCurrencies": zod.array(zod.string()),
+  "message": zod.string()
 })
 
 
@@ -636,6 +713,19 @@ export const getUniversityResponseSecondaryColorHexRegExp = new RegExp('^#[0-9A-
 
 
 export const GetUniversityResponse = zod.object({
+  "tuition": zod.object({
+  "inStateAmount": zod.number().nullable(),
+  "outOfStateAmount": zod.number().nullable(),
+  "internationalAmount": zod.number().nullable(),
+  "inStateYear": zod.number().int().nullable(),
+  "outOfStateYear": zod.number().int().nullable(),
+  "currency": zod.enum(['USD']),
+  "period": zod.enum(['year']),
+  "sourceUrl": zod.string().nullable(),
+  "recordUpdatedAt": zod.string(),
+  "status": zod.enum(['missing', 'source_reported', 'outdated']),
+  "note": zod.string()
+}).optional(),
   "id": zod.string(),
   "name": zod.string(),
   "country": zod.string(),
@@ -718,6 +808,19 @@ export const getStudentRecommendationsResponseItemsItemUniversitySecondaryColorH
 export const GetStudentRecommendationsResponse = zod.object({
   "items": zod.array(zod.object({
   "university": zod.object({
+  "tuition": zod.object({
+  "inStateAmount": zod.number().nullable(),
+  "outOfStateAmount": zod.number().nullable(),
+  "internationalAmount": zod.number().nullable(),
+  "inStateYear": zod.number().int().nullable(),
+  "outOfStateYear": zod.number().int().nullable(),
+  "currency": zod.enum(['USD']),
+  "period": zod.enum(['year']),
+  "sourceUrl": zod.string().nullable(),
+  "recordUpdatedAt": zod.string(),
+  "status": zod.enum(['missing', 'source_reported', 'outdated']),
+  "note": zod.string()
+}).optional(),
   "id": zod.string(),
   "name": zod.string(),
   "country": zod.string(),
@@ -970,6 +1073,19 @@ export const ListSavedUniversitiesResponseItem = zod.object({
   "universityId": zod.string(),
   "savedAt": zod.string(),
   "university": zod.object({
+  "tuition": zod.object({
+  "inStateAmount": zod.number().nullable(),
+  "outOfStateAmount": zod.number().nullable(),
+  "internationalAmount": zod.number().nullable(),
+  "inStateYear": zod.number().int().nullable(),
+  "outOfStateYear": zod.number().int().nullable(),
+  "currency": zod.enum(['USD']),
+  "period": zod.enum(['year']),
+  "sourceUrl": zod.string().nullable(),
+  "recordUpdatedAt": zod.string(),
+  "status": zod.enum(['missing', 'source_reported', 'outdated']),
+  "note": zod.string()
+}).optional(),
   "id": zod.string(),
   "name": zod.string(),
   "country": zod.string(),
@@ -1059,6 +1175,19 @@ export const SaveUniversityResponse = zod.object({
   "universityId": zod.string(),
   "savedAt": zod.string(),
   "university": zod.object({
+  "tuition": zod.object({
+  "inStateAmount": zod.number().nullable(),
+  "outOfStateAmount": zod.number().nullable(),
+  "internationalAmount": zod.number().nullable(),
+  "inStateYear": zod.number().int().nullable(),
+  "outOfStateYear": zod.number().int().nullable(),
+  "currency": zod.enum(['USD']),
+  "period": zod.enum(['year']),
+  "sourceUrl": zod.string().nullable(),
+  "recordUpdatedAt": zod.string(),
+  "status": zod.enum(['missing', 'source_reported', 'outdated']),
+  "note": zod.string()
+}).optional(),
   "id": zod.string(),
   "name": zod.string(),
   "country": zod.string(),

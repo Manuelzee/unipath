@@ -71,7 +71,7 @@ export function RecommendationsView() {
   return <div className="page page-enter">
     <div className="page-heading"><div><div className="eyebrow">MATCHED TO WHAT YOU SHARED</div><h1>Schools worth a look.</h1><p>Ranked by your saved preferences. A starting point, never a promise.</p></div>
       <Link href="/profile" className="button button-outline button-small" data-testid="link-edit-preferences"><SlidersHorizontal size={15}/> Edit questionnaire</Link></div>
-    <div className="data-notice rec-disclaimer"><ShieldCheck size={16}/><span><strong>No school tuition figures are shown.</strong> Scores reflect fit with your preferences using verified records only. They do not estimate admission chances. Confirm everything on official university pages.</span></div>
+    <div className="data-notice rec-disclaimer"><ShieldCheck size={16}/><span><strong>Tuition is not part of these scores.</strong> Where available, source-reported tuition appears on each school page. Scores reflect fit with your preferences using verified records only. They do not estimate admission chances. Confirm everything on official university pages.</span></div>
 
     {profileQ.isLoading ? <Skeleton/> : profileQ.isError ? <ErrorCard retry={() => void profileQ.refetch()}/> : <>
       <Questionnaire profile={p ?? null}/>

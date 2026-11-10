@@ -6,8 +6,19 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { ListUniversitiesApplicantStatus } from './listUniversitiesApplicantStatus';
+import type { ListUniversitiesTuitionRate } from './listUniversitiesTuitionRate';
 
 export type ListUniversitiesParams = {
+/**
+ * @minimum 0
+ * @maximum 1000000000000
+ */
+maxAnnualTuition?: number;
+/**
+ * @pattern ^[A-Z]{3}$
+ */
+tuitionCurrency?: string;
+tuitionRate?: ListUniversitiesTuitionRate;
 /**
  * @pattern ^[A-Z]{2}$
  */

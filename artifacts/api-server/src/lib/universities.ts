@@ -19,6 +19,8 @@ import {
   institutionFactsTable,
   type InstitutionDirectoryRecord,
 } from "@workspace/db";
+import { universityTuition } from "./tuition";
+import { getReferenceRate } from "./exchangeRates";
 
 export type University = typeof GetUniversityResponse._output;
 
@@ -26,6 +28,7 @@ function toUniversity(
   institution: InstitutionDirectoryRecord,
 ): University {
   return GetUniversityResponse.parse({
+    tuition: universityTuition(institution),
     id: institution.id,
     name: institution.name,
     country: institution.country,
@@ -110,6 +113,24 @@ export async function searchUniversities(
   filters: ListUniversitiesParams,
 ) {
   const conditions: SQL[] = [eq(institutionDirectoryTable.isActive, true)];
+  if (filters.maxAnnualTuition !== undefined) {
+    const fx = await getReferenceRate(filters.tuitionCurrency ?? "USD");
+    if (fx.rate === null || !["available", "identity"].includes(fx.status))
+      throw new TuitionRateUnavailable();
+    if (filters.tuitionRate === "international") {
+      // Never treat nonresident tuition as verified international tuition.
+      conditions.push(sql`false`);
+    } else {
+      const inState = filters.tuitionRate === "in_state";
+      const amount = inState ? institutionDirectoryTable.tuitionInStateUsd : institutionDirectoryTable.tuitionOutOfStateUsd;
+      const year = inState ? institutionDirectoryTable.tuitionInStateYear : institutionDirectoryTable.tuitionOutOfStateYear;
+      // Source amounts are whole USD. Round the converted ceiling down so
+      // PostgreSQL's integer comparison never receives a fractional parameter.
+      const maxUsd = Math.floor(filters.maxAnnualTuition / fx.rate);
+      conditions.push(eq(institutionDirectoryTable.countryCode, "US"));
+      conditions.push(sql`${amount} >= 0 AND ${amount} <= ${maxUsd}::double precision AND ${year} >= 2000 AND ${year} <= ${new Date().getUTCFullYear()}`);
+    }
+  }
   const search = filters.search?.trim();
   if (filters.countryCode) conditions.push(eq(institutionDirectoryTable.countryCode, filters.countryCode));
   if (filters.city?.trim()) {
@@ -185,6 +206,10 @@ export async function searchUniversities(
     page,
     pageSize,
   };
+}
+
+export class TuitionRateUnavailable extends Error {
+  constructor() { super("A current currency reference rate is unavailable. The budget filter was not applied. Retry or choose USD."); }
 }
 
 export async function findUniversity(

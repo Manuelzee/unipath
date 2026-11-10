@@ -14,7 +14,9 @@ import {
   getUniversityFilterOptions,
   searchUniversities,
   listUniversityFacts,
+  TuitionRateUnavailable,
 } from "../lib/universities";
+import { DISPLAY_CURRENCIES } from "../lib/exchangeRates";
 import {
   getDirectoryCoverage,
   getFundingFinderOptions,
@@ -67,6 +69,11 @@ router.get("/universities/filters", async (_req, res): Promise<void> => {
 });
 
 router.get("/universities", async (req, res): Promise<void> => {
+  if ((req.query.tuitionCurrency !== undefined && !DISPLAY_CURRENCIES.includes(String(req.query.tuitionCurrency))) ||
+      (typeof req.query.maxAnnualTuition === "string" && !req.query.maxAnnualTuition.trim())) {
+    res.status(400).json({ error: "Use a supported tuition currency and a nonempty numeric maximum." });
+    return;
+  }
   if (req.query.fundingOnly !== undefined &&
     !["true", "false"].includes(String(req.query.fundingOnly))) {
     res.status(400).json({ error: "fundingOnly must be true or false." });
@@ -81,8 +88,16 @@ router.get("/universities", async (req, res): Promise<void> => {
     return;
   }
 
-  const universities = await searchUniversities(query.data);
-  res.json(ListUniversitiesResponse.parse(universities));
+  try {
+    const universities = await searchUniversities(query.data);
+    res.json(ListUniversitiesResponse.parse(universities));
+  } catch (error) {
+    if (error instanceof TuitionRateUnavailable) {
+      res.status(503).json({ error: error.message, code: "TUITION_RATE_UNAVAILABLE" });
+      return;
+    }
+    throw error;
+  }
 });
 
 router.get("/universities/:id", async (req, res): Promise<void> => {

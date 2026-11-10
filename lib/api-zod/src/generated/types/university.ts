@@ -6,8 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { UniversityLogoVerificationStatus } from './universityLogoVerificationStatus';
+import type { UniversityTuition } from './universityTuition';
 
 export interface University {
+  tuition?: UniversityTuition;
   id: string;
   name: string;
   country: string;

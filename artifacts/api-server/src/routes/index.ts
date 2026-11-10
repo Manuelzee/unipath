@@ -7,6 +7,7 @@ import institutionLogosRouter from "./institutionLogos";
 import institutionBrandingRouter from "./institutionBranding";
 import adminVerificationRouter from "./adminVerification";
 import studentJobsRouter from "./studentJobs";
+import billingRouter from "./billing";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use(studentRouter);
 router.use(recommendationsRouter);
 router.use(adminVerificationRouter);
 router.use(studentJobsRouter);
+router.use(billingRouter);
 
 export default router;

@@ -190,6 +190,15 @@ paths:
       summary: Search imported institutions worldwide
       parameters:
         - in: query
+          name: maxAnnualTuition
+          schema: { type: number, minimum: 0, maximum: 1000000000000 }
+        - in: query
+          name: tuitionCurrency
+          schema: { type: string, default: USD, pattern: "^[A-Z]{3}$" }
+        - in: query
+          name: tuitionRate
+          schema: { type: string, enum: [in_state, out_of_state, international], default: out_of_state }
+        - in: query
           name: countryCode
           schema: { type: string, pattern: "^[A-Z]{2}$" }
         - in: query
@@ -234,6 +243,16 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ListUniversitiesResult" }
+        "400":
+          description: Invalid filter or unsupported currency.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TuitionSearchError" }
+        "503":
+          description: A current currency rate could not be verified; no unfiltered fallback is returned.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TuitionSearchError" }
   /universities/filters:
     get:
       operationId: getUniversityFilterOptions
@@ -245,6 +264,51 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/UniversityFilterOptions" }
+  /exchange-rates:
+    get:
+      operationId: getExchangeRate
+      parameters:
+        - in: query
+          name: currency
+          required: true
+          schema: { type: string, pattern: "^[A-Z]{3}$" }
+      responses:
+        "200":
+          description: Reference conversion from USD, never a payment quote.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ExchangeRate" }
+        "400": { description: Unsupported currency }
+  /billing/status:
+    get:
+      operationId: getBillingStatus
+      responses:
+        "200":
+          description: Honest payment availability; live checkout remains disabled.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BillingAvailability" }
+  /me/billing:
+    get:
+      operationId: getMyBilling
+      responses:
+        "200":
+          description: Account billing availability. No provider history is fabricated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BillingAvailability" }
+        "401": { description: Sign in required }
+  /admin/billing:
+    get:
+      operationId: getAdminBilling
+      responses:
+        "200":
+          description: Administrator-only provider setup status. Financial data is unavailable until connected.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BillingAvailability" }
+        "401": { description: Sign in required }
+        "403": { description: Administrator access required }
   /universities/coverage:
     get:
       operationId: getDirectoryCoverage
@@ -762,6 +826,7 @@ components:
       type: object
       required: [id, name, country, countryCode, city, state, institutionType, ownership, dataSource, dataYear, degreeLevels, degreeTypes, majors, website, admissionsWebsite, applicationWebsite, financialAidWebsite, admissionRate, admissionRateYear, completionRate, completionRateYear, completionRateType, pellGrantRate, pellGrantRateYear, medianDebtUsd, medianDebtYear, sourceUrl, isActive, lastUpdatedAt, sourceScope, sourceLicenseUrl, recognitionStatus, languages, applicantStatuses, dliNumber, dliSourceUrl, dliVerifiedAt, lastVerifiedAt]
       properties:
+        tuition: { $ref: "#/components/schemas/UniversityTuition" }
         id: { type: string }
         name: { type: string }
         country: { type: string }
@@ -862,6 +927,51 @@ components:
         majors:
           type: array
           items: { type: string }
+    UniversityTuition:
+      type: object
+      required: [inStateAmount, outOfStateAmount, internationalAmount, inStateYear, outOfStateYear, currency, period, sourceUrl, recordUpdatedAt, status, note]
+      properties:
+        inStateAmount: { type: ["number", "null"] }
+        outOfStateAmount: { type: ["number", "null"] }
+        internationalAmount: { type: ["number", "null"] }
+        inStateYear: { type: ["integer", "null"] }
+        outOfStateYear: { type: ["integer", "null"] }
+        currency: { type: string, enum: [USD] }
+        period: { type: string, enum: [year] }
+        sourceUrl: { type: ["string", "null"] }
+        recordUpdatedAt: { type: string }
+        status: { type: string, enum: [missing, source_reported, outdated] }
+        note: { type: string }
+    TuitionSearchError:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
+        code: { type: string }
+    ExchangeRate:
+      type: object
+      required: [base, currency, rate, asOf, fetchedAt, sourceUrl, status, note]
+      properties:
+        base: { type: string, enum: [USD] }
+        currency: { type: string }
+        rate: { type: ["number", "null"] }
+        asOf: { type: ["string", "null"] }
+        fetchedAt: { type: string }
+        sourceUrl: { type: string }
+        status: { type: string, enum: [identity, available, stale, unavailable] }
+        note: { type: string }
+    BillingAvailability:
+      type: object
+      required: [provider, providerConfigured, livePaymentsEnabled, cryptoEnabled, historyAvailable, baseCurrency, displayCurrencies, message]
+      properties:
+        provider: { type: string }
+        providerConfigured: { type: boolean }
+        livePaymentsEnabled: { type: boolean }
+        cryptoEnabled: { type: boolean }
+        historyAvailable: { type: boolean }
+        baseCurrency: { type: string, enum: [USD] }
+        displayCurrencies: { type: array, items: { type: string } }
+        message: { type: string }
     CountryOption:
       type: object
       required: [code, name, count]

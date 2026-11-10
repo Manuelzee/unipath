@@ -1,4 +1,8 @@
 import { useEffect, useState } from 'react';
+import { getGetBillingStatusQueryKey, useGetBillingStatus } from '@workspace/api-client-react';
+import { CURRENCIES } from '@/components/profile/PreferenceFields';
+import { RateNote, fmtMoney, useUsdRate } from '@/components/money/currency';
+import '@/components/money/money.css';
 import { Link } from 'wouter';
 import { useUser } from '@clerk/react';
 import { ArrowRight, Check, CircleDashed, Clock3, Lock, ShieldCheck } from 'lucide-react';
@@ -30,7 +34,7 @@ const FAQ = [
   ['Can I cancel?', 'There is nothing to cancel today: no subscriptions can be started. When billing launches, cancellation terms will be shown before you subscribe. There is no cancellation portal yet.'],
   ['How will billing work?', 'Student Plus and Premium are planned monthly subscriptions. Application Support packages are planned one-time purchases. Any applicable taxes and your total would be shown before payment; tax handling is not configured yet.'],
   ['What is included in each plan?', 'Each feature is labeled Available now, Limited, or Planned. Planned features are not built. Live AI is not connected, and the Guidance page shows prepared examples only.'],
-  ['Are these prices tuition?', 'No. These are UniPath subscription and support prices only. UniPath does not list school annual costs; check each institution directly.'],
+  ['Are these prices tuition?', 'No. These are UniPath subscription and support prices only. Where a source reports school tuition, it appears on that school page with its year; always confirm costs with each institution.'],
 ];
 
 export function PlansView() {
@@ -40,6 +44,11 @@ export function PlansView() {
   const [supportOpen, setSupportOpen] = useState(false);
   const [pkg, setPkg] = useState(PACKAGES[0].id);
   const selected = PACKAGES.find(p => p.id === pkg)!;
+  const billing = useGetBillingStatus({ query: { queryKey: getGetBillingStatusQueryKey() } });
+  const [currency, setCurrency] = useState('USD');
+  const { rate } = useUsdRate(currency);
+  const conv = (price: string) => { if (currency === 'USD' || !rate) return null; const nums = price.match(/[\d.]+/g)?.map(Number) ?? []; if (!nums.length || nums.every(n => n === 0)) return null; return 'about ' + nums.map(n => fmtMoney(n * rate, currency)).join(' – '); };
+  const options = billing.data?.displayCurrencies?.length ? billing.data.displayCurrencies : CURRENCIES;
 
   return <div className="page page-enter pp">
     <header className="pp-hero">
@@ -50,6 +59,10 @@ export function PlansView() {
 
     <div className="plans-callout" data-testid="status-billing"><ShieldCheck size={17} /><span><strong>Nothing is charged today.</strong> Payment processing is not configured, so no checkout or subscription can be started. Every tool that works today stays free while billing is unavailable. No hidden fees: prices shown are in USD, before any applicable tax.</span></div>
 
+    <div className="pp-currency"><label htmlFor="pp-cur">Show estimates in</label><select id="pp-cur" value={currency} onChange={e => setCurrency(e.target.value)} data-testid="select-plans-currency">{options.map(c => <option key={c}>{c}</option>)}</select><span style={{fontSize:12,color:'#5d7081'}}>Prices are set and would be charged in USD.</span></div>
+    <RateNote currency={currency} testId="text-plans-rate"/>
+    {billing.isError ? <p className="fx-note fx-warn">Billing status could not be loaded. Payments remain unavailable.</p> : billing.data && <p className="fx-note" data-testid="text-billing-status">{billing.data.message}</p>}
+
     <div className="pp-legend" aria-label="Availability legend">
       {(['available', 'limited', 'planned'] as Availability[]).map(s => <span key={s} className={`pp-status pp-${s}`}><StatusIcon s={s} />{AVAILABILITY_LABEL[s]}</span>)}
     </div>
@@ -58,7 +71,7 @@ export function PlansView() {
       {PLANS.map(plan => <article key={plan.id} className={plan.popular ? 'pp-card pp-popular' : 'pp-card'} data-testid={`card-plan-${plan.id}`}>
         {plan.popular && <span className="pp-badge" data-testid="badge-most-popular">Most Popular</span>}
         <h2>{plan.name}</h2>
-        <div className="pp-price" data-testid={`text-price-${plan.id}`}>{plan.price}<small>{plan.period}</small></div>
+        <div className="pp-price" data-testid={`text-price-${plan.id}`}>{plan.price}<small>{plan.period}</small>{conv(plan.price) && <span className="fx-converted">{conv(plan.price)}{plan.period.startsWith('/') ? plan.period : ''}</span>}</div>
         <p className="pp-aud">{plan.audience}</p>
         <ul className="pp-features">
           {plan.features.map(f => <li key={f.label} className={`pp-f pp-f-${f.status}`}>
@@ -73,7 +86,7 @@ export function PlansView() {
 
       <article className="pp-card pp-support" data-testid="card-plan-application-support">
         <h2>{SUPPORT.name}</h2>
-        <div className="pp-price" data-testid="text-price-application-support">{SUPPORT.price}<small>{SUPPORT.period}</small></div>
+        <div className="pp-price" data-testid="text-price-application-support">{SUPPORT.price}<small>{SUPPORT.period}</small>{conv(SUPPORT.price) && <span className="fx-converted">{conv(SUPPORT.price)}</span>}</div>
         <p className="pp-aud">{SUPPORT.audience}</p>
         <ul className="pp-features">
           {SUPPORT.features.map(f => <li key={f} className="pp-f pp-f-planned"><StatusIcon s="planned" /><div><span>{f} <em className="pp-status pp-planned">Planned</em></span></div></li>)}
@@ -112,7 +125,7 @@ export function PlansView() {
       <div role="radiogroup" aria-label="Application Support packages" className="pp-pkgs">
         {PACKAGES.map(p => <label key={p.id} className={p.id === pkg ? 'pp-pkg pp-pkg-on' : 'pp-pkg'} data-testid={`option-package-${p.id}`}>
           <input type="radio" name="package" value={p.id} checked={p.id === pkg} onChange={() => setPkg(p.id)} data-testid={`radio-package-${p.id}`} />
-          <span>{p.name}</span><b>{p.price}</b>
+          <span>{p.name}</span><b>{p.price}{conv(p.price) && <span className="fx-converted">{conv(p.price)}</span>}</b>
         </label>)}
       </div>
       <div className="pp-pkg-detail" data-testid={`detail-package-${selected.id}`}>

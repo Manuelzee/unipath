@@ -22,5 +22,15 @@ submission, admissions, or scholarship outcomes without explicit
 implementation and authorization.
 
 Subscription/service prices are distinct from institution tuition/cost
-figures; the student-facing school-price restriction does not hide
-UniPath's own plan prices.
+figures. School-price displays are now permitted by the later annual-budget
+requirements; the original UniPath plan prices remain unchanged.
+
+Keep live payments and publishing approval-gated. An unavailable billing screen must not be presented as working
+checkout, refund management or a transaction history.
+
+**Why:** The Annual Tuition Budget & Global Payments requirements require
+sandbox testing first and explicit owner approval before live payments or publishing.
+
+**How to apply:** Request a secure provider connection when implementation is
+resumed. Never infer merchant/customer crypto eligibility or recurring payment
+support from a processor's general marketing.

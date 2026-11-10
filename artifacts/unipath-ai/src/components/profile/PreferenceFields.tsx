@@ -70,7 +70,8 @@ export function PreferenceFields({ form, setForm }: Props) {
   return <>
     <div className="pref-section">
       <div className="pref-head"><h3>Annual Tuition Budget</h3><span className="pref-private"><Lock size={12}/> Private to you</span></div>
-      <p className="pref-sub">Your own planning number. School tuition figures are never shown, and this is not shared with schools.</p>
+      <p className="pref-sub">Optional. Your own planning number, not shared with schools. You can use it when setting university search filters. Where a source reports tuition, it is shown on school pages with its reporting year.</p>
+      <button type="button" className="pref-skip" onClick={() => setForm(f => ({ ...f, budgetChoice: 'none', customBudget: null, annualBudgetUsd: 0 }))} data-testid="button-skip-budget">{form.budgetChoice && form.budgetChoice !== 'none' ? 'Clear and skip this for now' : 'Skipping is fine: no budget limit'} · Save profile to keep this choice</button>
       <div className="budget-grid" role="radiogroup" aria-label="Annual tuition budget">
         {BUDGET_CHOICES.map(c => <button type="button" role="radio" aria-checked={form.budgetChoice === c} key={c}
           className={'budget-chip' + (form.budgetChoice === c ? ' is-on' : '')}
