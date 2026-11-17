@@ -17,6 +17,8 @@ import {
   db,
   institutionDirectoryTable,
   institutionFactsTable,
+  institutionTuitionTable,
+  type InstitutionTuitionRecord,
   type InstitutionDirectoryRecord,
 } from "@workspace/db";
 import { universityTuition } from "./tuition";
@@ -26,9 +28,10 @@ export type University = typeof GetUniversityResponse._output;
 
 function toUniversity(
   institution: InstitutionDirectoryRecord,
+  tuition: InstitutionTuitionRecord[] = [],
 ): University {
   return GetUniversityResponse.parse({
-    tuition: universityTuition(institution),
+    tuition: universityTuition(institution, tuition),
     id: institution.id,
     name: institution.name,
     country: institution.country,
@@ -111,26 +114,51 @@ function likePattern(value: string) {
 
 export async function searchUniversities(
   filters: ListUniversitiesParams,
-  database: Pick<typeof db, "select"> = db,
+  database: Pick<typeof db, "select" | "selectDistinct"> = db,
 ) {
   const conditions: SQL[] = [eq(institutionDirectoryTable.isActive, true)];
   if (filters.maxAnnualTuition !== undefined) {
-    const fx = await getReferenceRate(filters.tuitionCurrency ?? "USD");
-    if (fx.rate === null || !["available", "identity"].includes(fx.status))
-      throw new TuitionRateUnavailable();
-    if (filters.tuitionRate === "international") {
-      // Never treat nonresident tuition as verified international tuition.
-      conditions.push(sql`false`);
-    } else {
-      const inState = filters.tuitionRate === "in_state";
+    const category = filters.tuitionRate ?? "out_of_state";
+    const displayCurrency = filters.tuitionCurrency ?? "USD";
+    const currencies = await database.selectDistinct({ currency: institutionTuitionTable.currency })
+      .from(institutionTuitionTable).where(eq(institutionTuitionTable.category, category));
+    const nativeCurrencies = new Set(currencies.map(c => c.currency));
+    if (category === "in_state" || category === "out_of_state") nativeCurrencies.add("USD");
+    const alternatives: SQL[] = [];
+    for (const nativeCurrency of nativeCurrencies) {
+      let factor = 1;
+      if (nativeCurrency !== displayCurrency) {
+        const [target, native] = await Promise.all([getReferenceRate(displayCurrency), getReferenceRate(nativeCurrency)]);
+        if (target.rate === null || native.rate === null ||
+          !["available", "identity"].includes(target.status) || !["available", "identity"].includes(native.status))
+          throw new TuitionRateUnavailable();
+        factor = target.rate / native.rate;
+      }
+      const ceiling = filters.maxAnnualTuition / factor;
+      // Absorb only binary floating-point noise at an inclusive boundary, not
+      // a cent of additional spending or a rounded-up whole currency unit.
+      const maximum = ceiling + Math.abs(ceiling) * Number.EPSILON * 4;
+      alternatives.push(sql`exists (select 1 from ${institutionTuitionTable}
+        where ${institutionTuitionTable.institutionId} = ${institutionDirectoryTable.id}
+        and ${institutionTuitionTable.category} = ${category}
+        and ${institutionTuitionTable.currency} = ${nativeCurrency}
+        and ${institutionTuitionTable.amount} >= 0
+        and ${institutionTuitionTable.amount} <= ${maximum}::double precision
+        and ${institutionTuitionTable.year} >= 2000
+        and ${institutionTuitionTable.year} <= ${new Date().getUTCFullYear()})`);
+      if (nativeCurrency !== "USD" || (category !== "in_state" && category !== "out_of_state")) continue;
+      const inState = category === "in_state";
       const amount = inState ? institutionDirectoryTable.tuitionInStateUsd : institutionDirectoryTable.tuitionOutOfStateUsd;
       const year = inState ? institutionDirectoryTable.tuitionInStateYear : institutionDirectoryTable.tuitionOutOfStateYear;
-      // Source amounts are whole USD. Round the converted ceiling down so
-      // PostgreSQL's integer comparison never receives a fractional parameter.
-      const maxUsd = Math.floor(filters.maxAnnualTuition / fx.rate);
-      conditions.push(eq(institutionDirectoryTable.countryCode, "US"));
-      conditions.push(sql`${amount} >= 0 AND ${amount} <= ${maxUsd}::double precision AND ${year} >= 2000 AND ${year} <= ${new Date().getUTCFullYear()}`);
+      alternatives.push(sql`(${institutionDirectoryTable.countryCode} = 'US'
+        and coalesce(${institutionDirectoryTable.scorecardId}, ${institutionDirectoryTable.ipedsId}) > 0
+        and not exists (select 1 from ${institutionTuitionTable}
+          where ${institutionTuitionTable.institutionId} = ${institutionDirectoryTable.id}
+          and ${institutionTuitionTable.category} = ${category})
+        and ${amount} >= 0 AND ${amount} <= ${maximum}::double precision
+        AND ${year} >= 2000 AND ${year} <= ${new Date().getUTCFullYear()})`);
     }
+    conditions.push(alternatives.length ? or(...alternatives)! : sql`false`);
   }
   const search = filters.search?.trim();
   if (filters.countryCode) conditions.push(eq(institutionDirectoryTable.countryCode, filters.countryCode));
@@ -201,8 +229,10 @@ export async function searchUniversities(
       .offset((page - 1) * pageSize),
   ]);
 
+  const tuition = rows.length ? await database.select().from(institutionTuitionTable)
+    .where(inArray(institutionTuitionTable.institutionId, rows.map(r => r.id))) : [];
   return {
-    items: rows.map(toUniversity),
+    items: rows.map(row => toUniversity(row, tuition.filter(q => q.institutionId === row.id))),
     total: countResult[0]?.total ?? 0,
     page,
     pageSize,
@@ -210,7 +240,7 @@ export async function searchUniversities(
 }
 
 export class TuitionRateUnavailable extends Error {
-  constructor() { super("A current currency reference rate is unavailable. The budget filter was not applied. Retry or choose USD."); }
+  constructor() { super("A current currency reference rate is unavailable. The budget filter was not applied. Retry or choose the tuition source currency."); }
 }
 
 export async function findUniversity(
@@ -221,7 +251,9 @@ export async function findUniversity(
     .from(institutionDirectoryTable)
     .where(eq(institutionDirectoryTable.id, id))
     .limit(1);
-  return institution ? toUniversity(institution) : undefined;
+  if (!institution) return undefined;
+  const tuition = await db.select().from(institutionTuitionTable).where(eq(institutionTuitionTable.institutionId, id));
+  return toUniversity(institution, tuition);
 }
 
 export async function findUniversities(
@@ -232,9 +264,10 @@ export async function findUniversities(
     .select()
     .from(institutionDirectoryTable)
     .where(inArray(institutionDirectoryTable.id, ids));
+  const tuition = await db.select().from(institutionTuitionTable).where(inArray(institutionTuitionTable.institutionId, ids));
   return new Map(institutions.map((institution) => [
     institution.id,
-    toUniversity(institution),
+    toUniversity(institution, tuition.filter(q => q.institutionId === institution.id)),
   ]));
 }
 

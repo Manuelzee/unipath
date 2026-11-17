@@ -5,10 +5,11 @@
  */
 import { db, institutionDirectoryTable as schools } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
+import { importTuitionFile } from "../lib/tuitionImport";
 
 const emit = (value: unknown) => process.stdout.write(`${JSON.stringify(value)}\n`);
 const key = process.env.COLLEGE_SCORECARD_API_KEY;
-const years = [2024, 2023, 2022];
+const years = [1, 2, 3].map(age => new Date().getUTCFullYear() - age);
 type RecordRow = Record<string, unknown>;
 async function page(pageNumber: number) {
   const url = new URL("https://api.data.gov/ed/collegescorecard/v1/schools");
@@ -16,6 +17,7 @@ async function page(pageNumber: number) {
   url.searchParams.set("school.operating", "1");
   url.searchParams.set("per_page", "100");
   url.searchParams.set("page", String(pageNumber));
+  url.searchParams.set("sort", "id");
   url.searchParams.set("fields", ["id", ...years.flatMap(y => [
     `${y}.cost.tuition.in_state`, `${y}.cost.tuition.out_of_state`,
   ])].join(","));
@@ -42,6 +44,12 @@ const metric = (row: RecordRow, kind: string) => {
 };
 
 try {
+  const fileIndex = process.argv.indexOf("--file");
+  if (fileIndex !== -1) {
+    const path = process.argv[fileIndex + 1];
+    if (!path) throw new Error("Official normalized tuition file is required after --file.");
+    emit({ result: "completed", ...await importTuitionFile(path) });
+  } else {
   if (!key) throw new Error("COLLEGE_SCORECARD_API_KEY is not configured; no tuition was imported.");
   const first = await page(0);
   const rows = [...first.rows];
@@ -80,6 +88,7 @@ try {
   });
   emit({ result: "completed", officialRows: rows.length, updatedInstitutions: updated,
     reportingYearsRequested: years, scope: "Annual U.S. undergraduate in-state/out-of-state tuition only. Not international rates or worldwide coverage." });
+  }
 } catch (error) {
   // Only locally-authored messages above; never serialize a fetch/DB exception.
   const safe = error instanceof Error && /^(Official|COLLEGE_)/.test(error.message)

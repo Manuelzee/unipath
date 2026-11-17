@@ -290,7 +290,7 @@ export const listUniversitiesQueryPageSizeMax = 100;
 export const ListUniversitiesQueryParams = zod.object({
   "maxAnnualTuition": zod.coerce.number().min(listUniversitiesQueryMaxAnnualTuitionMin).max(listUniversitiesQueryMaxAnnualTuitionMax).optional(),
   "tuitionCurrency": zod.coerce.string().regex(listUniversitiesQueryTuitionCurrencyRegExp).default(listUniversitiesQueryTuitionCurrencyDefault),
-  "tuitionRate": zod.enum(['in_state', 'out_of_state', 'international']).default(listUniversitiesQueryTuitionRateDefault),
+  "tuitionRate": zod.enum(['in_state', 'out_of_state', 'domestic', 'international']).default(listUniversitiesQueryTuitionRateDefault),
   "countryCode": zod.coerce.string().regex(listUniversitiesQueryCountryCodeRegExp).optional(),
   "city": zod.coerce.string().optional(),
   "language": zod.coerce.string().optional(),
@@ -306,6 +306,8 @@ export const ListUniversitiesQueryParams = zod.object({
   "pageSize": zod.coerce.number().int().min(1).max(listUniversitiesQueryPageSizeMax).default(listUniversitiesQueryPageSizeDefault)
 })
 
+export const listUniversitiesResponseItemsItemTuitionQuotesItemAmountMin = 0;
+
 export const listUniversitiesResponseItemsItemPrimaryColorHexRegExp = new RegExp('^#[0-9A-Fa-f]{6}$');
 export const listUniversitiesResponseItemsItemSecondaryColorHexRegExp = new RegExp('^#[0-9A-Fa-f]{6}$');
 
@@ -313,6 +315,23 @@ export const listUniversitiesResponseItemsItemSecondaryColorHexRegExp = new RegE
 export const ListUniversitiesResponse = zod.object({
   "items": zod.array(zod.object({
   "tuition": zod.object({
+  "quotes": zod.array(zod.object({
+  "category": zod.enum(['in_state', 'out_of_state', 'domestic', 'international']),
+  "amount": zod.number().min(listUniversitiesResponseItemsItemTuitionQuotesItemAmountMin),
+  "currency": zod.enum(['USD', 'CAD']),
+  "year": zod.number().int(),
+  "academicYear": zod.string(),
+  "period": zod.enum(['year']),
+  "scope": zod.string(),
+  "sourceName": zod.string(),
+  "sourceUrl": zod.string(),
+  "sourceFileUrl": zod.string(),
+  "sourceLicenseUrl": zod.string(),
+  "attribution": zod.string(),
+  "sourcePublishedAt": zod.string().nullable(),
+  "importedAt": zod.string(),
+  "status": zod.enum(['source_reported', 'outdated'])
+})),
   "inStateAmount": zod.number().nullable(),
   "outOfStateAmount": zod.number().nullable(),
   "internationalAmount": zod.number().nullable(),
@@ -845,12 +864,31 @@ export const GetUniversityParams = zod.object({
   "id": zod.coerce.string()
 })
 
+export const getUniversityResponseTuitionQuotesItemAmountMin = 0;
+
 export const getUniversityResponsePrimaryColorHexRegExp = new RegExp('^#[0-9A-Fa-f]{6}$');
 export const getUniversityResponseSecondaryColorHexRegExp = new RegExp('^#[0-9A-Fa-f]{6}$');
 
 
 export const GetUniversityResponse = zod.object({
   "tuition": zod.object({
+  "quotes": zod.array(zod.object({
+  "category": zod.enum(['in_state', 'out_of_state', 'domestic', 'international']),
+  "amount": zod.number().min(getUniversityResponseTuitionQuotesItemAmountMin),
+  "currency": zod.enum(['USD', 'CAD']),
+  "year": zod.number().int(),
+  "academicYear": zod.string(),
+  "period": zod.enum(['year']),
+  "scope": zod.string(),
+  "sourceName": zod.string(),
+  "sourceUrl": zod.string(),
+  "sourceFileUrl": zod.string(),
+  "sourceLicenseUrl": zod.string(),
+  "attribution": zod.string(),
+  "sourcePublishedAt": zod.string().nullable(),
+  "importedAt": zod.string(),
+  "status": zod.enum(['source_reported', 'outdated'])
+})),
   "inStateAmount": zod.number().nullable(),
   "outOfStateAmount": zod.number().nullable(),
   "internationalAmount": zod.number().nullable(),
@@ -938,6 +976,8 @@ export const GetUniversityResponse = zod.object({
 /**
  * @summary Explainable preference recommendations using the account's saved questionnaire
  */
+export const getStudentRecommendationsResponseItemsItemUniversityTuitionQuotesItemAmountMin = 0;
+
 export const getStudentRecommendationsResponseItemsItemUniversityPrimaryColorHexRegExp = new RegExp('^#[0-9A-Fa-f]{6}$');
 export const getStudentRecommendationsResponseItemsItemUniversitySecondaryColorHexRegExp = new RegExp('^#[0-9A-Fa-f]{6}$');
 
@@ -946,6 +986,23 @@ export const GetStudentRecommendationsResponse = zod.object({
   "items": zod.array(zod.object({
   "university": zod.object({
   "tuition": zod.object({
+  "quotes": zod.array(zod.object({
+  "category": zod.enum(['in_state', 'out_of_state', 'domestic', 'international']),
+  "amount": zod.number().min(getStudentRecommendationsResponseItemsItemUniversityTuitionQuotesItemAmountMin),
+  "currency": zod.enum(['USD', 'CAD']),
+  "year": zod.number().int(),
+  "academicYear": zod.string(),
+  "period": zod.enum(['year']),
+  "scope": zod.string(),
+  "sourceName": zod.string(),
+  "sourceUrl": zod.string(),
+  "sourceFileUrl": zod.string(),
+  "sourceLicenseUrl": zod.string(),
+  "attribution": zod.string(),
+  "sourcePublishedAt": zod.string().nullable(),
+  "importedAt": zod.string(),
+  "status": zod.enum(['source_reported', 'outdated'])
+})),
   "inStateAmount": zod.number().nullable(),
   "outOfStateAmount": zod.number().nullable(),
   "internationalAmount": zod.number().nullable(),
@@ -1256,6 +1313,8 @@ export const SaveStudentProfileResponse = zod.object({
 /**
  * @summary List saved universities for the signed-in student
  */
+export const listSavedUniversitiesResponseUniversityTuitionQuotesItemAmountMin = 0;
+
 export const listSavedUniversitiesResponseUniversityPrimaryColorHexRegExp = new RegExp('^#[0-9A-Fa-f]{6}$');
 export const listSavedUniversitiesResponseUniversitySecondaryColorHexRegExp = new RegExp('^#[0-9A-Fa-f]{6}$');
 
@@ -1265,6 +1324,23 @@ export const ListSavedUniversitiesResponseItem = zod.object({
   "savedAt": zod.string(),
   "university": zod.object({
   "tuition": zod.object({
+  "quotes": zod.array(zod.object({
+  "category": zod.enum(['in_state', 'out_of_state', 'domestic', 'international']),
+  "amount": zod.number().min(listSavedUniversitiesResponseUniversityTuitionQuotesItemAmountMin),
+  "currency": zod.enum(['USD', 'CAD']),
+  "year": zod.number().int(),
+  "academicYear": zod.string(),
+  "period": zod.enum(['year']),
+  "scope": zod.string(),
+  "sourceName": zod.string(),
+  "sourceUrl": zod.string(),
+  "sourceFileUrl": zod.string(),
+  "sourceLicenseUrl": zod.string(),
+  "attribution": zod.string(),
+  "sourcePublishedAt": zod.string().nullable(),
+  "importedAt": zod.string(),
+  "status": zod.enum(['source_reported', 'outdated'])
+})),
   "inStateAmount": zod.number().nullable(),
   "outOfStateAmount": zod.number().nullable(),
   "internationalAmount": zod.number().nullable(),
@@ -1358,6 +1434,8 @@ export const SaveUniversityBody = zod.object({
   "universityId": zod.string()
 })
 
+export const saveUniversityResponseUniversityTuitionQuotesItemAmountMin = 0;
+
 export const saveUniversityResponseUniversityPrimaryColorHexRegExp = new RegExp('^#[0-9A-Fa-f]{6}$');
 export const saveUniversityResponseUniversitySecondaryColorHexRegExp = new RegExp('^#[0-9A-Fa-f]{6}$');
 
@@ -1367,6 +1445,23 @@ export const SaveUniversityResponse = zod.object({
   "savedAt": zod.string(),
   "university": zod.object({
   "tuition": zod.object({
+  "quotes": zod.array(zod.object({
+  "category": zod.enum(['in_state', 'out_of_state', 'domestic', 'international']),
+  "amount": zod.number().min(saveUniversityResponseUniversityTuitionQuotesItemAmountMin),
+  "currency": zod.enum(['USD', 'CAD']),
+  "year": zod.number().int(),
+  "academicYear": zod.string(),
+  "period": zod.enum(['year']),
+  "scope": zod.string(),
+  "sourceName": zod.string(),
+  "sourceUrl": zod.string(),
+  "sourceFileUrl": zod.string(),
+  "sourceLicenseUrl": zod.string(),
+  "attribution": zod.string(),
+  "sourcePublishedAt": zod.string().nullable(),
+  "importedAt": zod.string(),
+  "status": zod.enum(['source_reported', 'outdated'])
+})),
   "inStateAmount": zod.number().nullable(),
   "outOfStateAmount": zod.number().nullable(),
   "internationalAmount": zod.number().nullable(),

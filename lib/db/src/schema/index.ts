@@ -23,5 +23,6 @@ export * from "./matchingEvidence";
 export * from "./savedUniversities";
 export * from "./applicationTasks";
 export * from "./institutionDirectory";
+export * from "./institutionTuition";
 export * from "./institutionFacts";
 export * from "./institutionLogoAssets";export * from "./jobApplications";

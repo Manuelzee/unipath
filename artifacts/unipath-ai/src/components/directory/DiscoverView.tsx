@@ -26,14 +26,15 @@ export function DiscoverView() {
   const [filters, setFilters] = useState<DiscoverFilterState>(EMPTY_FILTERS);
   const [page, setPage] = useState(1);
   const [maxTuition, setMaxTuition] = useState(''); const [tuitionCurrency, setTuitionCurrency, savedBudget] = usePreferredCurrency(); const [applyMsg, setApplyMsg] = useState('');
-  const [tuitionRate, setTuitionRate] = useState<'in_state' | 'out_of_state' | 'international'>('out_of_state');
+  const [tuitionRate, setTuitionRate] = useState<'in_state' | 'out_of_state' | 'domestic' | 'international'>('out_of_state');
   const [picked, setPicked] = useState<Picked[]>([]); const [showCompare, setShowCompare] = useState(false);
   const fx = useUsdRate(tuitionCurrency);
   const maxTrim = maxTuition.trim(); const maxNum = maxTrim === '' ? null : Number(maxTrim);
   const maxInvalid = maxNum != null && (!Number.isFinite(maxNum) || maxNum < 0 || maxNum > 1_000_000_000_000);
   const budgetActive = maxNum != null && !maxInvalid;
-  const fxBlocked = budgetActive && tuitionCurrency !== 'USD' && !fx.rate;
-  const searchBlocked = maxInvalid || fxBlocked;
+  // Native-currency filters need no FX. The server verifies every cross rate
+  // against the actual source currencies and returns an explicit error if needed.
+  const searchBlocked = maxInvalid;
   const CEIL: Record<string, number> = { under_5000: 5000, '5000_10000': 10000, '10000_20000': 20000, '20000_35000': 35000, '35000_50000': 50000 };
   const applySaved = () => {
     const b = savedBudget; if (!b) return;
@@ -74,9 +75,9 @@ export function DiscoverView() {
     if (filters.language) p.language = filters.language;
     if (filters.applicantStatus) p.applicantStatus = filters.applicantStatus;
     if (filters.fundingOnly) p.fundingOnly = true;
-    if (budgetActive && !fxBlocked) { p.maxAnnualTuition = maxNum as number; p.tuitionCurrency = tuitionCurrency; p.tuitionRate = tuitionRate; }
+    if (budgetActive) { p.maxAnnualTuition = maxNum as number; p.tuitionCurrency = tuitionCurrency; p.tuitionRate = tuitionRate; }
     return p;
-  }, [filters, page, budgetActive, fxBlocked, maxNum, tuitionCurrency, tuitionRate]);
+  }, [filters, page, budgetActive, maxNum, tuitionCurrency, tuitionRate]);
 
   const results = useListUniversities(params, { query: { queryKey: getListUniversitiesQueryKey(params), enabled: !searchBlocked, staleTime: 30_000, refetchInterval: 60_000 } });
   const saved = useListSavedUniversities({ query: { enabled: !!isSignedIn, queryKey: getListSavedUniversitiesQueryKey() } });
@@ -118,15 +119,14 @@ export function DiscoverView() {
       <div className="tu-filter-grid">
         <label>MAXIMUM PER YEAR<input inputMode="decimal" value={maxTuition} onChange={e => { setMaxTuition(e.target.value); setPage(1); }} placeholder="e.g. 25000" aria-invalid={maxInvalid} data-testid="input-max-tuition"/></label>
         <label>CURRENCY<CurrencySelect value={tuitionCurrency} onChange={v => { setTuitionCurrency(v); setPage(1); }} testId="select-tuition-currency"/></label>
-        <label>COMPARE AGAINST<select value={tuitionRate} onChange={e => { setTuitionRate(e.target.value as typeof tuitionRate); setPage(1); }} data-testid="select-tuition-rate"><option value="out_of_state">Out-of-state (not international)</option><option value="in_state">In-state</option><option value="international">Verified international</option></select></label>
+        <label>COMPARE AGAINST<select value={tuitionRate} onChange={e => { setTuitionRate(e.target.value as typeof tuitionRate); setPage(1); }} data-testid="select-tuition-rate"><option value="out_of_state">U.S. out-of-state (not international)</option><option value="in_state">U.S. in-state</option><option value="domestic">Domestic (B.C. arts programs)</option><option value="international">International (B.C. arts programs)</option></select></label>
       </div>
       {maxInvalid && <p className="tu-error" role="alert">Enter a number from 0 to 1,000,000,000,000. Search is paused until this is corrected.</p>}
-      {fxBlocked && <p className="tu-error" role="alert" data-testid="text-fx-blocked">{fx.q.isLoading ? `Loading the ${tuitionCurrency} reference rate. Search will resume once it loads.` : `No current ${tuitionCurrency} reference rate. Search is paused; switch to USD or clear the budget to continue.`}</p>}
       <RateNote currency={tuitionCurrency}/>
-      <p className="filter-footnote" style={{marginTop:8}}>{budgetActive ? 'Only schools with a source-reported, year-labelled figure for this rate are shown. Schools with unknown tuition are left out, not judged unaffordable.' : 'Tuition coverage is very limited. Many schools have no imported figure.'} Out-of-state tuition is not verified international tuition.{tuitionRate === 'international' ? ' Verified international figures are almost never in the source, so expect few or no matches; that is not evidence that no school fits your budget.' : ''}</p>
+      <p className="filter-footnote" style={{marginTop:8}}>{budgetActive ? 'Only schools with a source-reported, year-labelled figure for this category are shown. Historical figures can match: this is not a current-price affordability guarantee. Schools with unknown tuition are left out, not judged unaffordable.' : 'Tuition coverage is partial. Many schools have no imported figure.'} U.S. out-of-state is not international tuition. Non-U.S. coverage is limited to matched B.C. institutions and annual arts-program figures; other programs and countries remain unknown. Read the scope, included fees and academic year before comparing.</p>
     </div>
     <div className="results-header"><div><h2>{countryName ? `Institutions in ${countryName}` : 'Institutions'}</h2><p data-testid="text-result-count">{searchBlocked ? 'Search paused — no budget-filtered result is available.' : results.isLoading ? 'Searching...' : results.isError ? 'Institution search is unavailable—not a zero-record result.' : `${total.toLocaleString()} matching imported records`}</p></div>{active && <button className="clear-filters" onClick={clear} data-testid="button-clear-filters"><X size={13}/> Clear filters</button>}</div>
-    {searchBlocked ? <p className="tu-warn" role="status">Correct the budget or load a current reference rate before viewing matching schools. Unfiltered schools are not presented as budget matches.</p> : results.isLoading ? <LoadingBlock/> : results.isError ? <ErrorBlock retry={() => void results.refetch()} title="Institution search couldn’t load" body="We could not apply this search. If a currency rate is unavailable, choose USD or clear the budget. This is not a confirmed zero-results search."/> : results.data?.items.length
+    {searchBlocked ? <p className="tu-warn" role="status">Correct the budget before viewing matching schools. Unfiltered schools are not presented as budget matches.</p> : results.isLoading ? <LoadingBlock/> : results.isError ? <ErrorBlock retry={() => void results.refetch()} title="Institution search couldn’t load" body="We could not apply this search. If a currency rate is unavailable, retry, choose the source currency, or clear the budget. This is not a confirmed zero-results search."/> : results.data?.items.length
       ? <div className="school-grid" aria-busy={results.isFetching}>{results.data.items.map(s => { const on = picked.some(x => x.id === s.id); return <div key={s.id} className="cmp-card-wrap"><SchoolCard school={s} saved={savedIds.has(s.id)} saving={pendingId === s.id} onSave={() => toggleSave(s)}/><button className={'cmp-pick' + (on ? ' is-on' : '')} disabled={!on && picked.length >= 4} onClick={() => togglePick(s)} aria-pressed={on} data-testid={`button-compare-${s.id}`}><Scale size={13}/> {on ? 'Selected to compare' : picked.length >= 4 ? 'Compare limit reached (4)' : 'Compare tuition'}</button></div>; })}</div>
       : <EmptyBlock testId="empty-results" title="No records match these filters" body={budgetActive ? 'No school has a source-reported tuition figure for this rate within your budget. Unknown tuition is excluded, so this does not mean no school is affordable. Try another rate or clear the budget.' : filters.language || filters.applicantStatus || filters.fundingOnly ? 'Many sources do not report language, applicant status, or funding. Those schools are unknown here, not excluded by the school itself. Try removing those filters.' : 'Try a broader search or clear your filters to browse every imported record.'} action="Clear search and filters" onAction={clear}/>}
     {!searchBlocked && !results.isError && total > 0 && <div className="pagination-bar"><button className="button button-outline button-small" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1 || results.isFetching} data-testid="button-prev-page"><ArrowLeft size={14}/> Previous</button><span>Page {page} of {totalPages}</span><button className="button button-outline button-small" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages || results.isFetching} data-testid="button-next-page">Next <ArrowRight size={14}/></button></div>}

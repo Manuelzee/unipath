@@ -197,7 +197,7 @@ paths:
           schema: { type: string, default: USD, pattern: "^[A-Z]{3}$" }
         - in: query
           name: tuitionRate
-          schema: { type: string, enum: [in_state, out_of_state, international], default: out_of_state }
+          schema: { type: string, enum: [in_state, out_of_state, domestic, international], default: out_of_state }
         - in: query
           name: countryCode
           schema: { type: string, pattern: "^[A-Z]{2}$" }
@@ -995,8 +995,11 @@ components:
           items: { type: string }
     UniversityTuition:
       type: object
-      required: [inStateAmount, outOfStateAmount, internationalAmount, inStateYear, outOfStateYear, currency, period, sourceUrl, recordUpdatedAt, status, note]
+      required: [quotes, inStateAmount, outOfStateAmount, internationalAmount, inStateYear, outOfStateYear, currency, period, sourceUrl, recordUpdatedAt, status, note]
       properties:
+        quotes:
+          type: array
+          items: { $ref: "#/components/schemas/TuitionQuote" }
         inStateAmount: { type: ["number", "null"] }
         outOfStateAmount: { type: ["number", "null"] }
         internationalAmount: { type: ["number", "null"] }
@@ -1008,6 +1011,25 @@ components:
         recordUpdatedAt: { type: string }
         status: { type: string, enum: [missing, source_reported, outdated] }
         note: { type: string }
+    TuitionQuote:
+      type: object
+      required: [category, amount, currency, year, academicYear, period, scope, sourceName, sourceUrl, sourceFileUrl, sourceLicenseUrl, attribution, sourcePublishedAt, importedAt, status]
+      properties:
+        category: { type: string, enum: [in_state, out_of_state, domestic, international] }
+        amount: { type: number, minimum: 0 }
+        currency: { type: string, enum: [USD, CAD] }
+        year: { type: integer }
+        academicYear: { type: string }
+        period: { type: string, enum: [year] }
+        scope: { type: string }
+        sourceName: { type: string }
+        sourceUrl: { type: string }
+        sourceFileUrl: { type: string }
+        sourceLicenseUrl: { type: string }
+        attribution: { type: string }
+        sourcePublishedAt: { type: ["string", "null"] }
+        importedAt: { type: string }
+        status: { type: string, enum: [source_reported, outdated] }
     TuitionSearchError:
       type: object
       required: [error]

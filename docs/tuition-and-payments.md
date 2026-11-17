@@ -9,13 +9,15 @@
   facts. Optional annual accommodation, food, transportation and other estimates
   are saved privately in the same selected currency.
 - Directory: optional annual maximum, currency, and separately selected in-state,
-  out-of-state, or verified international tuition. Unknown prices are excluded
+  out-of-state, domestic, or international tuition. Non-U.S. coverage is limited
+  to matched B.C. arts-program figures, not every program. Unknown prices are excluded
   only while a budget is applied, not treated as free or unaffordable.
 - Comparison: select two to four real directory records. Missing tuition is
   unknown, not zero. Each record is fetched from the real API.
-- School details: reporting-year-qualified annual U.S. undergraduate amounts,
-  source link, historical-data warning and distinct directory-record update time.
-  No international, semester, or program-level figure is inferred.
+- School details: native-currency annual amounts, academic year, category, scope,
+  source file, licence/attribution, source publication date when supplied, and
+  a tuition-import timestamp separate from directory updates. Historical figures
+  are labelled outdated. Semester prices and unreported programs are not inferred.
 - Optional calculator: student-entered annual living costs and tuition estimate
   in the selected currency. Saved living estimates can be loaded only when
   currencies match; changing the calculator currency clears inputs rather than
@@ -34,17 +36,52 @@
 
 ## Source and currency limitations
 
-The development directory has no imported tuition figures. The tuition-only
-College Scorecard import returned HTTP 403 on 2026-11-10 and made no changes.
-Worldwide tuition coverage and current institutional quotes are not available.
-The source API credentials need valid College Scorecard access, or the owner
-can supply official reporting-year-qualified data for a reviewed import.
-Do not infer account activation or the precise cause from HTTP 403 alone.
+As of **2026-11-17**, development contains **6,936 authentic annual tuition
+figures** across **3,468 institutions**:
+
+| Official source | Academic year | Imported coverage | Meaning |
+| --- | --- | --- | --- |
+| NCES IPEDS `IC2023_AY.zip`, `TUITION2` / `TUITION3`, reported flag `R` only | 2023/24 | 6,902 figures, 3,451 of 5,913 U.S. records | Annual full-time undergraduate average tuition in USD, in-state / out-of-state separately; **required fees excluded; outdated** |
+| B.C. domestic arts tuition, September 2025 release | 2025/26 | 17 figures, 17 Canadian records | Annual full-time domestic undergraduate arts-program tuition in CAD; not U.S. in-state |
+| B.C. international arts tuition, September 2025 release | 2025/26 | 17 figures, the same 17 Canadian records | Annual international arts-program tuition in CAD; not all programs |
+
+There are 6,174 directory records in total, including 258 Canadian records.
+The three non-U.S./non-Canadian records have no imported tuition. Missing prices
+remain unknown. Neither these counts nor a source reporting year establish
+current operation, recognition, DLI eligibility, program availability, or a
+current personalized price.
+
+The Scorecard API was securely retried on 2026-11-17 and again returned **HTTP
+403**; no API figures were imported. Presence of a secret does not establish
+valid access, account activation, or the precise reason for rejection. Official
+year-qualified IPEDS downloads supplied the U.S. figures instead. The attempted
+2024 IPEDS academic-year ZIP was unavailable (404); no newer year was invented.
+Source publication dates not supplied by an archive remain null.
+
+The official U.S. archive has 7,074 reported category/amount pairs; 172 did not
+match an existing U.S. IPEDS identity and were not imported. Each B.C. file
+contains 25 institutions; 17 matched exact, unambiguous names. Eight unmatched
+names per file remain unassigned, including institution-level UBC and Camosun
+figures whose directory entries are campus-specific. No fuzzy matching or
+campus propagation was used, and no university identity was created or changed.
+Worldwide coverage and current institutional quotes remain incomplete.
+
+B.C.'s two datasets explicitly use the **Open Government Licence – British
+Columbia**, permitting commercial redistribution with attribution. Every
+exposed quote carries the required attribution and licence link; the source
+does not endorse UniPath. No restricted WHED, CICIC or EduCanada data was copied.
+The U.S. data are public federal institutional statistics; no protected student
+records, university marks or images are included in the tuition snapshots.
 
 The server uses Frankfurter's documented v2 USD reference-rate API for the
 160 runtime-recognized fiat currency preferences. This is not a claim that rates
 are available for every currency. Rates have source dates and retrieval times,
 are cached for one hour, and are unusable for conversion after seven days.
+Native-currency filtering needs no exchange rate. Cross-currency tuition uses
+`amount × (USD→display rate) / (USD→source rate)`; both required rates must be
+usable. Original CAD figures are never relabelled USD, and are not written into
+legacy USD-only API fields. A tiny machine-precision tolerance handles exact
+inclusive boundaries; decimal amounts are not rounded up to whole dollars.
 Unverified rates have no fabricated fallback; a converted budget search fails
 explicitly instead of silently returning all institutions. These rates do
 not determine a payable checkout amount, bank fees, processor fees, or taxes.
@@ -56,6 +93,75 @@ Source references:
 - https://frankfurter.dev/
 - https://collegescorecard.ed.gov/data/
 - https://collegescorecard.ed.gov/data/api-documentation/
+- https://nces.ed.gov/ipeds/datacenter/data/IC2023_AY.zip
+- https://nces.ed.gov/ipeds/datacenter/data/IC2023_AY_Dict.zip
+- https://www.ed.gov/about/ed-overview/required-notices/website-policies/copyright-status-notice
+- https://catalogue.data.gov.bc.ca/dataset/670516e0-6cb0-4d3b-ab2b-b82ed9ee59db
+- https://catalogue.data.gov.bc.ca/dataset/6e317257-54fe-44d1-89a6-1fcd81f5a484
+- https://www2.gov.bc.ca/gov/content/data/policy-standards/data-policies/open-data/open-government-licence-bc
+
+### Reproduce the reviewed file import
+
+From the workspace root, run `pnpm --filter @workspace/db run push` for the
+new tuition evidence table, then:
+
+```sh
+cd artifacts/api-server
+pnpm exec tsx src/scripts/loadTuitionSnapshots.ts
+```
+
+The task-merge setup script runs this same development-only command after schema
+setup, so merging the code does not leave the main development directory with
+unknown tuition. It does not publish or connect to a production database.
+
+This development-only command validates all three bundled normalized
+files under `data/tuition/`, stages them, and imports in one transaction. It
+hash-checks all directory rows and reviewed institution facts before/after and
+rolls back if they change. It inserts into a separate evidence table; it never
+updates existing quotes or directory rows. Conflicts are counted as preserved,
+not refreshed or falsely reported as new imports. Re-running is safe.
+
+Each manifest retains the SHA-256 of the official downloaded archive/CSV:
+
+- IPEDS: `42d3ee39a107d69b6da02df2ffa934ebe3bb76657568fb9efb7027b6ce0d69ee`
+- B.C. domestic: `7886bbc53782f50ee2f3eda7b7250cd68cb06c1e46304f1775ac74b9f1549221`
+- B.C. international: `fe73bc6d86f5d7ad6ff1bc216adc3a45ad03b74f6a6f9203e8978d559496af89`
+
+Raw downloads and verification output live under ignored
+`generated-artifacts/tuition/`; the small normalized evidence snapshots are
+retained with the code so a task merge does not depend on temporary files.
+These hashes identify the reviewed raw files; they do not authenticate an
+arbitrary edited manifest. The file import is a trusted operator command, not
+a public upload endpoint. Review any replacement file against its official
+download and terms before running it.
+
+To prepare a fresh copy of the same official sources (paths relative to the
+API package):
+
+```sh
+python src/scripts/prepareTuitionFiles.py --input /path/to/IC2023_AY.zip \
+  --provider ipeds-2023 --output /path/to/ipeds-2023.json
+python src/scripts/prepareTuitionFiles.py --input /path/to/bc-domestic.csv \
+  --provider bc-domestic-2025 --output /path/to/bc-domestic-2025.json
+python src/scripts/prepareTuitionFiles.py --input /path/to/bc-international.csv \
+  --provider bc-international-2025 --output /path/to/bc-international-2025.json
+pnpm exec tsx src/scripts/importTuition.ts --file /path/to/normalized.json
+```
+
+Official Scorecard year-qualified institution files are also accepted:
+
+```sh
+python src/scripts/prepareTuitionFiles.py --input /path/to/MERGED2024_25_PP.csv \
+  --provider scorecard-2024 --output /path/to/scorecard-2024.json
+pnpm exec tsx src/scripts/importTuition.ts --file /path/to/scorecard-2024.json
+```
+
+The year must match the official `MERGEDYYYY_YY_PP.csv` filename. A ZIP must
+contain exactly one such CSV. Mixed-year “Most Recent” files are rejected;
+Scorecard tuition includes required fees and is labelled accordingly. Null,
+suppressed, not-applicable and unreported values are not treated as zero.
+Existing category evidence (including older amounts) is intentionally preserved;
+refreshing/replacing it requires a separately reviewed process.
 
 Run the opt-in tuition-only import in the API package:
 
@@ -63,7 +169,7 @@ Run the opt-in tuition-only import in the API package:
 pnpm exec tsx src/scripts/importTuition.ts
 ```
 
-It uses `COLLEGE_SCORECARD_API_KEY` from server Secrets, retrieves only small
+Without `--file`, it uses `COLLEGE_SCORECARD_API_KEY` from server Secrets, retrieves only small
 year-qualified batches, stages all pages before writing, and only fills missing
 paired tuition amounts/years. It preserves branding, identities, reviewed
 evidence, and existing tuition. No credential-bearing URLs are logged.
@@ -108,10 +214,45 @@ pnpm exec tsx src/scripts/tests/testTuitionAndRates.ts
 pnpm exec tsx src/scripts/tests/testTuitionDatabase.ts
 ```
 
-The tests use isolated synthetic fixtures, not live tuition or payment data.
+The two original TypeScript tests use isolated synthetic fixtures, not live tuition or payment data.
 Database filter fixtures are transaction-isolated and always rolled back.
 Live development checks separately cover reference-rate retrieval, invalid
 budget inputs, unknown-tuition exclusions, and payment availability/access gates.
+
+### Authentic import verification (2026-11-17)
+
+```sh
+python -m unittest discover -s artifacts/api-server/src/scripts/tests -p test_prepare_tuition.py
+cd artifacts/api-server
+pnpm exec tsx src/scripts/tests/testImportedTuition.ts
+```
+
+- Full workspace typecheck passed. Five file-preparation checks, 19 original
+  tuition/rate validation checks and seven rolled-back filter checks passed.
+- Eight authentic-import checks verified all 6,936 imported figures against
+  the official normalized snapshots, including currencies, scope, academic
+  years, source links and licence links. The import verified directory/fact
+  hashes were unchanged.
+- Actual comparison inputs: Langara international CAD 19,911 versus Douglas
+  CAD 19,875 for 2025/26, a CAD 36 difference. Alabama A&M 2023/24 in-state
+  USD 8,610 versus out-of-state USD 17,220, a USD 8,610 difference; international
+  remains unknown. This is historical tuition-only data, not a current offer.
+- Live Frankfurter reference on 2026-11-17: 1 USD = 1.427 CAD; Langara's
+  indicative USD equivalent was 13,953.05. Real CAD→USD and USD→CAD budget
+  searches included exact ceilings and excluded one cent below. A CAD-native
+  budget also worked with networking disabled.
+- Domestic/international category separation, unknown U.S. international fees,
+  ambiguous UBC-campus exclusions, explicit stale-rate failure, and preservation
+  of original amounts/provenance on reimport passed. Mutation checks rolled back.
+- The full task-merge setup passed, preserving all 6,936 existing quotes and
+  leaving directory/fact hashes unchanged. Both managed app services restarted
+  cleanly. A public detail-page screenshot showed original CAD amounts,
+  USD estimates, source/licence links, academic year and separate import dates
+  without overflowing source links. Interactive browser comparison was not run;
+  comparison inputs and converted budget boundaries were checked programmatically.
+- No production data import, publishing, payment changes, or sign-in changes
+  were performed. Earlier sections below are historical checks, not current
+  claims that development still has zero tuition.
 
 ### Earlier development results (2026-11-10)
 

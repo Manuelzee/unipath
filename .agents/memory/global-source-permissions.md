@@ -35,3 +35,14 @@ names and cannot substantiate unrelated institution or applicant-eligibility cla
 independent verification, and never infer a school website from its name/contact
 email or international eligibility from a co-op listing. Link official lookups
 without presenting them as verification of the record.
+
+Government institution-level tuition must not automatically be assigned to a
+campus-only directory entry. Leave ambiguous matches unknown unless an official
+source explicitly supports the campus and scope.
+
+**Why:** B.C.'s open arts-tuition data identify whole institutions, while parts
+of the Canadian directory identify individual campuses. Similar names alone
+do not establish that a campus offers the program or charges that amount.
+
+**How to apply:** Use exact unambiguous identities, keep program-specific scope
+visible, and obtain source-backed campus mappings before extending matches.

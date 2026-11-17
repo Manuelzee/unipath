@@ -154,6 +154,59 @@ export const UniversityLogoVerificationStatus = {
   error: 'error',
 } as const;
 
+export type TuitionQuoteCategory = typeof TuitionQuoteCategory[keyof typeof TuitionQuoteCategory];
+
+
+export const TuitionQuoteCategory = {
+  in_state: 'in_state',
+  out_of_state: 'out_of_state',
+  domestic: 'domestic',
+  international: 'international',
+} as const;
+
+export type TuitionQuoteCurrency = typeof TuitionQuoteCurrency[keyof typeof TuitionQuoteCurrency];
+
+
+export const TuitionQuoteCurrency = {
+  USD: 'USD',
+  CAD: 'CAD',
+} as const;
+
+export type TuitionQuotePeriod = typeof TuitionQuotePeriod[keyof typeof TuitionQuotePeriod];
+
+
+export const TuitionQuotePeriod = {
+  year: 'year',
+} as const;
+
+export type TuitionQuoteStatus = typeof TuitionQuoteStatus[keyof typeof TuitionQuoteStatus];
+
+
+export const TuitionQuoteStatus = {
+  source_reported: 'source_reported',
+  outdated: 'outdated',
+} as const;
+
+export interface TuitionQuote {
+  category: TuitionQuoteCategory;
+  /** @minimum 0 */
+  amount: number;
+  currency: TuitionQuoteCurrency;
+  year: number;
+  academicYear: string;
+  period: TuitionQuotePeriod;
+  scope: string;
+  sourceName: string;
+  sourceUrl: string;
+  sourceFileUrl: string;
+  sourceLicenseUrl: string;
+  attribution: string;
+  /** @nullable */
+  sourcePublishedAt: string | null;
+  importedAt: string;
+  status: TuitionQuoteStatus;
+}
+
 export type UniversityTuitionCurrency = typeof UniversityTuitionCurrency[keyof typeof UniversityTuitionCurrency];
 
 
@@ -178,6 +231,7 @@ export const UniversityTuitionStatus = {
 } as const;
 
 export interface UniversityTuition {
+  quotes: TuitionQuote[];
   /** @nullable */
   inStateAmount: number | null;
   /** @nullable */
@@ -1248,6 +1302,7 @@ export type ListUniversitiesTuitionRate = typeof ListUniversitiesTuitionRate[key
 export const ListUniversitiesTuitionRate = {
   in_state: 'in_state',
   out_of_state: 'out_of_state',
+  domestic: 'domestic',
   international: 'international',
 } as const;
 

@@ -5,11 +5,13 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { TuitionQuote } from './tuitionQuote';
 import type { UniversityTuitionCurrency } from './universityTuitionCurrency';
 import type { UniversityTuitionPeriod } from './universityTuitionPeriod';
 import type { UniversityTuitionStatus } from './universityTuitionStatus';
 
 export interface UniversityTuition {
+  quotes: TuitionQuote[];
   /** @nullable */
   inStateAmount: number | null;
   /** @nullable */

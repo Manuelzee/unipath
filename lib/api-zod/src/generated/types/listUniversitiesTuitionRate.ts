@@ -12,5 +12,6 @@ export type ListUniversitiesTuitionRate = typeof ListUniversitiesTuitionRate[key
 export const ListUniversitiesTuitionRate = {
   in_state: 'in_state',
   out_of_state: 'out_of_state',
+  domestic: 'domestic',
   international: 'international',
 } as const;
