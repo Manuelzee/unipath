@@ -1,0 +1,31 @@
+Add a new feature to my existing UniPath AI app and website called **Student Jobs & Visa Support**.
+
+The goal is to help international students on student visas discover legitimate employment opportunities while studying abroad.
+
+Build the following features:
+
+1. **AI Job Matching:** Match students with jobs based on their university, location, field of study, skills, visa type, and verified work authorization.
+
+2. **Student Job Search:** Include on-campus jobs, part-time jobs, internships, research assistant positions, teaching assistant positions, and post-graduation opportunities.
+
+3. **Visa Eligibility Assistant:** Provide country-specific information about student employment regulations, including F-1, J-1, CPT, OPT, and STEM OPT in the United States.
+
+4. **Employer Sponsorship Filters:** Allow students to identify employers advertising visa sponsorship, while clearly distinguishing sponsorship from current work authorization.
+
+5. **University Career Centers:** Connect students to official university career services and campus employment websites.
+
+6. **AI Resume Builder:** Generate professional resumes and cover letters tailored to each job.
+
+7. **Job Application Tracker:** Allow students to save jobs, track applications, interview dates, and employer responses.
+
+8. **International Coverage:** Support the United States, Canada, United Kingdom, Australia, and other countries with verified employment guidance.
+
+9. **Safety & Compliance:** Use official immigration sources, show when rules were last verified, and explain that job eligibility depends on the student's individual authorization. Never guarantee eligibility, employment, or visa approval. Do not recommend unauthorized employment.
+
+10. **Design:** Match the existing UniPath AI branding. Make the feature mobile-friendly, professional, simple, and easy for international students to navigate.
+
+Add a new navigation tab called **Student Jobs** and connect it to the student's existing UniPath AI profile.
+
+Use legitimate job listings from authorized APIs or official employer and university career websites. Clearly display job posting dates and identify unverified sponsorship claims.
+
+The goal is to make UniPath AI an all-in-one platform where international students can discover universities, prepare applications, find scholarships, and explore legally permitted employment opportunities.

@@ -86,8 +86,8 @@ No production DDL, fake institutions or fabricated branding are used.
 
 ## Beginner steps and checks
 
-No new API key or file upload is required. After the preview checks pass, click
-Publish/Republish. Then production must be checked separately:
+No new API key or file upload is required. After the local checks pass, deploy
+(and run `pnpm db:push` against production). Then production must be checked separately:
 
 - `/api/universities/branding-coverage` gives real category counts.
 - Search and inspect The University of Alabama for official palette/Big Al facts.

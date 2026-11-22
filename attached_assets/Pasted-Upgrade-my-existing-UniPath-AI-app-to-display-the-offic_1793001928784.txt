@@ -1,0 +1,43 @@
+Upgrade my existing UniPath AI app to display the official logo for every college and university in the database, including institutions in the United States, Canada, and countries worldwide.
+
+Requirements:
+
+1. **Official institution logos**
+   - Find and display each institution's official logo.
+   - Prefer official university websites, verified brand/media pages, or other authorized sources.
+   - Store the logo URL and source with the corresponding institution record.
+   - Use each institution's stable database ID to associate its logo with the correct school.
+
+2. **Show logos throughout the app**
+   - College search results.
+   - University matching results.
+   - Individual institution profile pages.
+   - Saved colleges and comparison lists.
+   - Application dashboards.
+
+3. **Automatic logo discovery**
+   - Create a process to discover and import logos for existing institutions and newly added institutions.
+   - Use official website metadata or authorized logo sources when possible.
+   - Cache appropriately sized images so the app loads quickly.
+   - Avoid downloading duplicate copies of the same image.
+
+4. **Accuracy and permissions**
+   - Never assign a logo to the wrong institution.
+   - Do not assume a logo belongs to a university based only on a similar name.
+   - Respect image licensing, trademarks, and source terms.
+   - If a verified logo cannot be found, display a professional placeholder with the school's name rather than a fabricated logo.
+
+5. **Database**
+   - Add fields for logo URL, logo source, verification status, and last-checked date.
+   - Make the import process repeatable without creating duplicate institutions or logo records.
+   - Do not replace correct logos with unverified images.
+
+6. **Performance and reliability**
+   - Add image fallbacks for broken links.
+   - Support different logo dimensions and transparent backgrounds.
+   - Ensure logos look good on desktop and mobile.
+   - Test the feature in both the preview and published production app.
+
+Please implement this in my existing project, preserve the current design and subscription plans, and tell me how many institutions have verified logos after testing. Do not claim every school has a logo until the data has actually been checked.
+
+I am a beginner with no coding experience, so handle the technical work and explain any actions I need to take in simple language.

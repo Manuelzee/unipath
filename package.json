@@ -1,18 +1,31 @@
 {
-  "name": "workspace",
-  "version": "0.0.0",
+  "name": "unipath-ai",
+  "version": "0.1.0",
   "license": "MIT",
-  "scripts": {
-    "preinstall": "sh -c 'rm -f package-lock.json yarn.lock; case \"$npm_config_user_agent\" in pnpm/*) ;; *) echo \"Use pnpm instead\" >&2; exit 1 ;; esac'",
-    "build": "pnpm run typecheck && pnpm -r --if-present run build",
-    "typecheck:libs": "tsc --build",
-    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
-  },
   "private": true,
-  "dependencies": {
-    "@replit/connectors-sdk": "^0.4.3"
+  "packageManager": "pnpm@10.34.9",
+  "engines": {
+    "node": ">=22.9"
+  },
+  "scripts": {
+    "preinstall": "node -e \"if(!(process.env.npm_config_user_agent||'').startsWith('pnpm/')){console.error('Use pnpm: corepack enable, then pnpm install');process.exit(1)}\"",
+    "dev": "pnpm --parallel --filter @workspace/api-server --filter @workspace/unipath-ai run dev",
+    "dev:api": "pnpm --filter @workspace/api-server run dev",
+    "dev:web": "pnpm --filter @workspace/unipath-ai run dev",
+    "db:local": "node -e \"require('node:fs').mkdirSync('.data',{recursive:true})\" && pglite-server --db=./.data/pglite --port=5433 --max-connections=10",
+    "db:push": "pnpm --filter @workspace/db run push",
+    "db:seed": "pnpm --filter @workspace/api-server run seed",
+    "codegen": "pnpm --filter @workspace/api-spec run codegen",
+    "build": "pnpm run typecheck && pnpm -r --if-present run build",
+    "start": "pnpm --filter @workspace/api-server run start",
+    "test": "pnpm --filter @workspace/api-server run test:unit",
+    "test:integration": "pnpm --filter @workspace/api-server run test:integration",
+    "typecheck:libs": "tsc --build",
+    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./apps/**\" --if-present run typecheck"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.17",
+    "@electric-sql/pglite-socket": "^0.2.20",
     "prettier": "^3.9.10",
     "typescript": "~5.9.3"
   }

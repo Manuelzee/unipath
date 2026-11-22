@@ -1,0 +1,154 @@
+# UniPath AI — Global Student Jobs & Visa Support
+
+Upgrade my existing UniPath AI app and website by adding a complete worldwide job search platform for international students studying on student visas.
+
+**Main objective:** Help international students discover real employment opportunities, understand applicable work restrictions, and prepare job applications.
+
+## 1. Worldwide job search
+
+Support countries worldwide, initially prioritizing the USA, Canada, UK, Australia, Germany, France, Ireland, New Zealand, Netherlands, Japan, Singapore, and UAE.
+
+Allow students to filter jobs by:
+- Country, city, and university
+- Student visa category
+- Work authorization status
+- On-campus or off-campus location
+- Part-time, internship, seasonal, or graduate employment
+- Job category and industry
+- Hourly pay or salary
+- Required skills and experience
+- Employer sponsorship availability
+- Remote, hybrid, or on-site work
+
+## 2. Complete student job categories
+
+Create a searchable job directory with these categories:
+
+**Campus employment**
+- Library assistant
+- Student ambassador
+- Campus receptionist
+- Research assistant
+- Teaching assistant
+- Laboratory assistant
+- Campus dining assistant
+- University bookstore assistant
+- IT help desk assistant
+- Student event assistant
+
+**Hospitality and retail**
+- Barista
+- Restaurant server
+- Cashier
+- Retail sales associate
+- Hotel front desk assistant
+- Kitchen assistant
+- Customer service representative
+- Event staff
+
+**Technology**
+- Software engineering intern
+- Web developer intern
+- Data analyst intern
+- IT support technician
+- Cybersecurity intern
+- UX/UI design intern
+
+**Business and professional**
+- Marketing intern
+- Finance intern
+- Accounting assistant
+- Administrative assistant
+- Human resources intern
+- Business analyst intern
+- Engineering intern
+
+**Other opportunities**
+- Tutor
+- Language assistant
+- Graphic designer
+- Social media assistant
+- Video editor
+- Warehouse assistant
+- Inventory assistant
+- Graduate trainee
+
+Treat these as job search categories, not guaranteed visa-eligible positions.
+
+## 3. Live job listings
+
+Integrate legitimate job listing APIs and official university career portals where access and licensing permit.
+
+Every listing must show:
+- Job title and employer
+- Country and city
+- Salary or hourly pay when available
+- Work schedule
+- Job description and requirements
+- Application deadline when available
+- Posting date and source
+- Employer application link
+- Visa sponsorship information when verified
+- Work authorization requirements
+- Date the listing was last checked
+
+Never invent job openings. Clearly label expired, unverified, or unavailable listings.
+
+## 4. AI student visa work eligibility
+
+Create a country-specific AI assistant that helps students understand employment restrictions.
+
+Ask students for their destination country, visa type, study status, work authorization, and university before providing personalized guidance.
+
+Support country-specific pathways, including US F-1/J-1 and CPT/OPT, Canadian study permit conditions, UK Student visa rules, and equivalent rules elsewhere.
+
+Use official government immigration guidance and record the source and verification date.
+
+Classify listings as:
+- Potentially eligible — authorization still needs verification
+- Additional authorization required
+- Likely restricted
+- Eligibility unknown
+
+Never guarantee that a job is legal for a particular student. Explain when university or immigration authority confirmation is required.
+
+## 5. AI job application tools
+
+Build:
+- AI resume and CV builder
+- Cover letter generator
+- Job matching recommendations
+- Interview preparation
+- Application checklist
+- Saved jobs and favorites
+- Application tracking dashboard
+- Interview reminders
+- Employer sponsorship filters
+
+## 6. Student dashboard
+
+Add a navigation tab called **Global Student Jobs**.
+
+The dashboard should include:
+- Recommended jobs
+- On-campus opportunities
+- Internships
+- Part-time jobs
+- Graduate opportunities
+- Visa and work eligibility guidance
+- Saved jobs
+- My job applications
+
+Reuse the student's existing UniPath AI profile and education preferences, with permission.
+
+## 7. Design and reliability
+
+Use the existing UniPath AI branding with a modern, premium, mobile-friendly interface.
+
+Support local currencies, languages, time zones, and accessible navigation.
+
+Include scam-reporting features, privacy protections, job listing moderation, and secure handling of student data.
+
+Make the job directory worldwide and scalable. Do not display fake jobs as live opportunities.
+
+**Final goal:** UniPath AI should become an all-in-one international student platform for university discovery, scholarships, admission preparation, visa guidance, and employment discovery worldwide.

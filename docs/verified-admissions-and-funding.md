@@ -9,7 +9,7 @@ the funding finder links to general official U.S. and Canadian sources.
 
 ## What can be imported
 
-`artifacts/api-server/src/scripts/importVerifiedInstitutionFacts.ts` accepts a
+`apps/api/src/scripts/importVerifiedInstitutionFacts.ts` accepts a
 curated JSON manifest for admissions and funding facts. It does not download,
 scrape, summarize, or invent the facts. A person must review the official page
 and the source’s current commercial-reuse terms before entering concise,
@@ -59,6 +59,5 @@ admissions/funding records to import. College Scorecard access alone does not
 provide each school’s current admission requirements, scholarships, or
 deadlines. Its values must not be used to fill those gaps. WHED, CICIC, and
 EduCanada bulk/reuse restrictions also remain in force; their directories are
-not imported by this script. Publishing is separate: Replit applies development
-schema changes to production through its Publish flow, and this change has not
-modified production.
+not imported by this script. Production is separate: schema changes reach production only through a reviewed
+deployment that runs `pnpm db:push`, and this change has not modified production.

@@ -1,0 +1,117 @@
+# UniPath AI — Annual Tuition Budget & Global Payments
+
+Upgrade my existing UniPath AI app and website with two new features: **Annual Tuition Budget** and **Worldwide Payments with Multiple Currencies and Cryptocurrency**.
+
+## 1. Annual Tuition Budget
+
+Add a required or skippable "Annual Tuition Budget" section to the student onboarding profile and university search filters.
+
+Allow students to:
+- Enter their maximum annual tuition budget.
+- Select their preferred currency, including USD, CAD, GBP, EUR, AUD, NGN, INR, CNY, AED, and other supported currencies.
+- Choose a budget range or enter a custom amount.
+- Filter universities worldwide based on annual tuition costs.
+- Compare tuition fees across universities.
+- View estimated tuition in their preferred currency.
+- Find scholarships and financial aid that may reduce tuition costs.
+- Compare domestic and international tuition rates where applicable.
+- See whether tuition estimates are per year, semester, or program.
+- View the tuition data source and last updated date.
+
+Show an optional estimated total annual cost including tuition, accommodation, food, transportation, and other expenses.
+
+Do not treat estimated scholarship awards as guaranteed funding. Clearly identify missing or outdated tuition information.
+
+## 2. Worldwide Customer Payments
+
+Build a secure payment system that allows customers worldwide to purchase UniPath AI subscriptions and application support services.
+
+Support these existing plans:
+- Free — $0
+- Student Plus — $9.99/month
+- Premium — $29.99/month
+- Application Support — $99–$299 per package
+
+Use USD as the initial base pricing currency and allow customers to view prices in supported local currencies.
+
+Integrate a reputable payment provider such as Stripe for card payments and supported local payment methods.
+
+Allow customers to:
+- Select their preferred currency.
+- See the exact amount payable before checkout.
+- Pay with supported credit/debit cards and local payment methods.
+- Receive payment confirmations and receipts.
+- Manage subscriptions.
+- Cancel recurring subscriptions.
+- View payment history and invoices.
+
+Display currency conversion rates, any applicable fees, and final checkout amounts accurately. Do not assume every payment method or currency is available in every country.
+
+## 3. Cryptocurrency Payments
+
+Add an optional "Pay with Crypto" payment method through a compliant cryptocurrency payment processor.
+
+Support cryptocurrency options such as:
+- Bitcoin (BTC)
+- Ethereum (ETH)
+- USDC
+- USDT, where supported by the selected provider
+
+Only enable currencies, tokens, and blockchain networks actually supported by the payment processor and legally available to the merchant and customer.
+
+Use provider-hosted checkout rather than collecting private wallet keys.
+
+Show:
+- Cryptocurrency and network
+- Exact payment amount
+- Network fees when available
+- Payment expiration time
+- Pending, confirmed, failed, or expired status
+- Transaction reference and receipt
+
+Do not mark a cryptocurrency payment as successful until the provider verifies final settlement.
+
+For recurring subscriptions, use a provider-supported recurring payment method. Do not assume cryptocurrency payments support automatic renewals.
+
+## 4. Admin Payment Dashboard
+
+Create a secure admin dashboard where I can:
+- View customer purchases and subscriptions.
+- See payment amounts and currencies.
+- Track completed, pending, refunded, and failed transactions.
+- View revenue reports.
+- Manage refunds and subscription status.
+- Export payment records.
+- Configure supported currencies and payment methods.
+
+Restrict financial and customer data to authorized administrators.
+
+## 5. Security and Compliance
+
+- Keep all payment API credentials in Replit Secrets.
+- Never store raw card numbers, CVVs, private keys, or seed phrases.
+- Use secure hosted checkout.
+- Verify payment provider webhooks.
+- Prevent duplicate payments and duplicate subscription activation.
+- Support applicable tax, refund, and consumer disclosure requirements.
+- Use verified exchange rates and clearly display conversion timestamps.
+- Follow provider policies and applicable cryptocurrency regulations.
+- Use sandbox/test environments before enabling live payments.
+
+## 6. Design
+
+Match the existing UniPath AI branding and mobile-friendly layout.
+
+Add:
+- Annual Tuition Budget to student onboarding.
+- Tuition Budget filters to university search.
+- Billing & Payments to student account settings.
+- Currency selector to the pricing page.
+- Pay with Crypto only when the selected provider is configured and supported.
+- Revenue & Transactions to the administrator dashboard.
+
+Build and test these features without disrupting university search, applications, scholarships, or Global Student Jobs.
+
+**Do not publish or enable live payments until I approve.**
+
+Report which features are complete, which payment providers require account setup, and which API secrets are needed.

@@ -1,0 +1,80 @@
+Update UniPath AI's college database and every school profile with these required sections. Do not display annual tuition or annual cost figures anywhere in the college directory or school profiles.
+
+1. Field of Study Directory
+
+Show the available fields of study and majors for each school.
+
+Include program names, degree levels, certificates, and areas of specialization when data is available.
+
+Support searches for a major across all schools and show which schools offer it.
+
+Use official institutional program pages and reliable program data.
+
+Do not assume a school offers a major unless it is verified.
+
+2. Admissions Requirements and Overview
+For each school, display:
+
+General admission requirements.
+
+First-year freshman application requirements.
+
+Transfer student requirements.
+
+International student requirements.
+
+Graduate admission requirements, where applicable.
+
+Required academic records, transcripts, essays, recommendation letters, and test scores where applicable.
+
+English-language proficiency requirements for international applicants, where applicable.
+
+Application methods, application deadlines, and official admissions links.
+
+Any program-specific requirements, auditions, portfolios, interviews, or prerequisite courses.
+
+Clearly distinguish general school requirements from program-specific requirements. Requirements vary by applicant type and program, so show the official source and last-verified date. If information cannot be verified, display "Check official admissions website."
+
+3. Scholarships and Funding
+For each school, create a dedicated scholarships and funding section containing:
+
+Merit-based scholarships.
+
+Need-based grants and financial aid.
+
+Institutional scholarships.
+
+Federal and state financial aid where applicable.
+
+International student scholarships and funding options.
+
+Scholarships for transfer students, graduate students, and specific majors where available.
+
+Athletic, talent-based, and special-eligibility awards where applicable.
+
+Work-study opportunities, assistantships, fellowships, and research funding where applicable.
+
+Eligibility requirements, award amounts when officially published, deadlines, required documents, renewal conditions, and application links.
+
+Show whether each funding opportunity is open to domestic students, international students, or specific applicant groups. Never promise that a student will receive funding or qualify for an award. Never invent scholarship names, award amounts, eligibility rules, or deadlines.
+
+4. Personalized Student Funding Finder
+Allow students to enter their citizenship, state of residence, intended major, degree level, academic results, and other relevant eligibility information. Use these details to find potential scholarships and explain why each might fit. Label matches as potential opportunities, not guaranteed awards.
+
+5. Official Sources and Data Quality
+Use NCES IPEDS and College Scorecard for available institutional and program data. Use each university's official admissions, academic department, scholarship, and financial aid pages for detailed requirements and funding opportunities. Link to FAFSA and relevant official state financial aid resources when applicable.
+
+Record the source URL, reporting year when relevant, and last verification date for each data item. Do not invent missing information. Build database fields that allow individual programs, admissions requirements, and scholarships to be linked to the correct institution.
+
+6. User Experience
+Create separate tabs on every school profile:
+
+Overview
+
+Fields of Study
+
+Admissions
+
+Scholarships & Funding
+
+Official Links

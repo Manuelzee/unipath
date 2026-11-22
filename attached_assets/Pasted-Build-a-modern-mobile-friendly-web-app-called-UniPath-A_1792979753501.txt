@@ -1,0 +1,52 @@
+Build a modern, mobile-friendly web app called UniPath AI that helps students find and apply to colleges and universities worldwide.
+
+I am a beginner with no coding experience, so build the app for me and explain any setup steps in simple language.
+
+Core features
+
+A welcoming homepage with the UniPath AI name, a professional design, and a “Find My University” button.
+
+Student profiles with country of residence, citizenship, intended study country, degree level, intended major, GPA or grades, budget, preferred language, and English test scores if applicable.
+
+University matching with filters for country, major, tuition budget, degree level, and admission requirements.
+
+University comparison pages showing tuition, entry requirements, programs, scholarships, application deadlines, and official university website links.
+
+An application dashboard where students can save universities, track deadlines, and organize their application tasks.
+
+An AI assistant that helps students understand admission requirements, brainstorm and improve their essays, and plan their applications. Students must review and approve application materials themselves.
+
+A responsive design that works on phones, tablets, and computers.
+
+Subscription plans
+
+Free: basic university matching.
+
+Student Plus: $9.99 per month for advanced comparisons and application planning.
+
+Premium: $29.99 per month for essay assistance, document checklists, and personalized guidance.
+
+Application Support: $99–$299 per package, with the exact services and price clearly displayed before purchase.
+
+Design
+Use a clean, premium education-technology style with a navy blue and white color scheme, attractive university imagery, simple navigation, and clear pricing cards.
+
+Technical requirements
+
+Build a functioning prototype with a frontend and backend.
+
+Use secure authentication for student accounts.
+
+Never expose secret API keys in browser code.
+
+Use clearly labeled sample university data until verified data sources are connected.
+
+Do not invent real admission deadlines, scholarships, tuition fees, or university requirements. Show official source links and verification dates for real data.
+
+Set up the project so an AI API and secure subscription payments can be connected later.
+
+Do not collect real payments until payment processing is properly configured and tested.
+
+Include helpful error messages and beginner-friendly setup instructions.
+
+Start by building the core app and show me how to run and preview it. Do not stop at a static landing page.

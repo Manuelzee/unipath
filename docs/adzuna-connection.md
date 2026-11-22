@@ -1,6 +1,6 @@
 # Adzuna connection checks
 
-Credentials are server-only Replit Secrets:
+Credentials are server-only environment variables (the root `.env` file locally, your host's secret settings in production):
 
 - `ADZUNA_APP_ID` is the Application ID.
 - `ADZUNA_APP_KEY` is the Application Key from **the same Adzuna application**.
@@ -15,7 +15,7 @@ swaps values, or bypasses Adzuna authentication.
 1. Sign in at <https://developer.adzuna.com/>.
 2. Complete email activation if the account is not activated.
 3. Open your application's credentials and copy its matching ID and key into
-   the two corresponding Replit Secrets fields. Do not share them in chat.
+   `ADZUNA_APP_ID` and `ADZUNA_APP_KEY` in `.env` (never in a `VITE_` variable). Do not share them in chat.
 4. Use Adzuna's [interactive documentation](https://developer.adzuna.com/activedocs)
    to test that application against the US job search endpoint.
 5. If the correct pair still returns `AUTH_FAIL`, check the application's
@@ -36,7 +36,7 @@ References:
 
 ## Safe local diagnostics
 
-From `artifacts/api-server`:
+From `apps/api`:
 
 ```sh
 pnpm exec tsx src/scripts/testAdzunaLive.ts

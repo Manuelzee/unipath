@@ -5,29 +5,29 @@
 The existing directory, student profiles, subscription plan descriptions,
 branding and image assets are preserved. Institution counts are measured from
 the connected database, not hardcoded. The new dashboard cannot silently
-read production while running in preview: its environment label tells you
+read production while running in development: its environment label tells you
 which database that server is querying.
 
-Development and production Clerk accounts are separate. Creating an account
-in preview does not create it on the published site.
+Development and production Clerk instances are separate. Creating an account
+locally does not create it on the production site.
 
 ## Secure owner setup
 
-1. Publish the admin update. Replit applies the additive development schema
-   changes through Publish; do not run production migration scripts, reset
-   the database, or copy development roles into production.
-2. Open https://uni-path-explorer.replit.app/sign-up and create your owner
-   account, or sign in to your existing **published-site** owner account.
+1. Deploy the admin update and run `pnpm db:push` against the production
+   database (the changes are additive). Do not reset the database or copy
+   development roles into production.
+2. Open `https://<your-domain>/sign-up` and create your owner account, or
+   sign in to your existing **production** owner account.
    Complete the provider's email/identity verification.
-3. Open https://uni-path-explorer.replit.app/admin/setup while signed in.
+3. Open `https://<your-domain>/admin/setup` while signed in.
    Confirm the page says **Production**, then copy **your own Clerk user ID**.
    An email address is not sufficient.
-4. In this project's Replit **Publishing → Adjust settings → Production app
-   secrets**, add `UNIPATH_ADMIN_SETUP_USER_ID` with that exact production
+4. In the production server's environment (your host's secret settings),
+   add `UNIPATH_ADMIN_SETUP_USER_ID` with that exact production
    user ID. It must be a server-side value; do not prefix it with `VITE_`.
    Do not put the ID in a shared public configuration or use someone else's
    account ID. Never supply a password, Clerk secret key or sign-in ticket.
-5. Republish so the server reads the production setting.
+5. Restart the production server so it reads the new setting.
 6. Return to `/admin/setup` as that same owner account. Read and tick the
    explicit authorization checkbox, then confirm administrator setup.
    This step is not automatic. The server verifies the signed-in immutable
@@ -42,19 +42,19 @@ the signed-in identity against the server-owned administrator membership
 table. Repeated setup does not duplicate grants or restore revoked grants.
 Removing the setup setting does not revoke an already-granted role.
 
-For preview testing, configure the development user's ID separately in
-development settings. Never assume development and production IDs match.
-The agent may use an isolated, explicitly authorized preview-only test
+For local testing, configure the development user's ID separately in
+your local `.env`. Never assume development and production IDs match.
+Automated tests may use an isolated, explicitly authorized development-only test
 membership to exercise authorization without changing the owner account.
 
 If you add a custom domain later, configure `UNIPATH_TRUSTED_ORIGINS` with
 the exact HTTPS origins, comma-separated, in the appropriate environment
-and republish. Administrative changes reject untrusted origins.
+and restart the server. Set `APP_ORIGIN` to the main site origin. Administrative changes reject untrusted origins.
 
 ## Separate student test account
 
 1. Sign out, or use a private/incognito browser window.
-2. Register at the published site's `/sign-up` using a different email and
+2. Register at the production site's `/sign-up` using a different email and
    complete normal verification. Keep that email distinct from your owner.
 3. Do **not** change the owner setup setting to the student's ID.
 4. Search institutions, open a real profile, inspect source links, and use
@@ -68,7 +68,7 @@ and republish. Administrative changes reject untrusted origins.
    not a supplied user ID. The student's data must remain separate from
    the owner's or any other account's private preferences.
 
-Preview automated sign-in support cannot establish a production session.
+A development sign-in cannot establish a production session.
 Production account registration, owner grant and signed-in live checks
 remain **NOT TESTED** until someone actually performs them. Do not share
 passwords or one-time sign-in tickets in chat.
@@ -111,7 +111,7 @@ have been verified by these text-source checks.
 
 ## Test checklist
 
-Record separate Preview and Production results for A–L. Use **PASS** only
+Record separate Development and Production results for A–L. Use **PASS** only
 for an observed result; otherwise **FAIL** or **NOT TESTED** with the reason.
 
 - A: Admin opens dashboard.
@@ -124,7 +124,7 @@ for an observed result; otherwise **FAIL** or **NOT TESTED** with the reason.
 - H: Student direct admin page/API access is denied.
 - I: Private account data stays account-scoped.
 - J: No server API keys, cookies or tokens in app bundles/API responses.
-- K: Published search returns real production records.
+- K: Production search returns real production records.
 - L: Subscription buttons honestly state checkout is unavailable; no fake
   payment success occurs.
 

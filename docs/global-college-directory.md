@@ -83,10 +83,10 @@ them U.S. states. These are not national country imports or complete coverage.
 
 ## Development and published data are separate
 
-The pilot is imported and tested in **Preview/development**. This does not establish
-that the published site has these tables or records. Replit's Publish process handles
-the managed production schema; database **records are not assumed to copy over**.
-Publishing and an approved production data import must be handled separately, with
+The pilot is imported and tested in **development**. This does not establish
+that the production site has these tables or records. Production schema changes are
+applied with `pnpm db:push` during deployment; database **records are not assumed to copy over**.
+Deployment and an approved production data import must be handled separately, with
 the target database confirmed. No production migration script or startup DDL is added.
 
 ## Maintainer instructions
@@ -105,7 +105,7 @@ Download the chosen resource from the official dataset page, review its release
 date and licence, then prepare and import:
 
 ```sh
-python artifacts/api-server/src/scripts/prepareCanadaPsc.py \
+python apps/api/src/scripts/prepareCanadaPsc.py \
   generated-artifacts/source-data/canada-psc.csv \
   --source-date 2026-09-01 --output generated-artifacts/canada-psc.json
 pnpm --filter @workspace/api-server exec tsx src/scripts/importInternationalDirectory.ts \
@@ -113,7 +113,7 @@ pnpm --filter @workspace/api-server exec tsx src/scripts/importInternationalDire
 pnpm --filter @workspace/db run push
 pnpm --filter @workspace/api-server exec tsx src/scripts/importInternationalDirectory.ts \
   ../../generated-artifacts/canada-psc.json
-python -m unittest discover -s artifacts/api-server/src/scripts/tests -p 'test_prepare_canada_psc.py'
+python -m unittest discover -s apps/api/src/scripts/tests -p 'test_prepare_canada_psc.py'
 ```
 
 The importer only permits the reviewed PSC source. A new source needs an explicit

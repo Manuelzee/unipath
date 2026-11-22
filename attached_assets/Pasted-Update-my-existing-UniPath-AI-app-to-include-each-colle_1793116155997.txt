@@ -1,0 +1,70 @@
+Update my existing UniPath AI app to include each college and university's official logo, school colors, mascot, and branded profile background.
+
+### 1. Official School Logos
+- Display each institution's official logo on search results, university cards, matching results, comparison pages, saved schools, and individual school profiles.
+- Use verified logos from official university websites or authorized sources.
+- Match each logo to the correct institution using its unique database ID.
+- If a logo cannot be verified, display a clean placeholder instead of an incorrect image.
+
+### 2. Official School Colors
+- Identify each school's official primary and secondary brand colors.
+- Store the colors as HEX values in the institution database.
+- Use the colors for the school's profile banner, accent elements, buttons, and decorative borders.
+- Keep text readable and maintain accessible color contrast.
+- If the official colors cannot be verified, use UniPath AI's default colors instead.
+
+### 3. Official Mascots
+- Display each school's official mascot name and, where legally permitted, an authorized mascot image.
+- Include the mascot's name, image source, and verification status.
+- Do not confuse a mascot with the school's logo or athletic team nickname.
+- Do not use unofficial mascot artwork or images without appropriate permission.
+- If no verified mascot information is available, display "Mascot information unavailable."
+
+### 4. Dynamic University Profile Backgrounds
+Create an attractive university profile page that adapts to each school's verified branding.
+
+The profile should show:
+- School logo and name.
+- City, state or province, and country.
+- Official primary and secondary colors.
+- Mascot name and authorized image, when available.
+- University campus image, when available and properly sourced.
+- Fields of study.
+- Admissions information.
+- Scholarships and funding.
+- Official university website links.
+
+Use each school's colors subtly in the background and header. Do not change the overall UniPath AI navigation, subscription pages, or global branding.
+
+### 5. Database Fields
+Add these fields to each institution record:
+- logo_url
+- logo_source_url
+- primary_color_hex
+- secondary_color_hex
+- colors_source_url
+- mascot_name
+- mascot_image_url
+- mascot_source_url
+- campus_image_url
+- branding_verification_status
+- branding_last_verified_at
+
+Make sure missing values are supported.
+
+### 6. Automated Branding Discovery
+Build a process to identify and verify official logos, colors, mascots, and campus images for institutions already in the database and for new institutions added later.
+
+Prefer official university brand guides, official athletics pages, and authorized media resources. Respect trademark rights, copyright, licensing, and source terms.
+
+Do not invent school colors, logos, mascots, or image URLs. Do not assign branding based only on a similar school name.
+
+### 7. Performance and Testing
+- Cache images appropriately.
+- Support transparent logos and different image dimensions.
+- Add fallbacks for broken images.
+- Make the profiles responsive on mobile and desktop.
+- Test the feature in both preview and the published app.
+- Report how many institutions have verified logos, colors, mascots, and campus images.
+
+I am a beginner and do not know how to code. Implement this in my existing project, explain any steps I need to take, and do not claim all institutions have complete branding until the records have been verified.

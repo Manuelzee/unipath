@@ -4,9 +4,9 @@
 
 - Private profile budget: optional range or custom amount, supported display
   currency, tuition/total scope, and explicit skip. Save the profile to persist.
-- Registration: sign-up leads to the protected `/onboarding` budget step.
-  Save or skip persists budget preferences without overwriting existing profile
-  facts. Optional annual accommodation, food, transportation and other estimates
+- Registration: sign-up leads to the protected `/onboarding` wizard, whose
+  third step is the budget. Skipping the budget saves an explicit "no budget"
+  answer; the wizard keeps existing profile facts it does not ask about. Optional annual accommodation, food, transportation and other estimates
   are saved privately in the same selected currency.
 - Directory: optional annual maximum, currency, and separately selected in-state,
   out-of-state, domestic, or international tuition. Non-U.S. coverage is limited
@@ -106,7 +106,7 @@ From the workspace root, run `pnpm --filter @workspace/db run push` for the
 new tuition evidence table, then:
 
 ```sh
-cd artifacts/api-server
+cd apps/api
 pnpm exec tsx src/scripts/loadTuitionSnapshots.ts
 ```
 
@@ -209,7 +209,7 @@ crypto supports recurring subscriptions.
 
 ```sh
 pnpm run typecheck
-cd artifacts/api-server
+cd apps/api
 pnpm exec tsx src/scripts/tests/testTuitionAndRates.ts
 pnpm exec tsx src/scripts/tests/testTuitionDatabase.ts
 ```
@@ -222,8 +222,8 @@ budget inputs, unknown-tuition exclusions, and payment availability/access gates
 ### Authentic import verification (2026-11-17)
 
 ```sh
-python -m unittest discover -s artifacts/api-server/src/scripts/tests -p test_prepare_tuition.py
-cd artifacts/api-server
+python -m unittest discover -s apps/api/src/scripts/tests -p test_prepare_tuition.py
+cd apps/api
 pnpm exec tsx src/scripts/tests/testImportedTuition.ts
 ```
 

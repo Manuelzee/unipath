@@ -1,0 +1,15 @@
+{
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/*.tsbuildinfo": true
+  },
+  "search.exclude": {
+    "**/dist": true,
+    "pnpm-lock.yaml": true,
+    "packages/api-zod/src/generated": true,
+    "packages/api-client-react/src/generated": true,
+    ".data": true
+  }
+}

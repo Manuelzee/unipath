@@ -84,9 +84,10 @@ comparison-list screen; its saved shortlist uses the shared component.
 
 ## Publishing and testing
 
-Publish/Re-publish is required to apply the additive logo fields/asset table
-through Replit's managed schema flow, ship the manifest and activate the new UI.
-App Storage settings are provisioned for the project; do not expose their values.
+Deploy and run `pnpm db:push` to apply the additive logo fields/asset table,
+ship the manifest and activate the new UI. Cached images live in private
+storage (`STORAGE_DIR`, default `.data/storage`) and are served only through
+the verification-checked image routes; never expose that folder directly.
 There is no startup DDL or public logo-import/upload endpoint.
 
 Check `/api/universities/logo-coverage` on the **published hostname**, inspect an

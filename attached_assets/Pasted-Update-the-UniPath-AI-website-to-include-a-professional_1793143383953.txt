@@ -1,0 +1,89 @@
+Update the UniPath AI website to include a professional, modern subscription section titled:
+
+# Simple, student-friendly plans
+
+**Choose the support you need, Start free, then upgrade when you want deeper comparisons, personalized planning, or hands-on application support.**
+
+### Design Requirements
+- Use a clean, modern design that feels welcoming to college students.
+- Make the section easy to understand on desktop and mobile.
+- Display each plan in a separate card with clear pricing, features, and a call-to-action button.
+- Keep the existing UniPath AI branding, school colors, logos, and overall design.
+- Make the pricing transparent, with no hidden fees.
+- Do not change existing subscription prices or remove existing features.
+
+### Plan 1: Free
+**Price: $0**
+
+For students beginning their college search.
+
+Features:
+- Basic university matching
+- Search universities worldwide
+- Explore majors and fields of study
+- View available admissions information
+- Discover scholarship opportunities
+- Save basic student preferences
+
+Button: **Get Started Free**
+
+### Plan 2: Student Plus
+**Price: $9.99/month**
+
+For students who want deeper comparisons and better planning.
+
+Features:
+- Everything in Free
+- Advanced university comparisons
+- Personalized university recommendations
+- Enhanced scholarship discovery
+- Application planning tools
+- Saved university lists and preferences
+- Start-term and budget-based matching
+
+Button: **Upgrade to Student Plus**
+
+Highlight this plan with a **Most Popular** badge.
+
+### Plan 3: Premium
+**Price: $29.99/month**
+
+For students who want more personalized application guidance.
+
+Features:
+- Everything in Student Plus
+- AI-powered application guidance
+- College essay assistance and feedback
+- Personalized application checklists
+- Document preparation guidance
+- Scholarship application planning
+- Personalized next-step recommendations
+
+Button: **Get Premium Support**
+
+### Plan 4: Application Support
+**Price: $99–$299 per package**
+
+For students who want additional help organizing their applications.
+
+Features:
+- Personalized application support based on the selected package
+- Application timeline and deadline organization
+- Document checklist assistance
+- Guidance through application requirements
+- Support with preparing application materials
+
+Button: **Explore Application Support**
+
+Clearly explain what each package includes before payment. Do not imply that UniPath AI submits applications, guarantees admission, or guarantees scholarships unless those services are explicitly implemented and authorized.
+
+### Additional Requirements
+1. Keep the existing subscription plans and prices consistent throughout the app.
+2. Connect each button to the appropriate signup, checkout, or package-selection flow.
+3. If payment processing is not configured, show a clear setup message rather than a fake successful payment.
+4. Explain the difference between monthly subscriptions and one-time application support packages.
+5. Add a short FAQ covering plan upgrades, cancellations, billing, and included features.
+6. Do not invent features that have not been implemented.
+7. Test the pricing cards, buttons, responsive layout, and subscription flows in both the preview and published application.
+
+**Goal:** Help students understand their options quickly, start for free, and upgrade only when they need additional support.

@@ -1,0 +1,52 @@
+Activate the complete payment processing system for my UniPath AI app and website.
+
+I want customers worldwide to be able to purchase subscriptions and application support packages using supported international currencies.
+
+**1. Activate secure checkout**
+- Integrate Stripe Checkout using the official Stripe API.
+- Accept supported international credit/debit cards and local payment methods.
+- Show prices in supported local currencies, including USD, EUR, GBP, CAD, AUD, NGN, and INR, where available.
+- Display the final amount, currency, and applicable fees before payment.
+- Redirect customers to secure provider-hosted checkout.
+
+**2. Activate paid subscription plans**
+- Student Plus: $9.99/month.
+- Premium: $29.99/month.
+- Application Support: $99–$299 per package, with package pricing configured by the administrator.
+- Free: $0.
+
+Create recurring subscriptions for Student Plus and Premium. Application Support packages should be one-time payments.
+
+**3. Subscription management**
+- Allow customers to upgrade, downgrade, and cancel subscriptions.
+- Provide access to payment history, invoices, and receipts.
+- Activate paid features only after verified successful payment.
+- Handle renewals, failed payments, cancellations, and refunds correctly.
+
+**4. Admin payment dashboard**
+- Display real revenue, completed payments, active subscriptions, refunds, and failed transactions.
+- Allow administrators to manage plans, customer billing, and refund requests.
+- Never show fabricated revenue or transactions.
+
+**5. Cryptocurrency payments**
+- Prepare a separate integration for a supported cryptocurrency payment provider.
+- Allow supported crypto payments only after provider approval, secure configuration, and successful testing.
+- Do not activate crypto checkout until it is verified.
+
+**6. Security**
+- Store API credentials securely in Replit Secrets.
+- Verify all payment webhooks.
+- Use idempotency protection to prevent duplicate charges.
+- Never store raw card information.
+- Keep payment processing on the server.
+- Follow applicable payment, tax, and privacy requirements.
+
+**7. Testing and launch**
+- Complete successful and failed checkout tests.
+- Test subscription activation, renewal, cancellation, refunds, and billing portal access.
+- Verify that customer accounts receive the correct paid features.
+- Test supported currencies and mobile checkout.
+
+Use Stripe test mode first. Once all tests pass, report the results and list any remaining setup requirements.
+
+Do not enable live charges or publish the app until I explicitly approve.

@@ -31,16 +31,16 @@ The official links at that check were:
 - https://ed-public-download.scorecard.network/downloads/Most-Recent-Cohorts-Institution_10152026.zip
 - https://ed-public-download.scorecard.network/downloads/Most-Recent-Cohorts-Field-of-Study_10152026.zip
 
-Keep the ZIPs intact and attach them in the Replit Agent chat upload form. The owner does not need to edit code, extract files, or create a database.
+Keep the ZIPs intact and place them in the ignored `attached_assets/` folder at the repository root.
 
-## Technical import procedure (handled by the agent)
+## Technical import procedure
 
 Inspect actual archive filenames, headers, and official release dates first. Do not assume a field layout changed safely. Raw archives and normalized intermediate files belong in the ignored `generated-artifacts/` directory; uploaded originals can remain in `attached_assets/`.
 
 Prepare the records (replace the placeholder paths with actual uploaded files):
 
 ```sh
-python artifacts/api-server/src/scripts/prepareScorecardFiles.py \
+python apps/api/src/scripts/prepareScorecardFiles.py \
   attached_assets/INSTITUTION.zip attached_assets/FIELD_OF_STUDY.zip \
   --output generated-artifacts/scorecard-prepared.json
 ```
@@ -141,7 +141,7 @@ publishes it. `/api/universities/import-status` reports source snapshot coverage
 expected/present counts and its checksum; this is not itself proof of a publish
 until requested from the actual published hostname.
 
-Development schema and data are separate from production. Do not tell the owner that importing development data updated their published site. Apply schema through Replit's publish migration workflow; do not add startup DDL or manually push the production schema. Production data needs its own approved import process. Verify the published environment separately before claiming that its directory is available.
+Development schema and data are separate from production. Do not tell the owner that importing development data updated their production site. Apply schema changes to production with `pnpm db:push` against the production `DATABASE_URL` during a reviewed deployment; do not add startup DDL. Production data needs its own approved import process. Verify the published environment separately before claiming that its directory is available.
 
 ### Official IPEDS provenance and reporting year
 
@@ -167,8 +167,8 @@ scholarships were inferred by the provenance comparison.
 
 ### Simple published-site checks
 
-After publishing succeeds, use the published hostname—not the `.replit.dev`
-preview—and open `/discover`:
+After deploying, use the production hostname, not a local development server,
+and open `/discover`:
 
 1. Clear all filters. For this snapshot, the expected total is **6,174**.
 2. Select United States: **5,913**; select Canada: **258**.

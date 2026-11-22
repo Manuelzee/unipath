@@ -1,0 +1,103 @@
+Update UniPath AI to include these three fields in the student profile, university matching questionnaire, and personalized school recommendations. **Keep the existing design, database, and subscription plans. Do not remove any existing features.**
+
+### 1. Annual Tuition Budget
+Add a field called **“Annual Tuition Budget”** to help students find schools within their budget.
+
+Allow students to select:
+- Under $5,000
+- $5,000–$10,000
+- $10,000–$20,000
+- $20,000–$35,000
+- $35,000–$50,000
+- $50,000+
+- I need scholarships or financial aid
+- No specific budget
+- Enter my own budget
+
+Requirements:
+- Let students select their preferred currency.
+- Allow students to indicate whether their budget is for tuition only or their total annual education budget.
+- For international schools, account for currency differences.
+- Use verified tuition information for matching when available.
+- Consider scholarships and financial aid when evaluating affordability, but never guarantee that a student will receive funding.
+- If tuition data is missing or outdated, clearly label it as unverified.
+- **Important:** Do not display annual tuition or annual cost figures on student-facing university profiles. Use this information internally for matching and show students affordability indicators, such as “May fit your budget,” “Scholarship opportunities available,” or “Budget information needs verification.”
+
+### 2. Start Term
+Add a field called **“When do you want to start school?”**
+
+Allow students to select:
+- Spring
+- Summer
+- Fall
+- Winter
+- Flexible / Any term
+
+Add a separate field for the preferred start year, with options for the current year and future years.
+
+Requirements:
+- Match students with institutions and programs that accept applications for their selected start term.
+- Check official university admissions pages for term availability and deadlines.
+- Clearly identify deadlines that have passed.
+- Never invent application deadlines or assume every program offers every start term.
+- If information is unavailable, display “Start term availability needs verification.”
+
+### 3. What Matters Most?
+Add a section titled **“What matters most to you?”**
+
+Let students select multiple priorities:
+- Scholarships and financial aid
+- Affordable education
+- Acceptance chances
+- My preferred major or field of study
+- Strong academic reputation
+- Internship and job opportunities
+- Career outcomes
+- Location and climate
+- Close to home
+- Campus life and student activities
+- Sports and school spirit
+- Online or hybrid programs
+- Flexible admission requirements
+- Support for international students
+- Diversity and inclusion
+- Small class sizes
+- Research opportunities
+- Graduate school opportunities
+- On-campus housing
+- Accessibility and student support services
+
+Allow students to rank their top three priorities so the matching system understands what matters most.
+
+### 4. Connect All Three Fields to AI Matching
+Update the university recommendation system to use:
+- Annual tuition budget
+- Preferred start term and year
+- Top three priorities
+- Preferred country and location
+- Desired major or program
+- Degree level
+- Academic and admissions profile
+- Scholarship eligibility
+
+Show each recommendation with:
+- University name and official logo
+- Location and available programs
+- A match percentage or clearly explained match score
+- Reasons the university matches the student's preferences
+- Potential affordability and scholarship indicators
+- Start-term compatibility
+- Official admissions and scholarship links
+- Any missing information that still needs verification
+
+Do not promise admission, scholarships, or employment outcomes. Explain that match scores are estimates, not guarantees.
+
+### 5. Save Student Preferences
+Store these preferences in the database and link them to the student's account. When a student returns, restore their saved preferences. Let students edit them at any time.
+
+Make sure the preferences work across the Free, Student Plus, and Premium plans, while preserving the existing subscription feature limits.
+
+### 6. Test Before Finishing
+Test the new fields on desktop and mobile. Verify that preferences save correctly, recommendations change when preferences change, and the feature works in both the preview and published application.
+
+When finished, report which database fields, pages, matching rules, and tests were updated. Do not claim the feature is complete unless it has actually been implemented and tested.

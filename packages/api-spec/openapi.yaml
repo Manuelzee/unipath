@@ -1,0 +1,2163 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: universities
+    description: International institution directory with source-limited coverage
+  - name: student
+    description: Signed-in student profile, saved schools, and application tasks
+  - name: jobs
+    description: Student employment guidance and job tracking
+  - name: ai
+    description: Server-side AI guidance with grounding, quotas and student approval
+paths:
+  /universities/{id}/verification:
+    get:
+      operationId: getPublicInstitutionVerification
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Reviewed non-price field evidence only; no reviewer identities or private jobs
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PublicInstitutionVerification" }
+  /me/admin-access:
+    get:
+      operationId: getAdminAccess
+      responses:
+        "200":
+          description: Signed-in user's server-checked access
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminAccess" }
+  /me/admin-setup:
+    post:
+      operationId: confirmAdminSetup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminSetupConfirmation" }
+      responses:
+        "200":
+          description: Explicit owner-confirmed server-side setup
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminAccess" }
+  /admin/status:
+    get:
+      operationId: getAdminStatus
+      responses:
+        "200":
+          description: Actual connected database aggregates, never another environment's inferred status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminDatabaseStatus" }
+  /admin/institutions:
+    get:
+      operationId: listAdminInstitutions
+      parameters:
+        - { name: search, in: query, schema: { type: string, maxLength: 160 } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+      responses:
+        "200":
+          description: Real paginated institution records
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminInstitutionList" }
+  /admin/institutions/{id}:
+    get:
+      operationId: getAdminInstitution
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Source evidence, latest attempts and review queue
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminInstitutionDetail" }
+  /admin/institutions/{id}/checks:
+    post:
+      operationId: runAdminInstitutionCheck
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Completed source check; supported claims still require review
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminVerificationJob" }
+  /admin/checks/{id}/retry:
+    post:
+      operationId: retryAdminInstitutionCheck
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: A new auditable attempt, never a fabricated success
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminVerificationJob" }
+  /admin/proposals/{id}/review:
+    post:
+      operationId: reviewAdminProposal
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminProposalDecision" }
+      responses:
+        "200":
+          description: Reviewed proposal or explicit stale-data conflict
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminVerificationProposal" }
+  /universities/branding-coverage:
+    get:
+      operationId: getInstitutionBrandingCoverage
+      responses:
+        "200":
+          description: Actual verified branding counts, not a full-coverage claim.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InstitutionBrandingCoverage" }
+  /institution-branding/images/{file}:
+    get:
+      operationId: getInstitutionBrandingImage
+      parameters:
+        - in: path
+          name: file
+          required: true
+          schema: { type: string, pattern: '^[a-f0-9]{64}\.webp$' }
+      responses:
+        "200":
+          description: Cached image with verified institution association and permitted reuse.
+          content:
+            image/webp:
+              schema: { type: string, format: binary }
+        "404": { description: No verified image is available. }
+  /institution-logos/{file}:
+    get:
+      operationId: getInstitutionLogoImage
+      parameters:
+        - in: path
+          name: file
+          required: true
+          schema: { type: string, pattern: '^[a-f0-9]{64}\.webp$' }
+      responses:
+        "200":
+          description: Immutable verified WebP logo cached in App Storage.
+          content:
+            image/webp:
+              schema: { type: string, format: binary }
+        "304": { description: Cached image has not changed. }
+        "404": { description: No verified image is available. }
+  /universities/logo-coverage:
+    get:
+      operationId: getInstitutionLogoCoverage
+      responses:
+        "200":
+          description: Actual logo verification coverage by country and status.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InstitutionLogoCoverage" }
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /universities:
+    get:
+      operationId: listUniversities
+      tags: [universities]
+      summary: Search imported institutions worldwide
+      parameters:
+        - in: query
+          name: maxAnnualTuition
+          schema: { type: number, minimum: 0, maximum: 1000000000000 }
+        - in: query
+          name: tuitionCurrency
+          schema: { type: string, default: USD, pattern: "^[A-Z]{3}$" }
+        - in: query
+          name: tuitionRate
+          schema: { type: string, enum: [in_state, out_of_state, domestic, international], default: out_of_state }
+        - in: query
+          name: countryCode
+          schema: { type: string, pattern: "^[A-Z]{2}$" }
+        - in: query
+          name: city
+          schema: { type: string }
+        - in: query
+          name: language
+          schema: { type: string }
+        - in: query
+          name: applicantStatus
+          schema: { type: string, enum: [Domestic, International] }
+        - in: query
+          name: fundingOnly
+          schema: { type: boolean, default: false }
+        - in: query
+          name: search
+          schema: { type: string }
+        - in: query
+          name: state
+          schema: { type: string }
+        - in: query
+          name: institutionType
+          schema: { type: string }
+        - in: query
+          name: ownership
+          schema: { type: string }
+        - in: query
+          name: degreeLevel
+          schema: { type: string }
+        - in: query
+          name: major
+          schema: { type: string }
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+        - in: query
+          name: pageSize
+          schema: { type: integer, minimum: 1, maximum: 100, default: 24 }
+      responses:
+        "200":
+          description: Matching active institutions from the NCES IPEDS and College Scorecard datasets
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ListUniversitiesResult" }
+        "400":
+          description: Invalid filter or unsupported currency.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TuitionSearchError" }
+        "503":
+          description: A current currency rate could not be verified; no unfiltered fallback is returned.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TuitionSearchError" }
+  /universities/filters:
+    get:
+      operationId: getUniversityFilterOptions
+      tags: [universities]
+      summary: Get directory filter values from the imported institution database
+      responses:
+        "200":
+          description: Available institution types, ownerships, degrees, and majors
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UniversityFilterOptions" }
+  /exchange-rates:
+    get:
+      operationId: getExchangeRate
+      parameters:
+        - in: query
+          name: currency
+          required: true
+          schema: { type: string, pattern: "^[A-Z]{3}$" }
+      responses:
+        "200":
+          description: Reference conversion from USD, never a payment quote.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ExchangeRate" }
+        "400": { description: Unsupported currency }
+  /billing/status:
+    get:
+      operationId: getBillingStatus
+      responses:
+        "200":
+          description: Honest payment availability; live checkout remains disabled.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BillingAvailability" }
+  /billing/checkout:
+    post:
+      operationId: requestCheckout
+      summary: Closed payment gate. No checkout or charge is created.
+      responses:
+        "409":
+          description: Payments are not available yet.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PaymentsUnavailable" }
+        "401": { description: Sign in required }
+  /billing/crypto/checkout:
+    post:
+      operationId: requestCryptoCheckout
+      summary: Closed crypto gate. No wallet address or transfer is created.
+      responses:
+        "409":
+          description: Cryptocurrency payments are not available yet.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PaymentsUnavailable" }
+        "401": { description: Sign in required }
+  /me/budget:
+    get:
+      operationId: getBudgetSettings
+      responses:
+        "200":
+          description: Private budget and annual living-expense preferences.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BudgetSettings" }
+        "401": { description: Sign in required }
+    put:
+      operationId: saveBudgetSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BudgetPreferences" }
+      responses:
+        "200":
+          description: Saved without overwriting other profile details.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BudgetSettings" }
+        "400": { description: Invalid budget preferences }
+        "401": { description: Sign in required }
+  /admin/customers:
+    get:
+      operationId: listAdminCustomers
+      parameters:
+        - in: query
+          name: search
+          schema: { type: string, maxLength: 100 }
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, maximum: 100000, default: 1 }
+      responses:
+        "200":
+          description: Real saved-profile account references. Private budgets and authentication data are not exposed.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminCustomerList" }
+        "400": { description: Invalid search or page }
+        "401": { description: Sign in required }
+        "403": { description: Administrator access required }
+  /me/billing:
+    get:
+      operationId: getMyBilling
+      responses:
+        "200":
+          description: Account billing availability. No provider history is fabricated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BillingAvailability" }
+        "401": { description: Sign in required }
+  /admin/billing:
+    get:
+      operationId: getAdminBilling
+      responses:
+        "200":
+          description: Administrator-only provider setup status. Financial data is unavailable until connected.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BillingAvailability" }
+        "401": { description: Sign in required }
+        "403": { description: Administrator access required }
+  /universities/coverage:
+    get:
+      operationId: getDirectoryCoverage
+      tags: [universities]
+      summary: Get tested country coverage and source access restrictions
+      responses:
+        "200":
+          description: Actual imported coverage, not a claim of national completeness
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DirectoryCoverage" }
+  /university-facts:
+    get:
+      operationId: listUniversityFacts
+      tags: [universities]
+      summary: Browse source-reported programs, admissions and funding
+      parameters:
+        - in: query
+          name: institutionId
+          required: true
+          schema: { type: string }
+        - in: query
+          name: kind
+          schema: { type: string, enum: [program, admissions, funding], default: program }
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+        - in: query
+          name: pageSize
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+      responses:
+        "200":
+          description: Paginated imported facts; absent facts are never inferred
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InstitutionFactPage" }
+        "404": { description: Institution not found }
+  /funding/matches:
+    post:
+      operationId: getFundingMatches
+      tags: [universities]
+      summary: Find potential source-verified funding opportunities for a student
+      description: Evaluates only recent, independently verified institutional funding records. Student inputs are held in memory for this request and are not stored or sent to external services. A match is a potential lead, never a guarantee of award or eligibility.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FundingStudentProfileInput"
+      responses:
+        "200":
+          description: Source-linked potential opportunities; never a promise of eligibility
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FundingMatchResponse"
+  /funding/options:
+    get:
+      operationId: getFundingFinderOptions
+      tags: [universities]
+      summary: Get source-supported choices for the student funding finder
+      responses:
+        "200":
+          description: Filters derived from recently verified imported opportunity records
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FundingFinderOptions"
+  /universities/{id}:
+    get:
+      operationId: getUniversity
+      tags: [universities]
+      summary: Get a college or university listing
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Institution directory record
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/University" }
+        "404": { description: University not found }
+  /me/recommendations:
+    get:
+      operationId: getStudentRecommendations
+      tags: [student]
+      summary: Explainable preference recommendations using the account's saved questionnaire
+      responses:
+        "200":
+          description: Estimated matches with explicit missing evidence
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RecommendationResult" }
+        "401": { description: Sign in required }
+        "409": { description: Save a profile first }
+        "503": { description: Matching data unavailable }
+  /me/profile:
+    get:
+      operationId: getStudentProfile
+      tags: [student]
+      summary: Get the signed-in student's profile
+      responses:
+        "200":
+          description: Student profile or null when not completed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StudentProfileResult" }
+        "401": { description: Sign in required }
+    put:
+      operationId: saveStudentProfile
+      tags: [student]
+      summary: Save the signed-in student's profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StudentProfileInput" }
+      responses:
+        "200":
+          description: Saved profile
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StudentProfile" }
+        "401": { description: Sign in required }
+  /me/saved:
+    get:
+      operationId: listSavedUniversities
+      tags: [student]
+      summary: List saved universities for the signed-in student
+      responses:
+        "200":
+          description: Saved university listings
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/SavedUniversity" }
+        "401": { description: Sign in required }
+    post:
+      operationId: saveUniversity
+      tags: [student]
+      summary: Save a university to the student's list
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SaveUniversityInput" }
+      responses:
+        "201":
+          description: Saved university
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SavedUniversity" }
+        "401": { description: Sign in required }
+  /me/saved/{universityId}:
+    delete:
+      operationId: removeSavedUniversity
+      tags: [student]
+      summary: Remove a saved university
+      parameters:
+        - in: path
+          name: universityId
+          required: true
+          schema: { type: string }
+      responses:
+        "204": { description: University removed }
+        "401": { description: Sign in required }
+  /me/tasks:
+    get:
+      operationId: listApplicationTasks
+      tags: [student]
+      summary: List application tasks
+      responses:
+        "200":
+          description: Tasks for the signed-in student
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ApplicationTask" }
+        "401": { description: Sign in required }
+    post:
+      operationId: createApplicationTask
+      tags: [student]
+      summary: Create an application task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ApplicationTaskInput" }
+      responses:
+        "201":
+          description: Created task
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApplicationTask" }
+        "401": { description: Sign in required }
+  /me/tasks/{id}:
+    patch:
+      operationId: updateApplicationTask
+      tags: [student]
+      summary: Update a task or mark it complete
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ApplicationTaskUpdate" }
+      responses:
+        "200":
+          description: Updated task
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApplicationTask" }
+        "401": { description: Sign in required }
+        "404": { description: Task not found }
+    delete:
+      operationId: deleteApplicationTask
+      tags: [student]
+      summary: Delete a task
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "204": { description: Task deleted }
+        "401": { description: Sign in required }
+        "404": { description: Task not found }
+  /student-jobs/guidance:
+    get:
+      operationId: getWorkGuidance
+      tags: [jobs]
+      summary: Official student work-rule sources by country
+      responses:
+        "200":
+          description: Official sources with the time each link was last fetched
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WorkGuidance" }
+  /student-jobs/providers:
+    get:
+      operationId: listJobProviders
+      tags: [jobs]
+      summary: Job listing providers and whether each is connected
+      responses:
+        "200":
+          description: Providers
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/JobProvider" }
+  /student-jobs/search:
+    get:
+      operationId: searchJobListings
+      tags: [jobs]
+      summary: Search real job listings from a connected provider
+      parameters:
+        - { in: query, name: provider, schema: { type: string } }
+        - { in: query, name: country, required: true, schema: { type: string, minLength: 2, maxLength: 2 } }
+        - { in: query, name: keywords, schema: { type: string, maxLength: 120 } }
+        - { in: query, name: city, schema: { type: string, maxLength: 120 } }
+        - { in: query, name: university, schema: { type: string, maxLength: 160 } }
+        - { in: query, name: category, schema: { type: string, maxLength: 80 } }
+        - { in: query, name: salaryMin, schema: { type: integer, minimum: 0 } }
+        - { in: query, name: jobType, schema: { type: string, enum: [part_time, full_time, internship, graduate] } }
+        - { in: query, name: remote, schema: { type: boolean } }
+        - { in: query, name: page, schema: { type: integer, minimum: 1, maximum: 50, default: 1 } }
+      responses:
+        "200":
+          description: Listings
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JobSearchResponse" }
+        "400": { description: Invalid search }
+        "401": { description: Sign in required }
+        "429":
+          description: Provider rate limit
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JobSearchError" }
+        "502":
+          description: Upstream authentication failure or rejected or invalid provider response
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JobSearchError" }
+        "503":
+          description: Missing or malformed configuration or temporary provider outage
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JobSearchError" }
+  /me/jobs:
+    get:
+      operationId: listJobApplications
+      tags: [jobs]
+      summary: List the student's tracked jobs
+      responses:
+        "200":
+          description: Jobs tracked by the signed-in student
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/JobApplication" }
+        "401": { description: Sign in required }
+    post:
+      operationId: createJobApplication
+      tags: [jobs]
+      summary: Track a job the student found
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/JobApplicationInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JobApplication" }
+        "400": { description: Invalid input }
+        "401": { description: Sign in required }
+  /me/jobs/{id}:
+    patch:
+      operationId: updateJobApplication
+      tags: [jobs]
+      summary: Update a tracked job
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/JobApplicationInput" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JobApplication" }
+        "400": { description: Invalid input }
+        "401": { description: Sign in required }
+        "404": { description: Not found }
+    delete:
+      operationId: deleteJobApplication
+      tags: [jobs]
+      summary: Delete a tracked job
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: integer } }
+      responses:
+        "204": { description: Deleted }
+        "401": { description: Sign in required }
+        "404": { description: Not found }
+  /me/dashboard:
+    get:
+      operationId: getStudentDashboard
+      tags: [student]
+      summary: Get application dashboard summary
+      responses:
+        "200":
+          description: Summary for the signed-in student
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DashboardSummary" }
+        "401": { description: Sign in required }
+  /me/applications:
+    get:
+      operationId: listApplications
+      tags: [student]
+      summary: List the student's application trackers with their tasks
+      responses:
+        "200":
+          description: Student-managed application trackers. UniPath never submits applications.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Application" }
+        "401": { description: Sign in required }
+    post:
+      operationId: createApplication
+      tags: [student]
+      summary: Start tracking an application for a directory institution
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ApplicationInput" }
+      responses:
+        "201":
+          description: Created tracker
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Application" }
+        "400": { description: Invalid input }
+        "401": { description: Sign in required }
+        "404": { description: University not found }
+  /me/applications/{id}:
+    patch:
+      operationId: updateApplication
+      tags: [student]
+      summary: Update status, notes or student-recorded details
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ApplicationUpdate" }
+      responses:
+        "200":
+          description: Updated tracker
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Application" }
+        "400": { description: Invalid input }
+        "401": { description: Sign in required }
+        "404": { description: Not found }
+    delete:
+      operationId: deleteApplication
+      tags: [student]
+      summary: Delete a tracker and its tasks
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: integer } }
+      responses:
+        "204": { description: Deleted }
+        "401": { description: Sign in required }
+        "404": { description: Not found }
+  /me/applications/{id}/tasks:
+    post:
+      operationId: createApplicationScopedTask
+      tags: [student]
+      summary: Add a task to a tracked application
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ApplicationScopedTaskInput" }
+      responses:
+        "201":
+          description: Created task
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApplicationTask" }
+        "400": { description: Invalid input }
+        "401": { description: Sign in required }
+        "404": { description: Application not found }
+  /me/applications/{id}/checklist:
+    post:
+      operationId: addApplicationChecklist
+      tags: [student]
+      summary: Add common document-checklist tasks the student can edit or remove
+      description: Generic items only. They are not the institution's verified requirements.
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: integer } }
+      responses:
+        "200":
+          description: Tracker with the added tasks; existing tasks with the same title are not duplicated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Application" }
+        "401": { description: Sign in required }
+        "404": { description: Application not found }
+  /ai/status:
+    get:
+      operationId: getAiStatus
+      tags: [ai]
+      summary: Whether the AI assistant is connected, and the signed-in student's remaining daily quota
+      responses:
+        "200":
+          description: Server-side configuration and usage; never exposes credentials
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AiStatus" }
+        "401": { description: Sign in required }
+  /ai/chat:
+    post:
+      operationId: askAiAssistant
+      tags: [ai]
+      summary: Grounded admissions guidance using the student's profile and verified university records
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AiChatInput" }
+      responses:
+        "200":
+          description: Advisory reply plus the verified facts that were provided to the model
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AiReply" }
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AiError" }
+        "401": { description: Sign in required }
+        "429":
+          description: Daily quota or short-term rate limit reached
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AiError" }
+        "502":
+          description: The AI provider failed; nothing was saved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AiError" }
+        "503":
+          description: The AI provider is not configured
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AiError" }
+  /ai/essay-review:
+    post:
+      operationId: reviewEssay
+      tags: [ai]
+      summary: Feedback on grammar, clarity, organization and tone. Never rewrites or invents experiences.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AiEssayInput" }
+      responses:
+        "200":
+          description: Advisory feedback for the student to review
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AiReply" }
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AiError" }
+        "401": { description: Sign in required }
+        "429":
+          description: Daily quota or short-term rate limit reached
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AiError" }
+        "502":
+          description: The AI provider failed; nothing was saved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AiError" }
+        "503":
+          description: The AI provider is not configured
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AiError" }
+  /me/ai/saved:
+    get:
+      operationId: listAiSavedItems
+      tags: [ai]
+      summary: Material the student reviewed and approved
+      responses:
+        "200":
+          description: Approved items
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AiSavedItem" }
+        "401": { description: Sign in required }
+    post:
+      operationId: saveAiItem
+      tags: [ai]
+      summary: Save reviewed AI material to the student's workspace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AiSavedItemInput" }
+      responses:
+        "201":
+          description: Saved item
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AiSavedItem" }
+        "400": { description: Invalid input }
+        "401": { description: Sign in required }
+  /me/ai/saved/{id}:
+    delete:
+      operationId: deleteAiSavedItem
+      tags: [ai]
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: integer } }
+      responses:
+        "204": { description: Deleted }
+        "401": { description: Sign in required }
+        "404": { description: Not found }
+  /me/export:
+    get:
+      operationId: exportMyData
+      tags: [student]
+      summary: Download everything UniPath stores for the signed-in student
+      responses:
+        "200":
+          description: Student-owned records only
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StudentDataExport" }
+        "401": { description: Sign in required }
+  /me/data-deletion:
+    post:
+      operationId: deleteMyData
+      tags: [student]
+      summary: Permanently delete the student's UniPath records (not the sign-in account)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DataDeletionRequest" }
+      responses:
+        "200":
+          description: Counts of deleted records
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DataDeletionResult" }
+        "400": { description: Confirmation missing }
+        "401": { description: Sign in required }
+  /me/documents:
+    get:
+      operationId: listStudentDocuments
+      tags: [student]
+      summary: The signed-in student's private documents (metadata only)
+      responses:
+        "200":
+          description: Documents, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/StudentDocument" }
+        "401": { description: Sign in required }
+    post:
+      operationId: uploadStudentDocument
+      tags: [student]
+      summary: Upload a PDF, PNG, JPEG or DOCX file to private storage
+      description: The file type is detected from its contents; the declared type and file extension are not trusted.
+      parameters:
+        - { in: query, name: fileName, required: true, schema: { type: string, minLength: 1, maxLength: 200 } }
+        - { in: query, name: title, schema: { type: string, maxLength: 160 } }
+        - { in: query, name: applicationId, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema: { type: string, format: binary }
+      responses:
+        "201":
+          description: Stored document
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StudentDocument" }
+        "400": { description: "Unsupported, empty or invalid file" }
+        "401": { description: Sign in required }
+        "404": { description: Application not found }
+        "409": { description: Document limit reached }
+        "413": { description: File too large }
+  /me/documents/{id}:
+    patch:
+      operationId: updateStudentDocument
+      tags: [student]
+      summary: Rename a document or link it to an application
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StudentDocumentUpdate" }
+      responses:
+        "200":
+          description: Updated document
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StudentDocument" }
+        "400": { description: Invalid input }
+        "401": { description: Sign in required }
+        "404": { description: Not found }
+    delete:
+      operationId: deleteStudentDocument
+      tags: [student]
+      summary: Permanently delete a document and its file
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: integer } }
+      responses:
+        "204": { description: Deleted }
+        "401": { description: Sign in required }
+        "404": { description: Not found }
+  /me/documents/{id}/file:
+    get:
+      operationId: downloadStudentDocument
+      tags: [student]
+      summary: Download a document (owner only, always as an attachment)
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: integer } }
+      responses:
+        "200":
+          description: File contents
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+        "401": { description: Sign in required }
+        "404": { description: Not found }
+components:
+  schemas:
+    PublicInstitutionVerification:
+      type: object
+      required: [institutionId, fields]
+      properties:
+        institutionId: { type: string }
+        fields: { type: array, items: { $ref: "#/components/schemas/AdminSourceField" } }
+    AdminAccess:
+      type: object
+      required: [userId, isAdmin, canSetup, setupConfigured, environment]
+      properties:
+        userId: { type: string }
+        isAdmin: { type: boolean }
+        canSetup: { type: boolean }
+        setupConfigured: { type: boolean }
+        environment: { type: string }
+    AdminSetupConfirmation:
+      type: object
+      required: [confirmed]
+      properties:
+        confirmed: { type: boolean, const: true }
+    AdminDatabaseStatus:
+      type: object
+      required: [environment, databaseIdentity, checkedAt, institutionCount, uniqueInstitutionIds, programFacts, savedProfiles, pendingProposals, failedChecks, automaticChangesRequireReview]
+      properties:
+        environment: { type: string }
+        databaseIdentity: { type: string }
+        checkedAt: { type: string }
+        institutionCount: { type: integer }
+        uniqueInstitutionIds: { type: integer }
+        programFacts: { type: integer }
+        savedProfiles: { type: integer }
+        pendingProposals: { type: integer }
+        failedChecks: { type: integer }
+        automaticChangesRequireReview: { type: boolean }
+    AdminInstitutionSummary:
+      type: object
+      required: [id, name, country, website, dataSource, dataYear]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        country: { type: string }
+        website: { type: string }
+        dataSource: { type: string }
+        dataYear: { type: string }
+    AdminInstitutionList:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/AdminInstitutionSummary" } }
+        total: { type: integer }
+        page: { type: integer }
+        pageSize: { type: integer }
+    AdminSourceField:
+      type: object
+      required: [fieldKey, title, value, status, sourceUrl, checkedAt, message]
+      properties:
+        fieldKey: { type: string }
+        title: { type: string }
+        value: { type: string }
+        status: { type: string }
+        sourceUrl: { type: ["string", "null"] }
+        checkedAt: { type: ["string", "null"] }
+        message: { type: string }
+    AdminVerificationJob:
+      type: object
+      required: [id, institutionId, status, requestedAt, completedAt, error, checks]
+      properties:
+        id: { type: string }
+        institutionId: { type: string }
+        status: { type: string }
+        requestedAt: { type: string }
+        completedAt: { type: ["string", "null"] }
+        error: { type: ["string", "null"] }
+        checks: { type: array, items: { $ref: "#/components/schemas/AdminSourceField" } }
+    AdminVerificationProposal:
+      type: object
+      required: [id, jobId, institutionId, fieldKey, value, previousValue, status, sourceUrl, checkedAt, reviewedAt, reviewNote]
+      properties:
+        id: { type: string }
+        jobId: { type: string }
+        institutionId: { type: string }
+        fieldKey: { type: string }
+        value: { type: string }
+        previousValue: { type: ["string", "null"] }
+        status: { type: string }
+        sourceUrl: { type: string }
+        checkedAt: { type: string }
+        reviewedAt: { type: ["string", "null"] }
+        reviewNote: { type: ["string", "null"] }
+    AdminProposalDecision:
+      type: object
+      required: [decision]
+      properties:
+        decision: { type: string, enum: [approve, reject] }
+        note: { type: string, maxLength: 1000 }
+    AdminInstitutionDetail:
+      type: object
+      required: [institution, fields, jobs, proposals]
+      properties:
+        institution: { $ref: "#/components/schemas/AdminInstitutionSummary" }
+        fields: { type: array, items: { $ref: "#/components/schemas/AdminSourceField" } }
+        jobs: { type: array, items: { $ref: "#/components/schemas/AdminVerificationJob" } }
+        proposals: { type: array, items: { $ref: "#/components/schemas/AdminVerificationProposal" } }
+    InstitutionBrandingCoverage:
+      type: object
+      required: [total, logos, colors, mascots, mascotImages, campusImages, attempted, note]
+      properties:
+        total: { type: integer }
+        logos: { type: integer }
+        colors: { type: integer }
+        mascots: { type: integer }
+        mascotImages: { type: integer }
+        campusImages: { type: integer }
+        attempted: { type: integer }
+        note: { type: string }
+    InstitutionLogoCoverage:
+      type: object
+      required: [rows, note]
+      properties:
+        note: { type: string }
+        rows:
+          type: array
+          items: { $ref: "#/components/schemas/InstitutionLogoCoverageRow" }
+    InstitutionLogoCoverageRow:
+      type: object
+      required: [countryCode, status, count, lastCheckedAt]
+      properties:
+        countryCode: { type: string }
+        status: { type: string }
+        count: { type: integer }
+        lastCheckedAt: { type: ["string", "null"] }
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    University:
+      type: object
+      required: [id, name, country, countryCode, city, state, institutionType, ownership, dataSource, dataYear, degreeLevels, degreeTypes, majors, website, admissionsWebsite, applicationWebsite, financialAidWebsite, admissionRate, admissionRateYear, completionRate, completionRateYear, completionRateType, pellGrantRate, pellGrantRateYear, medianDebtUsd, medianDebtYear, sourceUrl, isActive, lastUpdatedAt, sourceScope, sourceLicenseUrl, recognitionStatus, languages, applicantStatuses, dliNumber, dliSourceUrl, dliVerifiedAt, lastVerifiedAt]
+      properties:
+        tuition: { $ref: "#/components/schemas/UniversityTuition" }
+        id: { type: string }
+        name: { type: string }
+        country: { type: string }
+        countryCode: { type: string }
+        sourceScope: { type: ["string", "null"] }
+        sourceLicenseUrl: { type: ["string", "null"] }
+        recognitionStatus: { type: ["string", "null"] }
+        languages: { type: array, items: { type: string } }
+        applicantStatuses: { type: array, items: { type: string } }
+        dliNumber: { type: ["string", "null"] }
+        dliSourceUrl: { type: ["string", "null"] }
+        dliVerifiedAt: { type: ["string", "null"], format: date-time }
+        lastVerifiedAt: { type: ["string", "null"], format: date-time }
+        city: { type: string }
+        state: { type: string }
+        institutionType: { type: string }
+        ownership: { type: ["string", "null"] }
+        dataSource: { type: string }
+        dataYear: { type: ["string", "null"] }
+        degreeLevels:
+          type: array
+          items: { type: string }
+        degreeTypes:
+          type: array
+          items: { type: string }
+        majors:
+          type: array
+          items: { type: string }
+        website: { type: ["string", "null"] }
+        admissionsWebsite: { type: ["string", "null"] }
+        applicationWebsite: { type: ["string", "null"] }
+        financialAidWebsite: { type: ["string", "null"] }
+        logoUrl: { type: ["string", "null"], description: "Cached image URL, returned only for verified institution logos." }
+        logoSource: { type: ["string", "null"] }
+        logoIdentitySource: { type: ["string", "null"] }
+        logoLicenseUrl: { type: ["string", "null"] }
+        logoUsageNote: { type: ["string", "null"] }
+        logoVerificationStatus: { type: string, enum: [not_checked, verified, review_required, not_found, missing_website, error] }
+        logoLastCheckedAt: { type: ["string", "null"], format: date-time }
+        logoSourceUrl: { type: ["string", "null"] }
+        primaryColorHex: { type: ["string", "null"], pattern: '^#[0-9A-Fa-f]{6}$' }
+        secondaryColorHex: { type: ["string", "null"], pattern: '^#[0-9A-Fa-f]{6}$' }
+        colorsSourceUrl: { type: ["string", "null"] }
+        colorsUsageNote: { type: ["string", "null"] }
+        colorsVerificationStatus: { type: string }
+        colorsLastVerifiedAt: { type: ["string", "null"], format: date-time }
+        mascotName: { type: ["string", "null"] }
+        mascotSourceUrl: { type: ["string", "null"] }
+        mascotVerificationStatus: { type: string }
+        mascotLastVerifiedAt: { type: ["string", "null"], format: date-time }
+        mascotImageUrl: { type: ["string", "null"] }
+        mascotImageSourceUrl: { type: ["string", "null"] }
+        mascotImageLicenseUrl: { type: ["string", "null"] }
+        mascotImageCredit: { type: ["string", "null"] }
+        mascotImageVerificationStatus: { type: string }
+        campusImageUrl: { type: ["string", "null"] }
+        campusImageSourceUrl: { type: ["string", "null"] }
+        campusImageLicenseUrl: { type: ["string", "null"] }
+        campusImageCredit: { type: ["string", "null"] }
+        campusImageVerificationStatus: { type: string }
+        campusImageLastVerifiedAt: { type: ["string", "null"], format: date-time }
+        brandingVerificationStatus: { type: string }
+        brandingLastVerifiedAt: { type: ["string", "null"], format: date-time }
+        admissionRate: { type: ["number", "null"] }
+        admissionRateYear: { type: ["integer", "null"] }
+        completionRate: { type: ["number", "null"] }
+        completionRateYear: { type: ["integer", "null"] }
+        completionRateType: { type: ["string", "null"] }
+        pellGrantRate: { type: ["number", "null"] }
+        pellGrantRateYear: { type: ["integer", "null"] }
+        medianDebtUsd: { type: ["integer", "null"] }
+        medianDebtYear: { type: ["integer", "null"] }
+        sourceUrl: { type: string }
+        isActive: { type: boolean }
+        lastUpdatedAt: { type: string, format: date-time }
+    UniversityFilterOptions:
+      type: object
+      required: [institutionTypes, ownerships, degreeLevels, majors, countries, regions, languages, applicantStatuses]
+      properties:
+        countries:
+          type: array
+          items:
+            $ref: "#/components/schemas/CountryOption"
+        regions:
+          type: array
+          items: { $ref: "#/components/schemas/RegionOption" }
+        languages: { type: array, items: { type: string } }
+        applicantStatuses: { type: array, items: { type: string } }
+        institutionTypes:
+          type: array
+          items: { type: string }
+        ownerships:
+          type: array
+          items: { type: string }
+        degreeLevels:
+          type: array
+          items: { type: string }
+        majors:
+          type: array
+          items: { type: string }
+    UniversityTuition:
+      type: object
+      required: [quotes, inStateAmount, outOfStateAmount, internationalAmount, inStateYear, outOfStateYear, currency, period, sourceUrl, recordUpdatedAt, status, note]
+      properties:
+        quotes:
+          type: array
+          items: { $ref: "#/components/schemas/TuitionQuote" }
+        inStateAmount: { type: ["number", "null"] }
+        outOfStateAmount: { type: ["number", "null"] }
+        internationalAmount: { type: ["number", "null"] }
+        inStateYear: { type: ["integer", "null"] }
+        outOfStateYear: { type: ["integer", "null"] }
+        currency: { type: string, enum: [USD] }
+        period: { type: string, enum: [year] }
+        sourceUrl: { type: ["string", "null"] }
+        recordUpdatedAt: { type: string }
+        status: { type: string, enum: [missing, source_reported, outdated] }
+        note: { type: string }
+    TuitionQuote:
+      type: object
+      required: [category, amount, currency, year, academicYear, period, scope, sourceName, sourceUrl, sourceFileUrl, sourceLicenseUrl, attribution, sourcePublishedAt, importedAt, status]
+      properties:
+        category: { type: string, enum: [in_state, out_of_state, domestic, international] }
+        amount: { type: number, minimum: 0 }
+        currency: { type: string, enum: [USD, CAD] }
+        year: { type: integer }
+        academicYear: { type: string }
+        period: { type: string, enum: [year] }
+        scope: { type: string }
+        sourceName: { type: string }
+        sourceUrl: { type: string }
+        sourceFileUrl: { type: string }
+        sourceLicenseUrl: { type: string }
+        attribution: { type: string }
+        sourcePublishedAt: { type: ["string", "null"] }
+        importedAt: { type: string }
+        status: { type: string, enum: [source_reported, outdated] }
+    TuitionSearchError:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
+        code: { type: string }
+    ExchangeRate:
+      type: object
+      required: [base, currency, rate, asOf, fetchedAt, sourceUrl, status, note]
+      properties:
+        base: { type: string, enum: [USD] }
+        currency: { type: string }
+        rate: { type: ["number", "null"] }
+        asOf: { type: ["string", "null"] }
+        fetchedAt: { type: string }
+        sourceUrl: { type: string }
+        status: { type: string, enum: [identity, available, stale, unavailable] }
+        note: { type: string }
+    BillingAvailability:
+      type: object
+      required: [provider, providerConfigured, livePaymentsEnabled, cryptoEnabled, historyAvailable, baseCurrency, displayCurrencies, message]
+      properties:
+        provider: { type: string }
+        providerConfigured: { type: boolean }
+        livePaymentsEnabled: { type: boolean }
+        cryptoEnabled: { type: boolean }
+        historyAvailable: { type: boolean }
+        baseCurrency: { type: string, enum: [USD] }
+        displayCurrencies: { type: array, items: { type: string } }
+        message: { type: string }
+    PaymentsUnavailable:
+      type: object
+      required: [error, code]
+      properties:
+        error: { type: string }
+        code: { type: string, enum: [PAYMENTS_DISABLED] }
+    AnnualLivingExpenses:
+      type: object
+      additionalProperties: false
+      properties:
+        accommodation: { type: [number, "null"], minimum: 0, maximum: 1000000000 }
+        food: { type: [number, "null"], minimum: 0, maximum: 1000000000 }
+        transport: { type: [number, "null"], minimum: 0, maximum: 1000000000 }
+        other: { type: [number, "null"], minimum: 0, maximum: 1000000000 }
+    BudgetPreferences:
+      type: object
+      required: [budgetChoice, budgetCurrency, budgetScope, customBudget, livingExpenses]
+      properties:
+        budgetChoice:
+          type: string
+          enum: [under_5000, "5000_10000", "10000_20000", "20000_35000", "35000_50000", "50000_plus", aid_needed, none, custom]
+        budgetCurrency: { type: string, pattern: "^[A-Z]{3}$" }
+        budgetScope: { type: string, enum: [tuition, total] }
+        customBudget: { type: [number, "null"], minimum: 1, maximum: 1000000000 }
+        livingExpenses: { $ref: "#/components/schemas/AnnualLivingExpenses" }
+    BudgetSettings:
+      type: object
+      required: [budget, hasProfile]
+      properties:
+        budget: { $ref: "#/components/schemas/BudgetPreferences" }
+        hasProfile: { type: boolean }
+    AdminCustomer:
+      type: object
+      required: [accountReference, studyCountry, degreeLevel, accessPlan, updatedAt]
+      properties:
+        accountReference: { type: string }
+        studyCountry: { type: string }
+        degreeLevel: { type: string }
+        accessPlan: { type: string, enum: [Free] }
+        updatedAt: { type: string }
+    AdminCustomerList:
+      type: object
+      required: [items, total, page, pageSize, note]
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/AdminCustomer" } }
+        total: { type: integer }
+        page: { type: integer }
+        pageSize: { type: integer }
+        note: { type: string }
+    CountryOption:
+      type: object
+      required: [code, name, count]
+      properties:
+        code: { type: string }
+        name: { type: string }
+        count: { type: integer }
+    RegionOption:
+      type: object
+      required: [countryCode, code]
+      properties:
+        countryCode: { type: string }
+        code: { type: string }
+    CountryCoverage:
+      type: object
+      required: [countryCode, country, institutionCount, programCount, status, note, lastImportedAt]
+      properties:
+        countryCode: { type: string }
+        country: { type: string }
+        institutionCount: { type: integer }
+        programCount: { type: integer }
+        status: { type: string }
+        note: { type: string }
+        lastImportedAt: { type: ["string", "null"], format: date-time }
+    DirectoryCoverage:
+      type: object
+      required: [countries, worldwideNote, references]
+      properties:
+        countries:
+          type: array
+          items: { $ref: "#/components/schemas/CountryCoverage" }
+        worldwideNote: { type: string }
+        references:
+          type: array
+          items: { $ref: "#/components/schemas/DirectoryReference" }
+    DirectoryReference:
+      type: object
+      required: [name, url, termsUrl, access]
+      properties:
+        name: { type: string }
+        url: { type: string }
+        termsUrl: { type: string }
+        access: { type: string }
+    InstitutionFact:
+      type: object
+      required: [id, institutionId, kind, title, fieldsOfStudy, degreeLevel, language, programType, applicantStatuses, requirements, eligibility, applicantGroup, admissionScope, fundingCategory, awardAmount, eligibleCitizenships, eligibleResidenceCountries, eligibleResidenceRegions, eligibleDegreeLevels, eligibleMajors, majorRequirement, eligibleCriteria, minimumGpa, minimumGpaScale, deadline, officialUrl, sourceName, sourceUrl, sourceDate, sourceLicenseUrl, lastVerifiedAt, importedAt]
+      properties:
+        id: { type: string }
+        institutionId: { type: string }
+        kind: { type: string, enum: [program, admissions, funding] }
+        title: { type: string }
+        fieldsOfStudy: { type: array, items: { type: string } }
+        degreeLevel: { type: ["string", "null"] }
+        language: { type: ["string", "null"] }
+        programType: { type: ["string", "null"] }
+        applicantStatuses: { type: array, items: { type: string } }
+        requirements: { type: array, items: { type: string } }
+        eligibility: { type: ["string", "null"] }
+        applicantGroup: { type: ["string", "null"], enum: [general, first-year, transfer, international, graduate, program-specific, null] }
+        admissionScope: { type: ["string", "null"], enum: [school-general, program-specific, null] }
+        fundingCategory: { type: ["string", "null"], enum: [merit, need-based-grant, institutional, federal, state, international, transfer, graduate, athletic, talent-based, work-study, assistantship, fellowship, research, other, null] }
+        awardAmount: { type: ["string", "null"], maxLength: 240 }
+        eligibleCitizenships: { type: array, items: { type: string } }
+        eligibleResidenceCountries: { type: array, items: { type: string } }
+        eligibleResidenceRegions: { type: array, items: { type: string } }
+        eligibleDegreeLevels: { type: array, items: { type: string } }
+        eligibleMajors: { type: array, items: { type: string } }
+        majorRequirement: { type: ["string", "null"], enum: [required, not_restricted, null] }
+        eligibleCriteria: { type: array, items: { type: string } }
+        minimumGpa: { type: ["number", "null"], minimum: 0, maximum: 4 }
+        minimumGpaScale: { type: ["string", "null"], enum: ["4.0", null] }
+        deadline: { type: ["string", "null"], format: date }
+        officialUrl: { type: ["string", "null"] }
+        sourceName: { type: string }
+        sourceUrl: { type: string }
+        sourceDate: { type: ["string", "null"] }
+        sourceLicenseUrl: { type: ["string", "null"] }
+        lastVerifiedAt: { type: ["string", "null"], format: date-time }
+        importedAt: { type: string, format: date-time }
+    InstitutionFactPage:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/InstitutionFact" }
+        total: { type: integer }
+        page: { type: integer }
+        pageSize: { type: integer }
+    FundingStudentProfileInput:
+      type: object
+      additionalProperties: false
+      required: []
+      properties:
+        applicantStatus: { type: string, enum: [Domestic, International] }
+        applicantGroup:
+          type: string
+          enum: [first-year, transfer, graduate, other]
+        citizenship: { type: string, pattern: "^[A-Za-z]{2}$" }
+        residenceCountry: { type: string, pattern: "^[A-Za-z]{2}$" }
+        residenceRegion: { type: string, maxLength: 16 }
+        intendedMajor: { type: string, maxLength: 160 }
+        degreeLevel: { type: string, maxLength: 100 }
+        gpa:
+          type: number
+          minimum: 0
+          maximum: 4
+          description: Optional U.S. 4.0-scale GPA; other grading scales are not converted.
+        criteria:
+          type: array
+          maxItems: 20
+          uniqueItems: true
+          items: { type: string, maxLength: 100 }
+        page: { type: integer, minimum: 1, maximum: 100000 }
+        pageSize: { type: integer, minimum: 1, maximum: 50 }
+    FundingPotentialMatch:
+      type: object
+      required: [institutionId, institutionName, countryCode, city, opportunity, matchedCriteria, unconfirmedCriteria, deadlineStatus]
+      properties:
+        institutionId: { type: string }
+        institutionName: { type: string }
+        countryCode: { type: string }
+        city: { type: string }
+        opportunity:
+          $ref: "#/components/schemas/InstitutionFact"
+        matchedCriteria: { type: array, items: { type: string } }
+        unconfirmedCriteria: { type: array, items: { type: string } }
+        deadlineStatus:
+          type: string
+          enum: [Unknown, Source-reported date, Expired]
+    FundingMatchResponse:
+      type: object
+      required: [matches, matchCount, page, pageSize, totalPages, verifiedRecordCount, unverifiedRecordCount, expiredRecordCount, notice]
+      properties:
+        matches:
+          type: array
+          items: { $ref: "#/components/schemas/FundingPotentialMatch" }
+        matchCount: { type: integer, minimum: 0 }
+        page: { type: integer, minimum: 1 }
+        pageSize: { type: integer, minimum: 1, maximum: 50 }
+        totalPages: { type: integer, minimum: 0 }
+        verifiedRecordCount: { type: integer }
+        unverifiedRecordCount: { type: integer }
+        expiredRecordCount: { type: integer }
+        notice: { type: string }
+    FundingFinderOptions:
+      type: object
+      required: [verifiedOpportunityCount, unverifiedOpportunityCount, expiredOpportunityCount, applicantGroups, applicantStatuses, citizenships, residenceCountries, residenceRegions, degreeLevels, criteria, verificationWindowDays]
+      properties:
+        verifiedOpportunityCount: { type: integer }
+        unverifiedOpportunityCount: { type: integer }
+        expiredOpportunityCount: { type: integer }
+        applicantGroups:
+          type: array
+          items: { type: string }
+        applicantStatuses:
+          type: array
+          items: { type: string, enum: [Domestic, International] }
+        citizenships:
+          type: array
+          items: { type: string, pattern: "^[A-Z]{2}$" }
+        residenceCountries:
+          type: array
+          items: { type: string, pattern: "^[A-Z]{2}$" }
+        residenceRegions:
+          type: array
+          items: { type: string, maxLength: 16 }
+        degreeLevels:
+          type: array
+          items: { type: string }
+        criteria:
+          type: array
+          items: { type: string, maxLength: 100 }
+        verificationWindowDays: { type: integer }
+    ListUniversitiesResult:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/University" }
+        total: { type: integer }
+        page: { type: integer }
+        pageSize: { type: integer }
+    StudentProfileInput:
+      type: object
+      required: [residenceCountry, citizenship, studyCountry, degreeLevel, major, grades, annualBudgetUsd, preferredLanguage, englishTest, englishScore]
+      properties:
+        residenceCountry: { type: string }
+        citizenship: { type: string }
+        studyCountry: { type: string }
+        degreeLevel: { type: string }
+        major: { type: string }
+        grades: { type: string }
+        annualBudgetUsd: { type: number }
+        preferredLanguage: { type: string }
+        englishTest: { type: string }
+        englishScore: { type: string }
+        englishTestDate: { type: [string, "null"], pattern: '^\d{4}-\d{2}-\d{2}$' }
+        currentQualification: { type: string, maxLength: 120 }
+        gradingScale: { type: string, maxLength: 60 }
+        graduationYear: { type: [integer, "null"], minimum: 1950, maximum: 2100 }
+        budgetChoice:
+          type: string
+          enum: [under_5000, "5000_10000", "10000_20000", "20000_35000", "35000_50000", "50000_plus", aid_needed, none, custom]
+        budgetCurrency: { type: string, pattern: "^[A-Z]{3}$" }
+        budgetScope: { type: string, enum: [tuition, total] }
+        customBudget: { type: [number, "null"], minimum: 1, maximum: 1000000000 }
+        livingExpenses: { $ref: "#/components/schemas/AnnualLivingExpenses" }
+        startTerm: { type: string, enum: [spring, summer, fall, winter, flexible] }
+        startYear: { type: [integer, "null"], minimum: 2026, maximum: 2100 }
+        priorities:
+          type: array
+          maxItems: 20
+          items: { type: string }
+        topPriorities:
+          type: array
+          maxItems: 3
+          items: { type: string }
+        preferredLocation: { type: string, maxLength: 150 }
+        residenceRegion: { type: string, maxLength: 100 }
+        applicantStatus: { type: string, enum: [domestic, international, unsure] }
+        admissionTrack: { type: string, enum: [first_year, transfer, graduate, unsure] }
+    RecommendationAssessment:
+      type: object
+      required: [status, message, sources]
+      properties:
+        status: { type: string }
+        message: { type: string }
+        sources:
+          type: array
+          items: { type: string }
+        reportingYear: { type: [integer, "null"] }
+        deadline: { type: [string, "null"] }
+    SchoolRecommendation:
+      type: object
+      required: [university, score, evidenceCoverage, classification, classificationReason, reasons, missingInformation, affordability, startTerm, funding]
+      properties:
+        university: { $ref: "#/components/schemas/University" }
+        classification: { type: string, enum: [strong_match, potential_match, requirements_not_met, insufficient_information] }
+        classificationReason: { type: string }
+        score: { type: integer }
+        evidenceCoverage: { type: integer }
+        reasons: { type: array, items: { type: string } }
+        missingInformation: { type: array, items: { type: string } }
+        affordability: { $ref: "#/components/schemas/RecommendationAssessment" }
+        startTerm: { $ref: "#/components/schemas/RecommendationAssessment" }
+        funding: { $ref: "#/components/schemas/RecommendationAssessment" }
+    RecommendationResult:
+      type: object
+      required: [items, methodology, profileUpdatedAt, generatedAt, totalCandidates, disclaimer]
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/SchoolRecommendation" } }
+        methodology: { type: string }
+        profileUpdatedAt: { type: string }
+        generatedAt: { type: string }
+        totalCandidates: { type: integer }
+        disclaimer: { type: string }
+    StudentProfile:
+      allOf:
+        - $ref: "#/components/schemas/StudentProfileInput"
+        - type: object
+          required: [updatedAt]
+          properties:
+            updatedAt: { type: string }
+    StudentProfileResult:
+      type: object
+      required: [profile]
+      properties:
+        profile:
+          anyOf:
+            - $ref: "#/components/schemas/StudentProfile"
+            - type: "null"
+    SaveUniversityInput:
+      type: object
+      required: [universityId]
+      properties:
+        universityId: { type: string }
+    SavedUniversity:
+      type: object
+      required: [universityId, savedAt, university]
+      properties:
+        universityId: { type: string }
+        savedAt: { type: string }
+        university: { $ref: "#/components/schemas/University" }
+    ApplicationTaskInput:
+      type: object
+      required: [title, dueDate, universityId]
+      properties:
+        title: { type: string, minLength: 1 }
+        dueDate: { type: string }
+        universityId: { type: string }
+    ApplicationTaskUpdate:
+      type: object
+      properties:
+        title: { type: string, minLength: 1 }
+        dueDate: { type: string }
+        universityId: { type: string }
+        completed: { type: boolean }
+    ApplicationTask:
+      type: object
+      required: [id, title, dueDate, universityId, applicationId, completed, createdAt]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        dueDate: { type: string }
+        universityId: { type: string }
+        applicationId: { type: [integer, "null"] }
+        completed: { type: boolean }
+        createdAt: { type: string }
+    JobSearchError:
+      type: object
+      required: [error, code, retryable]
+      properties:
+        error: { type: string }
+        code: { type: string }
+        upstreamStatus: { type: integer }
+        retryable: { type: boolean }
+    JobProvider:
+      type: object
+      required: [id, name, configured, countries, attribution]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        configured: { type: boolean }
+        countries: { type: array, items: { type: string } }
+        attribution:
+          type: object
+          required: [text, url]
+          properties:
+            text: { type: string }
+            url: { type: string }
+    JobListing:
+      type: object
+      required: [id, provider, providerName, title, countryCode, description, salaryIsEstimated, applyUrl, sponsorship, lastCheckedAt]
+      properties:
+        id: { type: string }
+        provider: { type: string }
+        providerName: { type: string }
+        title: { type: string }
+        employer: { type: [string, "null"] }
+        location: { type: [string, "null"] }
+        countryCode: { type: string }
+        category: { type: [string, "null"] }
+        contractTime: { type: [string, "null"] }
+        description: { type: string }
+        salaryMin: { type: [number, "null"] }
+        salaryMax: { type: [number, "null"] }
+        salaryCurrency: { type: [string, "null"] }
+        salaryIsEstimated: { type: boolean }
+        postedAt: { type: [string, "null"] }
+        applyUrl: { type: string }
+        sponsorship: { type: string, enum: [mentioned_unverified, not_mentioned] }
+        lastCheckedAt: { type: string }
+    JobSearchResponse:
+      type: object
+      required: [provider, listings, page]
+      properties:
+        provider: { $ref: "#/components/schemas/JobProvider" }
+        listings: { type: array, items: { $ref: "#/components/schemas/JobListing" } }
+        total: { type: [integer, "null"] }
+        page: { type: integer }
+    WorkGuidanceSource:
+      type: object
+      required: [title, url, agency, checkedAt]
+      properties:
+        title: { type: string }
+        url: { type: string }
+        agency: { type: string }
+        checkedAt: { type: string }
+    WorkGuidanceCountry:
+      type: object
+      required: [code, name, sources, topics, contact, coverage]
+      properties:
+        coverage: { type: string, enum: [work_pages, entry_points] }
+        code: { type: string }
+        name: { type: string }
+        sources: { type: array, items: { $ref: "#/components/schemas/WorkGuidanceSource" } }
+        topics: { type: array, items: { type: string } }
+        contact: { type: string }
+    WorkGuidance:
+      type: object
+      required: [note, countries]
+      properties:
+        note: { type: string }
+        countries: { type: array, items: { $ref: "#/components/schemas/WorkGuidanceCountry" } }
+    JobApplicationInput:
+      type: object
+      required: [title, employer]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 200 }
+        employer: { type: string, minLength: 1, maxLength: 200 }
+        jobType:
+          type: string
+          enum: [on_campus, part_time, internship, research_assistant, teaching_assistant, post_graduation, other]
+        location: { type: [string, "null"], maxLength: 200 }
+        countryCode: { type: [string, "null"], maxLength: 2 }
+        sourceUrl: { type: [string, "null"], maxLength: 1000 }
+        postedDate: { type: [string, "null"] }
+        sponsorshipClaim:
+          type: string
+          enum: [not_stated, advertised_unverified, advertised_verified_official, not_offered]
+        authorizationNote: { type: [string, "null"], maxLength: 1000 }
+        eligibilityStatus:
+          type: string
+          enum: [unknown, potentially_eligible_unverified, additional_authorization_required, likely_restricted]
+        status:
+          type: string
+          enum: [saved, applied, interviewing, offer, rejected, withdrawn]
+        appliedDate: { type: [string, "null"] }
+        interviewDate: { type: [string, "null"] }
+        employerResponse: { type: [string, "null"], maxLength: 1000 }
+        notes: { type: [string, "null"], maxLength: 2000 }
+    JobApplication:
+      type: object
+      required: [id, title, employer, jobType, sponsorshipClaim, status, createdAt, updatedAt]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        employer: { type: string }
+        jobType: { type: string }
+        location: { type: [string, "null"] }
+        countryCode: { type: [string, "null"] }
+        sourceUrl: { type: [string, "null"] }
+        postedDate: { type: [string, "null"] }
+        sponsorshipClaim: { type: string }
+        authorizationNote: { type: [string, "null"] }
+        eligibilityStatus: { type: string }
+        status: { type: string }
+        appliedDate: { type: [string, "null"] }
+        interviewDate: { type: [string, "null"] }
+        employerResponse: { type: [string, "null"] }
+        notes: { type: [string, "null"] }
+        createdAt: { type: string }
+        updatedAt: { type: string }
+    DashboardSummary:
+      type: object
+      required: [savedCount, openTasks, completedTasks, upcomingTasks, overdueTasks, totalApplications, activeApplications, applicationsByStatus, upcomingDeadlines, profileCompletion, recentActivity]
+      properties:
+        savedCount: { type: integer }
+        openTasks: { type: integer }
+        completedTasks: { type: integer }
+        upcomingTasks:
+          type: array
+          items: { $ref: "#/components/schemas/ApplicationTask" }
+        overdueTasks:
+          type: array
+          items: { $ref: "#/components/schemas/ApplicationTask" }
+        totalApplications: { type: integer }
+        activeApplications: { type: integer }
+        applicationsByStatus:
+          type: array
+          items: { $ref: "#/components/schemas/StatusCount" }
+        upcomingDeadlines:
+          type: array
+          items: { $ref: "#/components/schemas/DashboardDeadline" }
+        profileCompletion: { $ref: "#/components/schemas/ProfileCompletion" }
+        recentActivity:
+          type: array
+          items: { $ref: "#/components/schemas/ActivityItem" }
+    StatusCount:
+      type: object
+      required: [status, count]
+      properties:
+        status: { $ref: "#/components/schemas/ApplicationStatus" }
+        count: { type: integer }
+    DashboardDeadline:
+      type: object
+      required: [applicationId, universityId, universityName, programName, deadline, status]
+      properties:
+        applicationId: { type: integer }
+        universityId: { type: string }
+        universityName: { type: string }
+        programName: { type: [string, "null"] }
+        deadline: { type: string }
+        status: { $ref: "#/components/schemas/ApplicationStatus" }
+    ProfileCompletion:
+      type: object
+      required: [percent, completed, total, missing]
+      properties:
+        percent: { type: integer, minimum: 0, maximum: 100 }
+        completed: { type: integer }
+        total: { type: integer }
+        missing: { type: array, items: { type: string } }
+    ActivityItem:
+      type: object
+      required: [kind, label, at, href]
+      properties:
+        kind: { type: string, enum: [saved, application_created, application_updated] }
+        label: { type: string }
+        at: { type: string }
+        href: { type: string }
+    ApplicationStatus:
+      type: string
+      enum: [interested, researching, preparing_documents, ready_to_apply, submitted, under_review, accepted, rejected, waitlisted]
+    ApplicationInput:
+      type: object
+      required: [universityId]
+      properties:
+        universityId: { type: string, minLength: 1, maxLength: 64 }
+        programName: { type: [string, "null"], maxLength: 200 }
+        intake: { type: [string, "null"], maxLength: 80 }
+        status: { $ref: "#/components/schemas/ApplicationStatus" }
+        deadline: { type: [string, "null"], pattern: '^\d{4}-\d{2}-\d{2}$' }
+        applicationUrl: { type: [string, "null"], maxLength: 1000 }
+        notes: { type: [string, "null"], maxLength: 2000 }
+    ApplicationUpdate:
+      type: object
+      properties:
+        programName: { type: [string, "null"], maxLength: 200 }
+        intake: { type: [string, "null"], maxLength: 80 }
+        status: { $ref: "#/components/schemas/ApplicationStatus" }
+        deadline: { type: [string, "null"], pattern: '^\d{4}-\d{2}-\d{2}$' }
+        applicationUrl: { type: [string, "null"], maxLength: 1000 }
+        notes: { type: [string, "null"], maxLength: 2000 }
+    ApplicationRecord:
+      type: object
+      required: [id, universityId, programName, intake, status, deadline, applicationUrl, notes, createdAt, updatedAt]
+      properties:
+        id: { type: integer }
+        universityId: { type: string }
+        programName: { type: [string, "null"] }
+        intake: { type: [string, "null"] }
+        status: { $ref: "#/components/schemas/ApplicationStatus" }
+        deadline: { type: [string, "null"] }
+        applicationUrl: { type: [string, "null"] }
+        notes: { type: [string, "null"] }
+        createdAt: { type: string }
+        updatedAt: { type: string }
+    Application:
+      allOf:
+        - $ref: "#/components/schemas/ApplicationRecord"
+        - type: object
+          required: [university, tasks]
+          properties:
+            university:
+              anyOf:
+                - $ref: "#/components/schemas/University"
+                - type: "null"
+            tasks:
+              type: array
+              items: { $ref: "#/components/schemas/ApplicationTask" }
+    ApplicationScopedTaskInput:
+      type: object
+      required: [title, dueDate]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 200 }
+        dueDate: { type: string, pattern: '^\d{4}-\d{2}-\d{2}$' }
+    AiStatus:
+      type: object
+      required: [configured, provider, model, plan, dailyLimit, usedToday, remainingToday, profileFieldsShared, notice]
+      properties:
+        configured: { type: boolean }
+        provider: { type: string }
+        model: { type: [string, "null"] }
+        plan: { type: string }
+        dailyLimit: { type: integer }
+        usedToday: { type: integer }
+        remainingToday: { type: integer }
+        profileFieldsShared: { type: array, items: { type: string } }
+        notice: { type: string }
+    AiChatMessage:
+      type: object
+      required: [role, content]
+      properties:
+        role: { type: string, enum: [user, assistant] }
+        content: { type: string, minLength: 1, maxLength: 6000 }
+    AiChatInput:
+      type: object
+      required: [message]
+      properties:
+        message: { type: string, minLength: 1, maxLength: 2000 }
+        history:
+          type: array
+          maxItems: 10
+          items: { $ref: "#/components/schemas/AiChatMessage" }
+        universityIds:
+          type: array
+          maxItems: 3
+          items: { type: string, minLength: 1, maxLength: 64 }
+        useProfile: { type: boolean }
+    AiEssayInput:
+      type: object
+      required: [essay]
+      properties:
+        essay: { type: string, minLength: 50, maxLength: 12000 }
+        prompt: { type: string, maxLength: 1000 }
+        focus:
+          type: array
+          maxItems: 5
+          items: { type: string, enum: [grammar, clarity, organization, tone, prompt_fit] }
+        universityId: { type: string, maxLength: 64 }
+    AiGroundingFact:
+      type: object
+      required: [kind, label, value, sourceUrl, asOf]
+      properties:
+        kind: { type: string, enum: [profile, university] }
+        label: { type: string }
+        value: { type: string }
+        sourceUrl: { type: [string, "null"] }
+        asOf: { type: [string, "null"] }
+    AiUsageSummary:
+      type: object
+      required: [dailyLimit, usedToday, remainingToday]
+      properties:
+        dailyLimit: { type: integer }
+        usedToday: { type: integer }
+        remainingToday: { type: integer }
+    AiReply:
+      type: object
+      required: [reply, grounding, usage, disclaimer, generatedAt, model]
+      properties:
+        reply: { type: string }
+        grounding:
+          type: array
+          items: { $ref: "#/components/schemas/AiGroundingFact" }
+        usage: { $ref: "#/components/schemas/AiUsageSummary" }
+        disclaimer: { type: string }
+        generatedAt: { type: string }
+        model: { type: string }
+    AiError:
+      type: object
+      required: [error, code]
+      properties:
+        error: { type: string }
+        code: { type: string, enum: [AI_NOT_CONFIGURED, AI_DAILY_LIMIT, AI_RATE_LIMITED, AI_PROVIDER_ERROR, AI_INVALID_INPUT] }
+    AiSavedItemInput:
+      type: object
+      required: [kind, title, content]
+      properties:
+        kind: { type: string, enum: [answer, checklist, essay_feedback, note] }
+        title: { type: string, minLength: 1, maxLength: 160 }
+        content: { type: string, minLength: 1, maxLength: 20000 }
+        sourceUrls:
+          type: array
+          maxItems: 20
+          items: { type: string, maxLength: 1000 }
+    AiSavedItem:
+      type: object
+      required: [id, kind, title, content, sourceUrls, createdAt]
+      properties:
+        id: { type: integer }
+        kind: { type: string }
+        title: { type: string }
+        content: { type: string }
+        sourceUrls: { type: array, items: { type: string } }
+        createdAt: { type: string }
+    SavedUniversityReference:
+      type: object
+      required: [universityId, savedAt]
+      properties:
+        universityId: { type: string }
+        savedAt: { type: string }
+    StudentDataExport:
+      type: object
+      required: [exportedAt, note, profile, savedUniversities, applications, tasks, aiSavedItems, jobApplications, documents]
+      properties:
+        exportedAt: { type: string }
+        note: { type: string }
+        profile:
+          anyOf:
+            - $ref: "#/components/schemas/StudentProfile"
+            - type: "null"
+        savedUniversities: { type: array, items: { $ref: "#/components/schemas/SavedUniversityReference" } }
+        applications: { type: array, items: { $ref: "#/components/schemas/ApplicationRecord" } }
+        tasks: { type: array, items: { $ref: "#/components/schemas/ApplicationTask" } }
+        aiSavedItems: { type: array, items: { $ref: "#/components/schemas/AiSavedItem" } }
+        jobApplications: { type: array, items: { $ref: "#/components/schemas/JobApplication" } }
+        documents: { type: array, items: { $ref: "#/components/schemas/StudentDocument" } }
+    StudentDocument:
+      type: object
+      required: [id, applicationId, title, fileName, contentType, sizeBytes, createdAt]
+      properties:
+        id: { type: integer }
+        applicationId: { type: [integer, "null"] }
+        title: { type: string }
+        fileName: { type: string }
+        contentType: { type: string, enum: [application/pdf, image/png, image/jpeg, application/vnd.openxmlformats-officedocument.wordprocessingml.document] }
+        sizeBytes: { type: integer }
+        createdAt: { type: string }
+    StudentDocumentUpdate:
+      type: object
+      properties:
+        title: { type: string, minLength: 1, maxLength: 160 }
+        applicationId: { type: [integer, "null"] }
+    DataDeletionRequest:
+      type: object
+      required: [confirm]
+      properties:
+        confirm: { type: string, enum: [DELETE] }
+    DataDeletionResult:
+      type: object
+      required: [deleted, note]
+      properties:
+        note: { type: string }
+        deleted:
+          type: object
+          required: [profiles, savedUniversities, applications, tasks, aiSavedItems, aiUsage, jobApplications, documents]
+          properties:
+            profiles: { type: integer }
+            savedUniversities: { type: integer }
+            applications: { type: integer }
+            tasks: { type: integer }
+            aiSavedItems: { type: integer }
+            aiUsage: { type: integer }
+            jobApplications: { type: integer }
+            documents: { type: integer }
+

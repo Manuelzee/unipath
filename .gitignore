@@ -34,6 +34,11 @@ node_modules
 !.vscode/launch.json
 !.vscode/extensions.json
 
+# secrets: never commit real credentials (see .env.example)
+.env
+.env.*
+!.env.example
+
 # misc
 /.sass-cache
 /connect.lock
@@ -51,6 +56,8 @@ Thumbs.db
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
 
-# Replit
+# local data: dev database, uploaded files, caches
+.data/
 .cache/
 .local/
+.config/
