@@ -13,6 +13,7 @@
     "dev:api": "pnpm --filter @workspace/api-server run dev",
     "dev:web": "pnpm --filter @workspace/unipath-ai run dev",
     "db:local": "node tools/dev-database.mjs",
+    "db:check": "pnpm --filter @workspace/db run check",
     "db:push": "pnpm --filter @workspace/db run push",
     "db:seed": "pnpm --filter @workspace/api-server run seed",
     "codegen": "pnpm --filter @workspace/api-spec run codegen",

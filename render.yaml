@@ -9,11 +9,13 @@ services:
     region: frankfurt
     branch: main
     # Installs everything (the build tools are dev dependencies), bundles the
-    # API, then applies additive schema changes to DATABASE_URL. A schema change
+    # API, checks the database connection (printing the cause if it fails),
+    # then applies additive schema changes to DATABASE_URL. A schema change
     # that could lose data stops the build instead of being applied.
     buildCommand: >-
       NODE_ENV=development npx -y pnpm@10.34.9 install --frozen-lockfile &&
       npx -y pnpm@10.34.9 --filter @workspace/api-server run build &&
+      npx -y pnpm@10.34.9 db:check &&
       npx -y pnpm@10.34.9 db:push
     startCommand: node --enable-source-maps apps/api/dist/index.mjs
     healthCheckPath: /api/healthz

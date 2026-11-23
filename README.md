@@ -28,6 +28,7 @@ Sign-up and sign-in work straight away. Until email is configured, each one-time
 | `pnpm typecheck` | Typecheck the whole workspace |
 | `pnpm codegen` | Regenerate the API hooks and Zod schemas from the OpenAPI spec |
 | `pnpm db:local` | Start the zero-install development database (reports it if one is already running) |
+| `pnpm db:check` | Test the connection to `DATABASE_URL` and explain a failure (never prints the password) |
 | `pnpm db:push` | Apply schema changes to `DATABASE_URL` (additive) |
 | `pnpm db:seed` | Load the bundled tuition snapshots |
 
