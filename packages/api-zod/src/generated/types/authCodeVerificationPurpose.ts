@@ -10,6 +10,5 @@ export type AuthCodeVerificationPurpose = typeof AuthCodeVerificationPurpose[key
 
 
 export const AuthCodeVerificationPurpose = {
-  sign_in: 'sign_in',
   verify_email: 'verify_email',
 } as const;

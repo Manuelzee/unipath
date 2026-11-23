@@ -20,9 +20,4 @@ export interface AuthCodeVerification {
      * @pattern ^[0-9]{6}$
      */
   code: string;
-  /**
-     * Used only when a code sign-in creates a new account
-     * @maxLength 60
-     */
-  firstName?: string;
 }

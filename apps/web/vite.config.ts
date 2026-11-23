@@ -32,6 +32,8 @@ export default defineConfig(({ mode }) => {
           manualChunks(id) {
             if (!id.includes('node_modules')) return undefined;
             if (/[\\/](@radix-ui|@floating-ui|cmdk|vaul)[\\/]/.test(id)) return 'vendor-ui';
+            // Only the home page's globe uses these; they download with it.
+            if (/[\\/](three|topojson-client|world-atlas)[\\/]/.test(id)) return 'vendor-globe';
             return 'vendor';
           },
         },

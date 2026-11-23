@@ -1,4 +1,4 @@
-import { Fragment, type FormEvent, type ReactNode, useEffect, useMemo, useState } from 'react';
+import { Fragment, type FormEvent, type ReactNode, Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { AuthProvider, Show, useAuth, useUser } from '@/lib/auth';
 import { AuthFlow } from '@/components/auth/AuthFlow';
@@ -21,6 +21,7 @@ import { CompareView } from '@/components/compare/CompareView';
 import { AssistantView } from '@/components/assistant/AssistantView';
 import { SettingsView } from '@/components/settings/SettingsView';
 import { DocumentsView } from '@/components/documents/DocumentsView';
+import { ChatView } from '@/components/chat/ChatView';
 import '@/components/workspace/workspace.css';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -32,7 +33,7 @@ import type { StudentProfileInput } from '@workspace/api-client-react';
 import {
   ArrowDownRight, ArrowLeft, ArrowRight, Bookmark, Briefcase, Check, CheckCircle2,
   ClipboardList, Compass, CreditCard, FileText, Gem, Globe2, GraduationCap, LayoutDashboard,
-  LoaderCircle, Menu, MessageCircle, Scale, Search, Settings, ShieldCheck, Sparkles,
+  LoaderCircle, Menu, MessageCircle, MessagesSquare, Scale, Search, Settings, ShieldCheck, Sparkles,
   UserRound, X,
 } from 'lucide-react';
 import { Link, Redirect, Route, Switch, useLocation, useSearch, Router as WouterRouter } from 'wouter';
@@ -49,6 +50,7 @@ const navItems = [
   { href: '/applications', label: 'Applications', icon: ClipboardList },
   { href: '/documents', label: 'Documents', icon: FileText },
   { href: '/ai-assistant', label: 'AI assistant', icon: MessageCircle },
+  { href: '/chat', label: 'Community chat', icon: MessagesSquare },
   { href: '/funding', label: 'Funding finder', icon: Sparkles },
   { href: '/jobs', label: 'Global Student Jobs', icon: Briefcase, testId: 'nav-student-jobs' },
   { href: '/profile', label: 'My profile', icon: UserRound },
@@ -104,6 +106,11 @@ function Shell({ children }: { children: ReactNode }) {
   </div>;
 }
 
+// The 3D globe loads only on the home page; the CSS globe shows while it loads
+// and wherever WebGL or the download is unavailable.
+const cssGlobe = <div className="globe"><div className="globe-lat lat-one"/><div className="globe-lat lat-two"/><div className="globe-lon"/><div className="land land-a"/><div className="land land-b"/><div className="land land-c"/></div>;
+const HeroGlobe = lazy(() => import('@/components/marketing/HeroGlobe').catch(() => ({ default: () => cssGlobe })));
+
 function Home() {
   const { isSignedIn } = useUser();
   if (isSignedIn) return <Redirect to="/dashboard"/>;
@@ -118,7 +125,7 @@ function Home() {
       </div>
       <div className="hero-art" aria-label="Illustration of a student exploring universities">
         <div className="art-orbit orbit-one"/><div className="art-orbit orbit-two"/>
-        <div className="globe"><div className="globe-lat lat-one"/><div className="globe-lat lat-two"/><div className="globe-lon"/><div className="land land-a"/><div className="land land-b"/><div className="land land-c"/></div>
+        <Suspense fallback={cssGlobe}><HeroGlobe fallback={cssGlobe}/></Suspense>
         <div className="orbit-pin pin-london"><span className="pin-dot"/>LONDON</div><div className="orbit-pin pin-toronto"><span className="pin-dot"/>TORONTO</div><div className="orbit-pin pin-singapore"><span className="pin-dot"/>SINGAPORE</div>
         <div className="floating-card card-schools"><div className="float-icon mint"><GraduationCap size={18}/></div><div><strong>Find your fit</strong><span>Across 6 continents</span></div></div>
         <div className="floating-card card-plan"><div className="float-icon amber"><Check size={18}/></div><div><strong>One clear step</strong><span>Then the next</span></div></div>
@@ -229,6 +236,7 @@ function AppRoutes() {
       <Route path="/saved">{()=><Protected><Shell><SavedView/></Shell></Protected>}</Route>
       <Route path="/applications">{()=><Protected><Shell><ApplicationsView/></Shell></Protected>}</Route>
       <Route path="/ai-assistant">{()=><Protected><Shell><AssistantView/></Shell></Protected>}</Route>
+      <Route path="/chat">{()=><Protected><Shell><ChatView/></Shell></Protected>}</Route>
       <Route path="/documents">{()=><Protected><Shell><DocumentsView/></Shell></Protected>}</Route>
       <Route path="/settings">{()=><Protected><Shell><SettingsView/></Shell></Protected>}</Route>
       <Route path="/profile">{()=><Protected><Profile/></Protected>}</Route>

@@ -20,6 +20,8 @@ tags:
     description: Server-side AI guidance with grounding, quotas and student approval
   - name: auth
     description: UniPath accounts, sign-in sessions and one-time email codes
+  - name: chat
+    description: Community chat room for signed-in students
 paths:
   /universities/{id}/verification:
     get:
@@ -1167,7 +1169,7 @@ paths:
     post:
       operationId: sendAuthCode
       tags: [auth]
-      summary: Email a one-time code (sign in, verify an email, or reset a password)
+      summary: Email a one-time code to confirm a new account's email or reset a password (codes are never used to sign in)
       requestBody:
         required: true
         content:
@@ -1186,7 +1188,7 @@ paths:
     post:
       operationId: verifyAuthCode
       tags: [auth]
-      summary: Sign in with an emailed code (creates the account on first use) or verify a new account
+      summary: Confirm a new account's email with the emailed code; the account can be used only after this
       requestBody:
         required: true
         content:
@@ -1288,6 +1290,51 @@ paths:
         "204": { description: Account deleted and signed out }
         "400": { description: Confirmation missing }
         "401": { description: Sign in required }
+  /chat/messages:
+    get:
+      operationId: listChatMessages
+      tags: [chat]
+      summary: The most recent community messages (oldest first), or the page before a message id
+      parameters:
+        - { in: query, name: before, required: false, schema: { type: integer, minimum: 1 } }
+        - { in: query, name: limit, required: false, schema: { type: integer, minimum: 1, maximum: 100 } }
+      responses:
+        "200":
+          description: Messages, oldest first
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ChatMessagePage" }
+        "401": { description: Sign in required }
+    post:
+      operationId: sendChatMessage
+      tags: [chat]
+      summary: Post a message to the community chat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ChatMessageInput" }
+      responses:
+        "201":
+          description: The new message
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ChatMessage" }
+        "400": { description: Empty or too long }
+        "401": { description: Sign in required }
+        "429": { description: Sending too quickly }
+  /chat/messages/{id}:
+    delete:
+      operationId: deleteChatMessage
+      tags: [chat]
+      summary: Delete one of your own messages (administrators can delete any)
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: integer } }
+      responses:
+        "204": { description: Deleted }
+        "401": { description: Sign in required }
+        "403": { description: Not your message }
+        "404": { description: Not found }
 components:
   schemas:
     PublicInstitutionVerification:
@@ -2311,7 +2358,7 @@ components:
         savedAt: { type: string }
     StudentDataExport:
       type: object
-      required: [exportedAt, note, account, profile, savedUniversities, applications, tasks, aiSavedItems, jobApplications, documents]
+      required: [exportedAt, note, account, profile, savedUniversities, applications, tasks, aiSavedItems, jobApplications, documents, chatMessages]
       properties:
         exportedAt: { type: string }
         note: { type: string }
@@ -2329,6 +2376,7 @@ components:
         aiSavedItems: { type: array, items: { $ref: "#/components/schemas/AiSavedItem" } }
         jobApplications: { type: array, items: { $ref: "#/components/schemas/JobApplication" } }
         documents: { type: array, items: { $ref: "#/components/schemas/StudentDocument" } }
+        chatMessages: { type: array, items: { $ref: "#/components/schemas/OwnChatMessage" } }
     StudentDocument:
       type: object
       required: [id, applicationId, title, fileName, contentType, sizeBytes, createdAt]
@@ -2357,7 +2405,7 @@ components:
         note: { type: string }
         deleted:
           type: object
-          required: [profiles, savedUniversities, applications, tasks, aiSavedItems, aiUsage, jobApplications, documents]
+          required: [profiles, savedUniversities, applications, tasks, aiSavedItems, aiUsage, jobApplications, documents, chatMessages]
           properties:
             profiles: { type: integer }
             savedUniversities: { type: integer }
@@ -2367,6 +2415,7 @@ components:
             aiUsage: { type: integer }
             jobApplications: { type: integer }
             documents: { type: integer }
+            chatMessages: { type: integer }
     AuthUser:
       type: object
       required: [id, email, firstName, lastName, emailVerified, hasPassword, googleConnected, createdAt]
@@ -2389,15 +2438,14 @@ components:
             - type: "null"
         methods:
           type: object
-          required: [password, emailCode, google]
+          required: [password, google]
           properties:
             password: { type: boolean }
-            emailCode: { type: boolean }
             google: { type: boolean }
         emailDelivery:
           type: string
           enum: [email, server_log, unavailable]
-          description: "email: codes are emailed. server_log: development only, codes are written to the API server log. unavailable: email codes are off."
+          description: "email: codes are emailed. server_log: development only, codes are written to the API server log. unavailable: registration and password resets are off."
     AuthResult:
       type: object
       required: [status]
@@ -2426,13 +2474,13 @@ components:
       required: [email, purpose]
       properties:
         email: { type: string, minLength: 3, maxLength: 254 }
-        purpose: { type: string, enum: [sign_in, verify_email, reset_password] }
+        purpose: { type: string, enum: [verify_email, reset_password] }
     AuthCodeSent:
       type: object
       required: [email, purpose, delivery, expiresInSeconds, resendAfterSeconds]
       properties:
         email: { type: string }
-        purpose: { type: string, enum: [sign_in, verify_email, reset_password] }
+        purpose: { type: string, enum: [verify_email, reset_password] }
         delivery: { type: string, enum: [email, server_log] }
         expiresInSeconds: { type: integer }
         resendAfterSeconds: { type: integer }
@@ -2441,9 +2489,8 @@ components:
       required: [email, purpose, code]
       properties:
         email: { type: string, minLength: 3, maxLength: 254 }
-        purpose: { type: string, enum: [sign_in, verify_email] }
+        purpose: { type: string, enum: [verify_email] }
         code: { type: string, minLength: 6, maxLength: 6, pattern: "^[0-9]{6}$" }
-        firstName: { type: string, maxLength: 60, description: "Used only when a code sign-in creates a new account" }
     PasswordResetInput:
       type: object
       required: [email, code, password]
@@ -2468,3 +2515,31 @@ components:
       required: [revoked]
       properties:
         revoked: { type: integer }
+    ChatMessageInput:
+      type: object
+      required: [body]
+      properties:
+        body: { type: string, minLength: 1, maxLength: 1000 }
+    ChatMessage:
+      type: object
+      required: [id, body, createdAt, authorName, mine, canDelete]
+      properties:
+        id: { type: integer }
+        body: { type: string }
+        createdAt: { type: string }
+        authorName: { type: string, description: "First name and last initial only; never an email address" }
+        mine: { type: boolean }
+        canDelete: { type: boolean }
+    ChatMessagePage:
+      type: object
+      required: [items, hasMore]
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/ChatMessage" } }
+        hasMore: { type: boolean, description: "Older messages exist before the first item" }
+    OwnChatMessage:
+      type: object
+      required: [id, body, createdAt]
+      properties:
+        id: { type: integer }
+        body: { type: string }
+        createdAt: { type: string }

@@ -7,7 +7,7 @@
  */
 
 /**
- * email: codes are emailed. server_log: development only, codes are written to the API server log. unavailable: email codes are off.
+ * email: codes are emailed. server_log: development only, codes are written to the API server log. unavailable: registration and password resets are off.
  */
 export type AuthSessionEmailDelivery = typeof AuthSessionEmailDelivery[keyof typeof AuthSessionEmailDelivery];
 

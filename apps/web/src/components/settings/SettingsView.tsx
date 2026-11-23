@@ -75,9 +75,9 @@ function DeleteData() {
       void qc.invalidateQueries();
     } });
   };
-  const labels: Record<string, string> = { profiles: 'Profile', savedUniversities: 'Saved schools', applications: 'Applications', tasks: 'Tasks', aiSavedItems: 'Saved AI notes', aiUsage: 'AI usage records', jobApplications: 'Tracked jobs' };
+  const labels: Record<string, string> = { profiles: 'Profile', savedUniversities: 'Saved schools', applications: 'Applications', tasks: 'Tasks', aiSavedItems: 'Saved AI notes', aiUsage: 'AI usage records', jobApplications: 'Tracked jobs', documents: 'Documents', chatMessages: 'Community chat messages' };
   return <section className="ws-panel danger-zone" style={{ gridColumn: '1 / -1' }}>
-    <div className="ws-head"><div><span className="eyebrow">DANGER ZONE</span><h2>Delete my UniPath data</h2><p>Permanently removes your profile, shortlist, applications, tasks, saved AI notes, AI usage records and job tracker. Your account stays, so you can start fresh; to remove the account too, use “Delete my account” below. This cannot be undone.</p></div><div className="profile-icon" style={{ background: '#fbe9e7', color: '#a3463f' }}><Trash2 size={19}/></div></div>
+    <div className="ws-head"><div><span className="eyebrow">DANGER ZONE</span><h2>Delete my UniPath data</h2><p>Permanently removes your profile, shortlist, applications, tasks, documents, saved AI notes, AI usage records, job tracker and community chat messages. Your account stays, so you can start fresh; to remove the account too, use “Delete my account” below. This cannot be undone.</p></div><div className="profile-icon" style={{ background: '#fbe9e7', color: '#a3463f' }}><Trash2 size={19}/></div></div>
     {result ? <div role="status" data-testid="text-deletion-result"><strong>{result.note}</strong>
       <ul className="result-list">{Object.entries(result.deleted).map(([k, v]) => <li key={k}>{labels[k] ?? k}: {v}</li>)}</ul></div>
       : <form className="ws-row" onSubmit={submit} style={{ alignItems: 'flex-end' }}>

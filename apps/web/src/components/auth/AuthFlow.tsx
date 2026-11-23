@@ -8,10 +8,10 @@ import { errorMessage } from '@/components/workspace/shared';
 
 type Mode = 'sign-in' | 'sign-up';
 type Delivery = 'email' | 'server_log';
+// Codes appear only while registering (and for password resets); signing in never asks for one.
 type Step =
   | { kind: 'password' }
-  | { kind: 'code-email' }
-  | { kind: 'code'; purpose: 'sign_in' | 'verify_email'; email: string; delivery: Delivery; sentAt: number }
+  | { kind: 'code'; email: string; delivery: Delivery; sentAt: number }
   | { kind: 'reset-email' }
   | { kind: 'reset'; email: string; delivery: Delivery; sentAt: number };
 
@@ -50,7 +50,7 @@ export function AuthFlow({ mode }: { mode: Mode }) {
   };
   const finish = (result: AuthResult, fallbackEmail: string) => {
     if (result.status === 'verification_required') {
-      go({ kind: 'code', purpose: 'verify_email', email: result.email ?? fallbackEmail, delivery: result.delivery ?? 'email', sentAt: Date.now() });
+      go({ kind: 'code', email: result.email ?? fallbackEmail, delivery: result.delivery ?? 'email', sentAt: Date.now() });
       return;
     }
     // Navigate before publishing the user so the signed-in redirect on this page never wins.
@@ -65,19 +65,18 @@ export function AuthFlow({ mode }: { mode: Mode }) {
   </Card>;
 
   if (step.kind === 'code') {
-    const verifying = step.purpose === 'verify_email';
-    return <Card title="Check your email" sub={<>We sent a 6-digit code to <strong>{step.email}</strong>. It works for 10 minutes.</>}>
+    return <Card title="Confirm your email" sub={<>We sent a 6-digit code to <strong>{step.email}</strong>. Enter it to finish creating your account. It works for 10 minutes.</>}>
       <DeliveryNote delivery={step.delivery}/>
-      <CodeForm busy={busy} label={verifying ? 'Verify and continue' : 'Sign in'} onSubmit={code => run(async () => {
-        finish(await verifyAuthCode({ email: step.email, purpose: step.purpose, code, ...(firstName.trim() ? { firstName: firstName.trim() } : {}) }), step.email);
+      <CodeForm busy={busy} label="Verify and continue" onSubmit={code => run(async () => {
+        finish(await verifyAuthCode({ email: step.email, purpose: 'verify_email', code }), step.email);
       })}/>
       <Feedback error={error} notice={notice}/>
       <div className="auth-alt-row">
         <Resend sentAt={step.sentAt} busy={busy} onResend={() => run(async () => {
-          const sent = await sendAuthCode({ email: step.email, purpose: step.purpose });
+          const sent = await sendAuthCode({ email: step.email, purpose: 'verify_email' });
           setStep({ ...step, delivery: sent.delivery, sentAt: Date.now() }); setNotice('We sent a new code. Use the most recent one.');
         })}/>
-        <button type="button" className="auth-text-button" onClick={() => go(verifying ? { kind: 'password' } : { kind: 'code-email' })} data-testid="button-auth-change-email">Use a different email</button>
+        <button type="button" className="auth-text-button" onClick={() => go({ kind: 'password' })} data-testid="button-auth-change-email">Use a different email</button>
       </div>
     </Card>;
   }
@@ -114,28 +113,10 @@ export function AuthFlow({ mode }: { mode: Mode }) {
     </Card>;
   }
 
-  if (step.kind === 'code-email') {
-    const submit = (e: FormEvent) => { e.preventDefault(); void run(async () => {
-      const sent = await sendAuthCode({ email, purpose: 'sign_in' });
-      go({ kind: 'code', purpose: 'sign_in', email: sent.email, delivery: sent.delivery, sentAt: Date.now() });
-    }); };
-    return <Card title={signUp ? 'Sign up with an email code' : 'Sign in with an email code'} sub="No password needed: we’ll email you a 6-digit code each time you sign in.">
-      <GoogleButton returnTo={returnTo} shown={auth.methods.google}/>
-      {emailOff ? <EmailOff/> : <form className="auth-form" onSubmit={submit} noValidate>
-        {signUp && <TextField label="First name" value={firstName} onChange={setFirstName} autoComplete="given-name" testId="input-auth-first-name"/>}
-        <EmailField value={email} onChange={setEmail}/>
-        <Submit busy={busy} label="Email me a code" testId="button-send-code"/>
-      </form>}
-      <Feedback error={error} notice={notice}/>
-      <div className="auth-alt-row"><button type="button" className="auth-text-button" onClick={() => go({ kind: 'password' })} data-testid="button-use-password"><ArrowLeft size={13}/> Use a password instead</button></div>
-      <Switch mode={mode} carry={carry}/>
-    </Card>;
-  }
-
   // Password step: the sign-in or sign-up form.
   return <PasswordStep mode={mode} email={email} setEmail={setEmail} firstName={firstName} setFirstName={setFirstName}
     busy={busy} emailOff={emailOff} methods={auth.methods} returnTo={returnTo} carry={carry} feedback={<Feedback error={error} notice={notice}/>}
-    onForgot={() => go({ kind: 'reset-email' })} onUseCode={() => go({ kind: 'code-email' })}
+    onForgot={() => go({ kind: 'reset-email' })}
     onSignIn={password => run(async () => finish(await signInWithPassword({ email, password }), email))}
     onSignUp={(lastName, password) => run(async () => finish(await signUpWithPassword({ email, password, firstName, lastName }), email))}/>;
 }
@@ -143,7 +124,7 @@ export function AuthFlow({ mode }: { mode: Mode }) {
 function PasswordStep(props: {
   mode: Mode; email: string; setEmail: (v: string) => void; firstName: string; setFirstName: (v: string) => void;
   busy: boolean; emailOff: boolean; methods: AuthSession['methods']; returnTo: string | null; carry: string; feedback: ReactNode;
-  onForgot: () => void; onUseCode: () => void; onSignIn: (password: string) => void; onSignUp: (lastName: string, password: string) => void;
+  onForgot: () => void; onSignIn: (password: string) => void; onSignUp: (lastName: string, password: string) => void;
 }) {
   const [password, setPassword] = useState('');
   const [lastName, setLastName] = useState('');
@@ -172,7 +153,6 @@ function PasswordStep(props: {
       <Submit busy={props.busy} label={signUp ? 'Create account' : 'Sign in'} testId={signUp ? 'button-sign-up' : 'button-sign-in'}/>
     </form>}
     {problem ? <p className="auth-error" role="alert">{problem}</p> : props.feedback}
-    {props.methods.emailCode && <div className="auth-alt-row"><button type="button" className="auth-text-button" onClick={props.onUseCode} data-testid="button-use-email-code"><Mail size={13}/> {signUp ? 'Sign up with an email code instead' : 'Email me a sign-in code instead'}</button></div>}
     <Switch mode={props.mode} carry={props.carry}/>
   </Card>;
 }
@@ -286,7 +266,7 @@ function DeliveryNote({ delivery }: { delivery: Delivery }) {
 }
 
 function EmailOff() {
-  return <div className="auth-dev-note" role="note"><Mail size={15}/><span>Email sign-up and sign-in codes aren’t available on this server yet. Existing accounts can still sign in with a password.</span></div>;
+  return <div className="auth-dev-note" role="note"><Mail size={15}/><span>Registration isn’t available on this server yet because email isn’t set up. Existing accounts can still sign in with their password.</span></div>;
 }
 
 function Switch({ mode, carry }: { mode: Mode; carry: string }) {

@@ -39,7 +39,6 @@ async function deliver(message: OutgoingEmail) {
 }
 
 const COPY: Record<CodePurpose, { subject: string; intro: string }> = {
-  sign_in: { subject: "Your UniPath AI sign-in code", intro: "Use this code to sign in to UniPath AI." },
   verify_email: { subject: "Confirm your email for UniPath AI", intro: "Use this code to confirm your email address and finish creating your UniPath AI account." },
   reset_password: { subject: "Reset your UniPath AI password", intro: "Use this code to choose a new password for your UniPath AI account." },
 };

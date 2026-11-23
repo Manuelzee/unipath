@@ -24,9 +24,11 @@ import { requireJson } from "../middlewares/requireJson";
 import { deleteStudentData } from "./account";
 
 /**
- * UniPath accounts: email + password (verified by an emailed code), email-code
- * sign-in (creates the account on first use) and Google. Successful sign-ins
- * set the session cookie; see lib/auth/session.ts.
+ * UniPath accounts. Registration takes a name, email and password, then the
+ * 6-digit code emailed to that address; the account can be used only after
+ * the code is entered. Signing in is email + password (or Google) and never
+ * asks for a code. Successful sign-ins set the session cookie; see
+ * lib/auth/session.ts.
  */
 const router: IRouter = Router();
 router.use("/auth", requireJson, (_req, res, next) => { res.setHeader("Cache-Control", "no-store"); next(); });
@@ -123,7 +125,7 @@ router.get("/auth/session", handle(async (req, res) => {
   const delivery = emailDelivery();
   res.json(GetAuthSessionResponse.parse({
     user: user ? publicUser(user) : null,
-    methods: { password: true, emailCode: delivery !== "unavailable", google: googleConfigured() },
+    methods: { password: true, google: googleConfigured() },
     emailDelivery: delivery,
   }));
 }));
@@ -164,8 +166,9 @@ router.post("/auth/sign-in", handle(async (req, res) => {
   if (!user || !correct) {
     limits.failedSignInsByIp.take(ip(req));
     limits.failedSignInsByEmail.take(email);
-    throw fail(401, "That email and password don’t match. If you signed up with Google or an email code, use that option instead.");
+    throw fail(401, "That email and password don’t match. Check them and try again, or reset your password.");
   }
+  // Registration is finished only once the emailed code is entered.
   if (!user.emailVerifiedAt) {
     const delivery = await sendCode(email, "verify_email", { quietCooldown: true });
     res.json(AuthResultSchema.parse({ status: "verification_required", email, delivery }));
@@ -182,21 +185,17 @@ router.post("/auth/codes", handle(async (req, res) => {
   take(limits.codesByIp, ip(req));
   const mode = emailDelivery();
   if (mode === "unavailable") throw emailOff();
-  if (purpose === "sign_in") {
-    // Always sent: a code sign-in creates the account if it is new.
-    await sendCode(email, purpose);
-  } else {
-    // Only real accounts get these, but the reply is identical either way and
-    // is sent before the email, so it does not reveal who has an account.
-    const user = await findUserByEmail(email);
-    const wanted = purpose === "reset_password" ? !!user : !!user && !user.emailVerifiedAt;
-    if (wanted) {
-      if (!limits.codeResend.take(`${purpose}:${email}`)) throw fail(429, `Wait ${RESEND_AFTER_SECONDS} seconds before asking for another code.`);
-      if (!limits.codesByEmail.take(email)) throw tooMany();
-      void issueCode(email, purpose)
-        .then(code => sendCodeEmail(email, code, purpose, CODE_TTL_SECONDS / 60))
-        .catch(() => req.log.error({ purpose }, "Could not send an account email"));
-    }
+  // Codes confirm a new account or reset a password; they never sign anyone in.
+  // Only real accounts get them, but the reply is identical either way and is
+  // sent before the email, so it does not reveal who has an account.
+  const user = await findUserByEmail(email);
+  const wanted = purpose === "reset_password" ? !!user : !!user && !user.emailVerifiedAt;
+  if (wanted) {
+    if (!limits.codeResend.take(`${purpose}:${email}`)) throw fail(429, `Wait ${RESEND_AFTER_SECONDS} seconds before asking for another code.`);
+    if (!limits.codesByEmail.take(email)) throw tooMany();
+    void issueCode(email, purpose)
+      .then(code => sendCodeEmail(email, code, purpose, CODE_TTL_SECONDS / 60))
+      .catch(() => req.log.error({ purpose }, "Could not send an account email"));
   }
   res.json(SendAuthCodeResponse.parse({ email, purpose, delivery: mode, expiresInSeconds: CODE_TTL_SECONDS, resendAfterSeconds: RESEND_AFTER_SECONDS }));
 }));
@@ -208,23 +207,12 @@ router.post("/auth/codes/verify", handle(async (req, res) => {
   take(limits.codeChecksByIp, ip(req));
   const check = await consumeCode(email, body.data.purpose, body.data.code);
   if (check !== "ok") throw fail(400, codeProblem[check]);
+  // The only purpose is verify_email: entering the code finishes registration.
   const existing = await findUserByEmail(email);
-  if (body.data.purpose === "verify_email") {
-    if (!existing) throw fail(400, codeProblem.invalid);
-    const firstVerification = !existing.emailVerifiedAt;
-    const user = firstVerification ? await updateUser(existing.id, { emailVerifiedAt: new Date() }) : existing;
-    await signIn(req, res, user, firstVerification);
-    return;
-  }
-  if (!existing) {
-    const { user, isNewUser } = await createVerifiedUser({ email, firstName: cleanName(body.data.firstName) });
-    await signIn(req, res, user, isNewUser);
-    return;
-  }
-  // Proving the address claims an unverified sign-up; a password someone else
-  // may have set on it is discarded.
-  const user = existing.emailVerifiedAt ? existing : await updateUser(existing.id, { emailVerifiedAt: new Date(), passwordHash: null });
-  await signIn(req, res, user, false);
+  if (!existing) throw fail(400, codeProblem.invalid);
+  const firstVerification = !existing.emailVerifiedAt;
+  const user = firstVerification ? await updateUser(existing.id, { emailVerifiedAt: new Date() }) : existing;
+  await signIn(req, res, user, firstVerification);
 }));
 
 router.post("/auth/password-reset", handle(async (req, res) => {

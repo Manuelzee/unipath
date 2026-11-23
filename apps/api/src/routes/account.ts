@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { DeleteMyDataBody, DeleteMyDataResponse, ExportMyDataResponse } from "@workspace/api-zod";
 import {
   aiSavedItemsTable, aiUsageTable, applicationTasksTable, applicationsTable, authUsersTable, db,
-  jobApplicationsTable, savedUniversitiesTable, studentDocumentsTable, studentProfilesTable,
+  chatMessagesTable, jobApplicationsTable, savedUniversitiesTable, studentDocumentsTable, studentProfilesTable,
 } from "@workspace/db";
 import { deleteObject } from "../lib/storage";
 import { publicUser } from "../lib/auth/users";
@@ -25,7 +25,7 @@ const iso = (d: Date) => d.toISOString();
 
 router.get("/me/export", requireAuth, async (req, res): Promise<void> => {
   const userId = studentId(req);
-  const [[account], [profile], saved, applications, tasks, aiItems, jobs, documents] = await Promise.all([
+  const [[account], [profile], saved, applications, tasks, aiItems, jobs, documents, chat] = await Promise.all([
     db.select().from(authUsersTable).where(eq(authUsersTable.id, userId)).limit(1),
     db.select().from(studentProfilesTable).where(eq(studentProfilesTable.userId, userId)).limit(1),
     db.select().from(savedUniversitiesTable).where(eq(savedUniversitiesTable.userId, userId)),
@@ -34,6 +34,7 @@ router.get("/me/export", requireAuth, async (req, res): Promise<void> => {
     db.select().from(aiSavedItemsTable).where(eq(aiSavedItemsTable.userId, userId)),
     db.select().from(jobApplicationsTable).where(eq(jobApplicationsTable.userId, userId)),
     db.select().from(studentDocumentsTable).where(eq(studentDocumentsTable.userId, userId)),
+    db.select().from(chatMessagesTable).where(eq(chatMessagesTable.userId, userId)).orderBy(chatMessagesTable.id),
   ]);
   res.setHeader("Cache-Control", "private, no-store");
   res.json(ExportMyDataResponse.parse({
@@ -50,6 +51,7 @@ router.get("/me/export", requireAuth, async (req, res): Promise<void> => {
     aiSavedItems: aiItems.map(i => ({ ...i, createdAt: iso(i.createdAt) })),
     jobApplications: jobs.map(j => ({ ...j, createdAt: iso(j.createdAt), updatedAt: iso(j.updatedAt) })),
     documents: documents.map(toDocument),
+    chatMessages: chat.map(m => ({ id: m.id, body: m.body, createdAt: iso(m.createdAt) })),
   }));
 });
 
@@ -69,6 +71,7 @@ export async function deleteStudentData(userId: string) {
       aiSavedItems: await count(tx.delete(aiSavedItemsTable).where(eq(aiSavedItemsTable.userId, userId)).returning({ id: aiSavedItemsTable.id })),
       aiUsage: await count(tx.delete(aiUsageTable).where(eq(aiUsageTable.userId, userId)).returning({ id: aiUsageTable.id })),
       jobApplications: await count(tx.delete(jobApplicationsTable).where(eq(jobApplicationsTable.userId, userId)).returning({ id: jobApplicationsTable.id })),
+      chatMessages: await count(tx.delete(chatMessagesTable).where(eq(chatMessagesTable.userId, userId)).returning({ id: chatMessagesTable.id })),
       profiles: await count(tx.delete(studentProfilesTable).where(eq(studentProfilesTable.userId, userId)).returning({ id: studentProfilesTable.userId })),
     };
   });

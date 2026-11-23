@@ -35,6 +35,15 @@ const mail = (name: string) => `${name}@${DOMAIN}`;
 // ---- Captured email ----
 const outbox: Array<{ to: string; subject: string; text: string }> = [];
 setMailer(async message => { outbox.push(message); });
+/** Waits for an email to `to` whose subject matches (some emails are sent after the reply). */
+async function waitForCode(to: string, subject: RegExp) {
+  for (let i = 0; i < 40; i++) {
+    const message = [...outbox].reverse().find(m => m.to === to && subject.test(m.subject));
+    if (message) return message.text.match(/\b(\d{6})\b/)![1];
+    await new Promise(r => setTimeout(r, 50));
+  }
+  throw new Error(`no email matching ${subject} was sent to ${to}`);
+}
 const lastCode = (to: string) => {
   const message = [...outbox].reverse().find(m => m.to === to);
   assert.ok(message, `no email was sent to ${to}`);
@@ -105,7 +114,7 @@ test("signed out: session is null and every method is offered", async () => {
   const res = await new Browser().get("/api/auth/session");
   assert.equal(res.status, 200);
   assert.equal(res.data.user, null);
-  assert.deepEqual(res.data.methods, { password: true, emailCode: true, google: true });
+  assert.deepEqual(res.data.methods, { password: true, google: true });
   assert.equal(res.data.emailDelivery, "email");
   assert.equal((await new Browser().get("/api/me/export")).status, 401);
 });
@@ -190,36 +199,39 @@ test("cross-site writes are refused even with a valid session", async () => {
   assert.ok(await b.me(), "still signed in after the form post");
 });
 
-test("email-code sign-in creates a passwordless account on first use", async () => {
+test("codes never sign anyone in: only registration and password resets use them", async () => {
   const b = new Browser();
-  const email = mail("grace");
-  const sent = await b.post("/api/auth/codes", { email, purpose: "sign_in" });
-  assert.equal(sent.status, 200);
-  assert.deepEqual([sent.data.delivery, sent.data.expiresInSeconds, sent.data.resendAfterSeconds], ["email", 600, 30]);
-  assert.equal((await b.post("/api/auth/codes", { email, purpose: "sign_in" })).status, 429, "no instant resend");
-  const ok = await b.post("/api/auth/codes/verify", { email, purpose: "sign_in", code: lastCode(email), firstName: "Grace" });
-  assert.equal(ok.data.status, "signed_in");
-  assert.equal(ok.data.isNewUser, true);
-  assert.deepEqual([ok.data.user.firstName, ok.data.user.hasPassword, ok.data.user.emailVerified], ["Grace", false, true]);
-  assert.equal((await b.post("/api/auth/codes/verify", { email, purpose: "sign_in", code: lastCode(email) })).status, 400, "codes work once");
+  assert.equal((await b.post("/api/auth/codes", { email: mail("nocode"), purpose: "sign_in" })).status, 400);
+  assert.equal((await b.post("/api/auth/codes/verify", { email: mail("nocode"), purpose: "sign_in", code: "123456" })).status, 400);
+  assert.equal((await b.post("/api/auth/codes/verify", { email: mail("ada"), purpose: "verify_email", code: "123456" })).status, 400,
+    "an existing account cannot be entered with a code");
+  assert.equal(b.cookies.size, 0);
+  assert.equal(await b.me(), null);
+});
+
+test("registration codes cannot be resent instantly", async () => {
+  const b = new Browser();
+  const email = mail("resend");
+  await b.post("/api/auth/sign-up", { email, password: "correct horse battery", firstName: "Rio" });
+  assert.equal((await b.post("/api/auth/codes", { email, purpose: "verify_email" })).status, 429);
 });
 
 test("a code locks after five wrong tries and expired codes are refused", async () => {
   const b = new Browser();
   const email = mail("lock");
-  await b.post("/api/auth/codes", { email, purpose: "sign_in" });
+  await b.post("/api/auth/sign-up", { email, password: "correct horse battery", firstName: "Lee" });
   const code = lastCode(email);
   const wrong = code === "123456" ? "654321" : "123456";
   const results: number[] = [];
   let last: any;
-  for (let i = 0; i < 5; i++) { last = await b.post("/api/auth/codes/verify", { email, purpose: "sign_in", code: wrong }); results.push(last.status); }
+  for (let i = 0; i < 5; i++) { last = await b.post("/api/auth/codes/verify", { email, purpose: "verify_email", code: wrong }); results.push(last.status); }
   assert.deepEqual(results, [400, 400, 400, 400, 400]);
   assert.match(last.data.error, /Too many wrong tries/);
-  assert.equal((await b.post("/api/auth/codes/verify", { email, purpose: "sign_in", code })).status, 400, "the right code no longer works");
+  assert.equal((await b.post("/api/auth/codes/verify", { email, purpose: "verify_email", code })).status, 400, "the right code no longer works");
   const email2 = mail("expired");
-  await b.post("/api/auth/codes", { email: email2, purpose: "sign_in" });
+  await b.post("/api/auth/sign-up", { email: email2, password: "correct horse battery", firstName: "Ana" });
   await db.update(authCodesTable).set({ expiresAt: new Date(Date.now() - 1000) }).where(eq(authCodesTable.email, email2));
-  const expired = await b.post("/api/auth/codes/verify", { email: email2, purpose: "sign_in", code: lastCode(email2) });
+  const expired = await b.post("/api/auth/codes/verify", { email: email2, purpose: "verify_email", code: lastCode(email2) });
   assert.equal(expired.status, 400);
   assert.match(expired.data.error, /expired/);
   assert.equal(b.cookies.size, 0);
@@ -229,12 +241,15 @@ test("an unverified sign-up cannot hijack the real owner's account", async () =>
   const victim = mail("victim");
   const attacker = new Browser();
   await attacker.post("/api/auth/sign-up", { email: victim, password: "attacker password", firstName: "Mallory" });
-  // The real owner signs in with a code sent to their inbox.
+  const blocked = await attacker.post("/api/auth/sign-in", { email: victim, password: "attacker password" });
+  assert.equal(blocked.data.status, "verification_required", "no access without the code from the inbox");
+  assert.equal(attacker.cookies.size, 0);
+  // The real owner resets the password with a code sent to their inbox.
   const owner = new Browser();
-  await owner.post("/api/auth/codes", { email: victim, purpose: "sign_in" });
-  const ok = await owner.post("/api/auth/codes/verify", { email: victim, purpose: "sign_in", code: lastCode(victim) });
+  await owner.post("/api/auth/codes", { email: victim, purpose: "reset_password" });
+  const code = await waitForCode(victim, /Reset your UniPath AI password/);
+  const ok = await owner.post("/api/auth/password-reset", { email: victim, code, password: "the real owner's passphrase" });
   assert.equal(ok.data.status, "signed_in");
-  assert.equal(ok.data.user.hasPassword, false, "the attacker's password was discarded");
   assert.equal((await attacker.post("/api/auth/sign-in", { email: victim, password: "attacker password" })).status, 401);
 });
 
@@ -271,11 +286,6 @@ test("changing the password needs the current one and ends other sessions only",
   assert.equal(ok.status, 200);
   assert.ok(await here.me(), "this browser stays signed in");
   assert.equal(await there.me(), null, "the other one is signed out");
-  // A passwordless account can add a password without a current one.
-  const grace = new Browser();
-  await grace.post("/api/auth/codes", { email: mail("grace2"), purpose: "sign_in" });
-  await grace.post("/api/auth/codes/verify", { email: mail("grace2"), purpose: "sign_in", code: lastCode(mail("grace2")) });
-  assert.equal((await grace.request("POST", "/api/auth/password", { newPassword: "first password set" })).data.hasPassword, true);
 });
 
 test("name updates and sign-out-others", async () => {
@@ -317,6 +327,8 @@ test("Google: new accounts go to onboarding, returning ones go back where they w
   const me = await b.me();
   assert.deepEqual([me?.email, me?.googleConnected, me?.hasPassword, me?.emailVerified], [mail("lin"), true, false, true]);
   assert.equal(b.cookies.has("unipath_google_oauth"), false, "the one-time state cookie is cleared");
+  // An account without a password can add one without a current password.
+  assert.equal((await b.request("POST", "/api/auth/password", { newPassword: "first password set" })).data.hasPassword, true);
   const again = await googleSignIn(new Browser(), { sub: "google-sub-1", email: mail("lin") }, "/compare?ids=a");
   assert.equal(again.location, "/compare?ids=a");
   const offsite = await googleSignIn(new Browser(), { sub: "google-sub-1", email: mail("lin") }, "//evil.example/x");

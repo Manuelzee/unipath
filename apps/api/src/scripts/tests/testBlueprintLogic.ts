@@ -22,6 +22,7 @@ import { cleanName, normalizeEmail, safeRedirect } from "../../lib/auth/validati
 import { GoogleSignInError, decodeJwtPayload } from "../../lib/auth/google";
 import { codeEmail } from "../../lib/auth/email";
 import { clientIp } from "../../lib/clientIp";
+import { chatName, cleanChatMessage } from "../../lib/chat";
 import { GetExchangeRateQueryParams, SearchJobListingsQueryParams, UploadStudentDocumentQueryParams } from "@workspace/api-zod";
 
 const tests: Array<[string, () => void | Promise<void>]> = [];
@@ -306,6 +307,14 @@ test("the visitor IP from the web proxy is trusted only with the shared secret",
   } finally {
     if (saved === undefined) delete process.env.PROXY_SHARED_SECRET; else process.env.PROXY_SHARED_SECRET = saved;
   }
+});
+test("chat shows first name and last initial and cleans message text", () => {
+  assert.equal(chatName("Ada", "lovelace"), "Ada L.");
+  assert.equal(chatName("Ben", ""), "Ben");
+  assert.equal(chatName("  ", "Smith"), "Student");
+  assert.equal(cleanChatMessage("\r\n  hi\r\n\r\n\r\n\r\nthere ‮\u0000 "), "hi\n\nthere");
+  assert.equal(cleanChatMessage("⁦⁩  "), "");
+  assert.equal(cleanChatMessage("y".repeat(1200)).length, 1000);
 });
 test("code emails carry the code, its lifetime and a phishing warning", () => {
   const email = codeEmail("ada@example.com", "042917", "reset_password", 10);

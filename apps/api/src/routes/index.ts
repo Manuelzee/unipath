@@ -14,6 +14,7 @@ import aiRouter from "./ai";
 import accountRouter from "./account";
 import documentsRouter from "./documents";
 import authRouter from "./auth";
+import chatRouter from "./chat";
 
 const router: IRouter = Router();
 
@@ -32,5 +33,6 @@ router.use(applicationsRouter);
 router.use(aiRouter);
 router.use(accountRouter);
 router.use(documentsRouter);
+router.use(chatRouter);
 
 export default router;

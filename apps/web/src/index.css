@@ -354,3 +354,11 @@ html { scroll-behavior: smooth; }
 .auth-dev-note { margin:0 0 16px;padding:11px 12px;display:flex;gap:9px;align-items:flex-start;border:1px solid #f0e0c4;border-radius:10px;background:#fdf7ec;color:#7a5a26;font-size:12px;line-height:1.55; }
 .auth-dev-note svg { flex:none;margin-top:2px; }
 @media (max-width:760px) { .auth-card { padding:26px 20px 22px;border-radius:16px; } .auth-name-row { grid-template-columns:1fr; } }
+
+/* Rotating three.js globe in the hero (components/marketing/HeroGlobe.tsx). Sized so the sphere matches the CSS globe it replaces. */
+.globe-3d { width:340px; height:340px; position:relative; flex:none; touch-action:pan-y; cursor:grab; opacity:0; transition:opacity .6s ease; }
+.globe-3d:active { cursor:grabbing; }
+.globe-3d-ready { opacity:1; }
+.globe-3d canvas { width:100%; height:100%; display:block; }
+@media (max-width:760px) { .globe-3d { width:305px; height:305px; } }
+@media (prefers-reduced-motion:reduce) { .globe-3d { transition:none; } }

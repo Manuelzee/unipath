@@ -26,7 +26,7 @@ type AuthContextValue = {
   signOut: (beforeClear?: () => void) => Promise<void>;
 };
 
-const defaultMethods: Methods = { password: true, emailCode: true, google: false };
+const defaultMethods: Methods = { password: true, google: false };
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {

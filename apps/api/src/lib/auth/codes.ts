@@ -6,9 +6,10 @@ import { authCodesTable, db } from "@workspace/db";
  * Six-digit email codes. Only a hash is stored, a new code replaces the
  * previous one, codes expire after 10 minutes, and each code allows at most
  * five tries. The try is counted before the comparison, so parallel guesses
- * cannot get past the limit.
+ * cannot get past the limit. Codes confirm a new account's email or reset a
+ * password; they never sign anyone in.
  */
-export type CodePurpose = "sign_in" | "verify_email" | "reset_password";
+export type CodePurpose = "verify_email" | "reset_password";
 export type CodeCheck = "ok" | "invalid" | "expired" | "locked";
 export const CODE_TTL_SECONDS = 600;
 export const MAX_CODE_ATTEMPTS = 5;

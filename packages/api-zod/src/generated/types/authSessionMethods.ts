@@ -8,6 +8,5 @@
 
 export type AuthSessionMethods = {
   password: boolean;
-  emailCode: boolean;
   google: boolean;
 };

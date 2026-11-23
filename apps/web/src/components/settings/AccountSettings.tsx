@@ -41,7 +41,7 @@ export function AccountPanel() {
       <div style={{ flexBasis: '100%' }}><StatusLine status={nameStatus}/></div>
     </form>
     <div className="settings-item"><div><strong>Ways to sign in</strong><span>
-      {[user.hasPassword && 'Password', methods.emailCode && 'Email code', user.googleConnected && 'Google'].filter(Boolean).join(' · ') || 'Email code'}
+      {[user.hasPassword && 'Email and password', user.googleConnected && 'Google'].filter(Boolean).join(' · ') || 'No password yet: add one below'}
       {!user.googleConnected && methods.google && '. Continue with Google works too if your Google account uses this email.'}
     </span></div></div>
     <PasswordForm/>

@@ -10,7 +10,6 @@ export type AuthCodeRequestPurpose = typeof AuthCodeRequestPurpose[keyof typeof 
 
 
 export const AuthCodeRequestPurpose = {
-  sign_in: 'sign_in',
   verify_email: 'verify_email',
   reset_password: 'reset_password',
 } as const;

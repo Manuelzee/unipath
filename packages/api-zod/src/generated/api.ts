@@ -2939,6 +2939,11 @@ export const ExportMyDataResponse = zod.object({
   "contentType": zod.enum(['application/pdf', 'image/png', 'image/jpeg', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']),
   "sizeBytes": zod.number().int(),
   "createdAt": zod.string()
+})),
+  "chatMessages": zod.array(zod.object({
+  "id": zod.number().int(),
+  "body": zod.string(),
+  "createdAt": zod.string()
 }))
 })
 
@@ -2960,7 +2965,8 @@ export const DeleteMyDataResponse = zod.object({
   "aiSavedItems": zod.number().int(),
   "aiUsage": zod.number().int(),
   "jobApplications": zod.number().int(),
-  "documents": zod.number().int()
+  "documents": zod.number().int(),
+  "chatMessages": zod.number().int()
 })
 })
 
@@ -3070,10 +3076,9 @@ export const GetAuthSessionResponse = zod.object({
 }),zod.null()]),
   "methods": zod.object({
   "password": zod.boolean(),
-  "emailCode": zod.boolean(),
   "google": zod.boolean()
 }),
-  "emailDelivery": zod.enum(['email', 'server_log', 'unavailable']).describe('email: codes are emailed. server_log: development only, codes are written to the API server log. unavailable: email codes are off.')
+  "emailDelivery": zod.enum(['email', 'server_log', 'unavailable']).describe('email: codes are emailed. server_log: development only, codes are written to the API server log. unavailable: registration and password resets are off.')
 })
 
 
@@ -3151,7 +3156,7 @@ export const SignInWithPasswordResponse = zod.object({
 
 
 /**
- * @summary Email a one-time code (sign in, verify an email, or reset a password)
+ * @summary Email a one-time code to confirm a new account's email or reset a password (codes are never used to sign in)
  */
 export const sendAuthCodeBodyEmailMin = 3;
 export const sendAuthCodeBodyEmailMax = 254;
@@ -3160,12 +3165,12 @@ export const sendAuthCodeBodyEmailMax = 254;
 
 export const SendAuthCodeBody = zod.object({
   "email": zod.string().min(sendAuthCodeBodyEmailMin).max(sendAuthCodeBodyEmailMax),
-  "purpose": zod.enum(['sign_in', 'verify_email', 'reset_password'])
+  "purpose": zod.enum(['verify_email', 'reset_password'])
 })
 
 export const SendAuthCodeResponse = zod.object({
   "email": zod.string(),
-  "purpose": zod.enum(['sign_in', 'verify_email', 'reset_password']),
+  "purpose": zod.enum(['verify_email', 'reset_password']),
   "delivery": zod.enum(['email', 'server_log']),
   "expiresInSeconds": zod.number().int(),
   "resendAfterSeconds": zod.number().int()
@@ -3173,7 +3178,7 @@ export const SendAuthCodeResponse = zod.object({
 
 
 /**
- * @summary Sign in with an emailed code (creates the account on first use) or verify a new account
+ * @summary Confirm a new account's email with the emailed code; the account can be used only after this
  */
 export const verifyAuthCodeBodyEmailMin = 3;
 export const verifyAuthCodeBodyEmailMax = 254;
@@ -3183,15 +3188,12 @@ export const verifyAuthCodeBodyCodeMax = 6;
 
 
 export const verifyAuthCodeBodyCodeRegExp = new RegExp('^[0-9]{6}$');
-export const verifyAuthCodeBodyFirstNameMax = 60;
-
 
 
 export const VerifyAuthCodeBody = zod.object({
   "email": zod.string().min(verifyAuthCodeBodyEmailMin).max(verifyAuthCodeBodyEmailMax),
-  "purpose": zod.enum(['sign_in', 'verify_email']),
-  "code": zod.string().min(verifyAuthCodeBodyCodeMin).max(verifyAuthCodeBodyCodeMax).regex(verifyAuthCodeBodyCodeRegExp),
-  "firstName": zod.string().max(verifyAuthCodeBodyFirstNameMax).optional().describe('Used only when a code sign-in creates a new account')
+  "purpose": zod.enum(['verify_email']),
+  "code": zod.string().min(verifyAuthCodeBodyCodeMin).max(verifyAuthCodeBodyCodeMax).regex(verifyAuthCodeBodyCodeRegExp)
 })
 
 export const VerifyAuthCodeResponse = zod.object({
@@ -3327,5 +3329,62 @@ export const DeleteAccountBody = zod.object({
 })
 
 export const DeleteAccountResponse = zod.void()
+
+
+/**
+ * @summary The most recent community messages (oldest first), or the page before a message id
+ */
+
+export const listChatMessagesQueryLimitMax = 100;
+
+
+
+export const ListChatMessagesQueryParams = zod.object({
+  "before": zod.coerce.number().int().min(1).optional(),
+  "limit": zod.coerce.number().int().min(1).max(listChatMessagesQueryLimitMax).optional()
+})
+
+export const ListChatMessagesResponse = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.number().int(),
+  "body": zod.string(),
+  "createdAt": zod.string(),
+  "authorName": zod.string().describe('First name and last initial only; never an email address'),
+  "mine": zod.boolean(),
+  "canDelete": zod.boolean()
+})),
+  "hasMore": zod.boolean().describe('Older messages exist before the first item')
+})
+
+
+/**
+ * @summary Post a message to the community chat
+ */
+export const sendChatMessageBodyBodyMax = 1000;
+
+
+
+export const SendChatMessageBody = zod.object({
+  "body": zod.string().min(1).max(sendChatMessageBodyBodyMax)
+})
+
+export const SendChatMessageResponse = zod.object({
+  "id": zod.number().int(),
+  "body": zod.string(),
+  "createdAt": zod.string(),
+  "authorName": zod.string().describe('First name and last initial only; never an email address'),
+  "mine": zod.boolean(),
+  "canDelete": zod.boolean()
+})
+
+
+/**
+ * @summary Delete one of your own messages (administrators can delete any)
+ */
+export const DeleteChatMessageParams = zod.object({
+  "id": zod.coerce.number().int()
+})
+
+export const DeleteChatMessageResponse = zod.void()
 
 

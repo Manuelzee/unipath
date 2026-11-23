@@ -10,6 +10,7 @@ import type { ApplicationRecord } from './applicationRecord';
 import type { ApplicationTask } from './applicationTask';
 import type { AuthUser } from './authUser';
 import type { JobApplication } from './jobApplication';
+import type { OwnChatMessage } from './ownChatMessage';
 import type { SavedUniversityReference } from './savedUniversityReference';
 import type { StudentDocument } from './studentDocument';
 import type { StudentProfile } from './studentProfile';
@@ -25,4 +26,5 @@ export interface StudentDataExport {
   aiSavedItems: AiSavedItem[];
   jobApplications: JobApplication[];
   documents: StudentDocument[];
+  chatMessages: OwnChatMessage[];
 }

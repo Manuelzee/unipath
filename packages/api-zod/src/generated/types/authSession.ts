@@ -12,6 +12,6 @@ import type { AuthUser } from './authUser';
 export interface AuthSession {
   user: AuthUser | null;
   methods: AuthSessionMethods;
-  /** email: codes are emailed. server_log: development only, codes are written to the API server log. unavailable: email codes are off. */
+  /** email: codes are emailed. server_log: development only, codes are written to the API server log. unavailable: registration and password resets are off. */
   emailDelivery: AuthSessionEmailDelivery;
 }

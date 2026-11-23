@@ -53,6 +53,9 @@ import type {
   BillingAvailability,
   BudgetPreferences,
   BudgetSettings,
+  ChatMessage,
+  ChatMessageInput,
+  ChatMessagePage,
   DashboardSummary,
   DataDeletionRequest,
   DataDeletionResult,
@@ -73,6 +76,7 @@ import type {
   JobSearchResponse,
   ListAdminCustomersParams,
   ListAdminInstitutionsParams,
+  ListChatMessagesParams,
   ListUniversitiesParams,
   ListUniversitiesResult,
   ListUniversityFactsParams,
@@ -5737,7 +5741,7 @@ export const getSendAuthCodeUrl = () => {
 }
 
 /**
- * @summary Email a one-time code (sign in, verify an email, or reset a password)
+ * @summary Email a one-time code to confirm a new account's email or reset a password (codes are never used to sign in)
  */
 export const sendAuthCode = async (authCodeRequest: AuthCodeRequest, options?: Parameters<typeof customFetch>[1]): Promise<AuthCodeSent> => {
 
@@ -5803,7 +5807,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type SendAuthCodeMutationVariables = {data: BodyType<AuthCodeRequest>}
 
     /**
- * @summary Email a one-time code (sign in, verify an email, or reset a password)
+ * @summary Email a one-time code to confirm a new account's email or reset a password (codes are never used to sign in)
  */
 export const useSendAuthCode = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendAuthCode>>, TError,SendAuthCodeMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -5825,7 +5829,7 @@ export const getVerifyAuthCodeUrl = () => {
 }
 
 /**
- * @summary Sign in with an emailed code (creates the account on first use) or verify a new account
+ * @summary Confirm a new account's email with the emailed code; the account can be used only after this
  */
 export const verifyAuthCode = async (authCodeVerification: AuthCodeVerification, options?: Parameters<typeof customFetch>[1]): Promise<AuthResult> => {
 
@@ -5891,7 +5895,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type VerifyAuthCodeMutationVariables = {data: BodyType<AuthCodeVerification>}
 
     /**
- * @summary Sign in with an emailed code (creates the account on first use) or verify a new account
+ * @summary Confirm a new account's email with the emailed code; the account can be used only after this
  */
 export const useVerifyAuthCode = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyAuthCode>>, TError,VerifyAuthCodeMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -6402,5 +6406,251 @@ export const useDeleteAccount = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getDeleteAccountMutationOptions(options));
+    }
+
+export const getListChatMessagesUrl = (params?: ListChatMessagesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/chat/messages?${stringifiedParams}` : `/api/chat/messages`
+}
+
+/**
+ * @summary The most recent community messages (oldest first), or the page before a message id
+ */
+export const listChatMessages = async (params?: ListChatMessagesParams, options?: Parameters<typeof customFetch>[1]): Promise<ChatMessagePage> => {
+
+  return customFetch<ChatMessagePage>(getListChatMessagesUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListChatMessagesQueryKey = (params?: ListChatMessagesParams,) => {
+    return [
+    `/api/chat/messages`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListChatMessagesQueryOptions = <TData = Awaited<ReturnType<typeof listChatMessages>>, TError = ErrorType<void>>(params?: ListChatMessagesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listChatMessages>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListChatMessagesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listChatMessages>>> = ({ signal }) => listChatMessages(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listChatMessages>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListChatMessagesQueryResult = NonNullable<Awaited<ReturnType<typeof listChatMessages>>>
+export type ListChatMessagesQueryError = ErrorType<void>
+
+
+/**
+ * @summary The most recent community messages (oldest first), or the page before a message id
+ */
+
+export function useListChatMessages<TData = Awaited<ReturnType<typeof listChatMessages>>, TError = ErrorType<void>>(
+ params?: ListChatMessagesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listChatMessages>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListChatMessagesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSendChatMessageUrl = () => {
+
+
+
+
+  return `/api/chat/messages`
+}
+
+/**
+ * @summary Post a message to the community chat
+ */
+export const sendChatMessage = async (chatMessageInput: ChatMessageInput, options?: Parameters<typeof customFetch>[1]): Promise<ChatMessage> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ChatMessage>(getSendChatMessageUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(chatMessageInput)
+  }
+);}
+
+
+
+
+
+export const getSendChatMessageMutationKey = () => ['sendChatMessage'] as const;
+
+export const getSendChatMessageMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendChatMessage>>, TError,SendChatMessageMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof sendChatMessage>>, TError,SendChatMessageMutationVariables, TContext> => {
+
+const mutationKey = getSendChatMessageMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendChatMessage>>, SendChatMessageMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  sendChatMessage(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SendChatMessageMutationResult = NonNullable<Awaited<ReturnType<typeof sendChatMessage>>>
+    export type SendChatMessageMutationBody = BodyType<ChatMessageInput>
+    export type SendChatMessageMutationError = ErrorType<void>
+    export type SendChatMessageMutationVariables = {data: BodyType<ChatMessageInput>}
+
+    /**
+ * @summary Post a message to the community chat
+ */
+export const useSendChatMessage = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendChatMessage>>, TError,SendChatMessageMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof sendChatMessage>>,
+        TError,
+        SendChatMessageMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSendChatMessageMutationOptions(options));
+    }
+
+export const getDeleteChatMessageUrl = (id: number,) => {
+
+
+
+
+  return `/api/chat/messages/${id}`
+}
+
+/**
+ * @summary Delete one of your own messages (administrators can delete any)
+ */
+export const deleteChatMessage = async (id: number, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getDeleteChatMessageUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteChatMessageMutationKey = () => ['deleteChatMessage'] as const;
+
+export const getDeleteChatMessageMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteChatMessage>>, TError,DeleteChatMessageMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteChatMessage>>, TError,DeleteChatMessageMutationVariables, TContext> => {
+
+const mutationKey = getDeleteChatMessageMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteChatMessage>>, DeleteChatMessageMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteChatMessage(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteChatMessageMutationResult = NonNullable<Awaited<ReturnType<typeof deleteChatMessage>>>
+
+    export type DeleteChatMessageMutationError = ErrorType<void>
+    export type DeleteChatMessageMutationVariables = {id: number}
+
+    /**
+ * @summary Delete one of your own messages (administrators can delete any)
+ */
+export const useDeleteChatMessage = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteChatMessage>>, TError,DeleteChatMessageMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteChatMessage>>,
+        TError,
+        DeleteChatMessageMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDeleteChatMessageMutationOptions(options));
     }
 

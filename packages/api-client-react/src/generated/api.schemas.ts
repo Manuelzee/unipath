@@ -1656,6 +1656,12 @@ export interface StudentDocument {
   createdAt: string;
 }
 
+export interface OwnChatMessage {
+  id: number;
+  body: string;
+  createdAt: string;
+}
+
 export interface StudentDataExport {
   exportedAt: string;
   note: string;
@@ -1667,6 +1673,7 @@ export interface StudentDataExport {
   aiSavedItems: AiSavedItem[];
   jobApplications: JobApplication[];
   documents: StudentDocument[];
+  chatMessages: OwnChatMessage[];
 }
 
 export interface StudentDocumentUpdate {
@@ -1699,6 +1706,7 @@ export type DataDeletionResultDeleted = {
   aiUsage: number;
   jobApplications: number;
   documents: number;
+  chatMessages: number;
 };
 
 export interface DataDeletionResult {
@@ -1708,12 +1716,11 @@ export interface DataDeletionResult {
 
 export type AuthSessionMethods = {
   password: boolean;
-  emailCode: boolean;
   google: boolean;
 };
 
 /**
- * email: codes are emailed. server_log: development only, codes are written to the API server log. unavailable: email codes are off.
+ * email: codes are emailed. server_log: development only, codes are written to the API server log. unavailable: registration and password resets are off.
  */
 export type AuthSessionEmailDelivery = typeof AuthSessionEmailDelivery[keyof typeof AuthSessionEmailDelivery];
 
@@ -1727,7 +1734,7 @@ export const AuthSessionEmailDelivery = {
 export interface AuthSession {
   user: AuthUser | null;
   methods: AuthSessionMethods;
-  /** email: codes are emailed. server_log: development only, codes are written to the API server log. unavailable: email codes are off. */
+  /** email: codes are emailed. server_log: development only, codes are written to the API server log. unavailable: registration and password resets are off. */
   emailDelivery: AuthSessionEmailDelivery;
 }
 
@@ -1793,7 +1800,6 @@ export type AuthCodeRequestPurpose = typeof AuthCodeRequestPurpose[keyof typeof 
 
 
 export const AuthCodeRequestPurpose = {
-  sign_in: 'sign_in',
   verify_email: 'verify_email',
   reset_password: 'reset_password',
 } as const;
@@ -1811,7 +1817,6 @@ export type AuthCodeSentPurpose = typeof AuthCodeSentPurpose[keyof typeof AuthCo
 
 
 export const AuthCodeSentPurpose = {
-  sign_in: 'sign_in',
   verify_email: 'verify_email',
   reset_password: 'reset_password',
 } as const;
@@ -1836,7 +1841,6 @@ export type AuthCodeVerificationPurpose = typeof AuthCodeVerificationPurpose[key
 
 
 export const AuthCodeVerificationPurpose = {
-  sign_in: 'sign_in',
   verify_email: 'verify_email',
 } as const;
 
@@ -1853,11 +1857,6 @@ export interface AuthCodeVerification {
      * @pattern ^[0-9]{6}$
      */
   code: string;
-  /**
-     * Used only when a code sign-in creates a new account
-     * @maxLength 60
-     */
-  firstName?: string;
 }
 
 export interface PasswordResetInput {
@@ -1904,6 +1903,30 @@ export interface AccountUpdate {
 
 export interface SessionsRevoked {
   revoked: number;
+}
+
+export interface ChatMessageInput {
+  /**
+     * @minLength 1
+     * @maxLength 1000
+     */
+  body: string;
+}
+
+export interface ChatMessage {
+  id: number;
+  body: string;
+  createdAt: string;
+  /** First name and last initial only; never an email address */
+  authorName: string;
+  mine: boolean;
+  canDelete: boolean;
+}
+
+export interface ChatMessagePage {
+  items: ChatMessage[];
+  /** Older messages exist before the first item */
+  hasMore: boolean;
 }
 
 export type ListAdminInstitutionsParams = {
@@ -2070,5 +2093,17 @@ fileName: string;
  */
 title?: string;
 applicationId?: number;
+};
+
+export type ListChatMessagesParams = {
+/**
+ * @minimum 1
+ */
+before?: number;
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: number;
 };
 

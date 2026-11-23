@@ -15,4 +15,5 @@ export type DataDeletionResultDeleted = {
   aiUsage: number;
   jobApplications: number;
   documents: number;
+  chatMessages: number;
 };
