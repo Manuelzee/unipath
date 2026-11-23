@@ -10,7 +10,10 @@ const fail = (message, hint) => {
   process.exit(1);
 };
 if (!url) fail("DATABASE_URL is not set.", "Set it in the host's environment settings (see docs/deployment.md).");
-if (/\[YOUR-PASSWORD\]/i.test(url)) fail("DATABASE_URL still contains the [YOUR-PASSWORD] placeholder.", "Replace it, brackets included, with the database password.");
+if (/\[YOUR-(DATABASE-)?PASSWORD\]/i.test(url))
+  fail("DATABASE_URL still contains the password placeholder.", "Replace [YOUR-PASSWORD] (or [YOUR-DATABASE-PASSWORD]), brackets included, with the database password.");
+if (url.includes("…"))
+  fail("DATABASE_URL contains the … character, so it is an example rather than the real connection string.", "Copy the Session pooler URI from Supabase > Connect.");
 
 let parsed;
 try { parsed = new URL(url); } catch {
