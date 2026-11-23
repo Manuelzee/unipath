@@ -93,7 +93,7 @@ There is no startup DDL or public logo-import/upload endpoint.
 Check `/api/universities/logo-coverage` on the **published hostname**, inspect an
 actual verified institution response and fetch its cached image. Test a missing
 image URL (404/fallback), the immutable ETag/cache headers, search/profile display
-on mobile and desktop, and a saved school when signed in. Report actual preview
+on mobile and desktop, and a saved school when signed in. Report actual development
 and production verified counts separately until both environments are checked.
 
 No annual tuition/cost figures, homepage design, subscription plans or student

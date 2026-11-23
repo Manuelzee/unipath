@@ -105,7 +105,7 @@ The development directory had 6,174 records and no duplicate primary/NCES IDs.
 The published database had the directory tables but zero institution rows.
 Therefore live unfiltered zero results were caused by missing production data.
 Filters for unimported U.S. majors, funding, applicant status or language can
-also legitimately return zero in preview; removing them reveals existing rows.
+also legitimately return zero in development; removing them reveals existing rows.
 Search-request errors are now displayed as errors, not as a zero-record count.
 
 ## Official admissions and financial aid pages
@@ -119,7 +119,7 @@ Never derive a plausible `/admissions` or `/financial-aid` URL. If a direct link
 On API startup, missing rows are inserted from a checksum-verified snapshot of
 the two public directory tables, even if IPEDS is already present. The snapshot
 contains **6,174 institutions and 5,573 program records**, matching the reviewed
-preview data: 5,913 U.S., 258 Canadian pilot institutions/campuses, and one each
+development data: 5,913 U.S., 258 Canadian pilot institutions/campuses, and one each
 in FM, MH and PW. Canada is a limited PSC co-op/internship listing, not a full
 national directory, recognition register or DLI dataset.
 
@@ -136,8 +136,8 @@ The exporter reads only the two directory tables, validates source identities,
 and refuses bundles above its small-data size limit. There are no startup
 schema migrations, external downloads or substitute sample records.
 
-The new code takes effect on the published website only after the owner
-publishes it. `/api/universities/import-status` reports source snapshot coverage,
+The new code takes effect on the live website only after the owner
+deploys it. `/api/universities/import-status` reports source snapshot coverage,
 expected/present counts and its checksum; this is not itself proof of a publish
 until requested from the actual published hostname.
 

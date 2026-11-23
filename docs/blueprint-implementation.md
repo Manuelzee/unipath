@@ -26,7 +26,7 @@ This maps the *UniPath AI Product & Engineering Blueprint* to the code. Status:
 | 03 Modules | Built | `apps/api/src/routes/*` |
 | 04 Pages and routes | Built. Blueprint URLs (`/register`, `/login`, `/universities`, `/universities/:id`, `/pricing`, `/ai-assistant`) also work and redirect to the app's routes | `apps/web/src/App.tsx` |
 | 04 Onboarding wizard (5 steps, "why we ask", review) | Built | `components/profile/OnboardingWizard.tsx` |
-| 05 Match classifications | Built: Strong Match, Potential Match, Requirements Not Met, Insufficient Information. Verified hard requirements are checked separately and outrank the score. | `api-server/src/lib/matching/classify.ts`, `score.ts` |
+| 05 Match classifications | Built: Strong Match, Potential Match, Requirements Not Met, Insufficient Information. Verified hard requirements are checked separately and outrank the score. | `apps/api/src/lib/matching/classify.ts`, `score.ts` |
 | 05 Data integrity and source metadata | Existing, kept: source URLs, reporting years, verification dates, "Not reported" | directory components |
 | 06 Dashboard (profile completion, counts, deadlines, overdue tasks, matches, activity, status overview) | Built | `components/dashboard/DashboardView.tsx`, `GET /api/me/dashboard` |
 | 06 Applications (9 statuses, lifecycle, tasks, document checklist) | Built. Student-managed: UniPath never submits. | `components/applications/ApplicationsView.tsx`, `routes/applications.ts` |
@@ -39,7 +39,8 @@ This maps the *UniPath AI Product & Engineering Blueprint* to the code. Status:
 | 10 Ownership checks, input validation | Built: every student query is scoped to the signed-in user, every input is validated against the OpenAPI schema, and JSON is required for writes | routes |
 | 10 Settings: export and delete my data | Built | `components/settings/SettingsView.tsx`, `routes/account.ts` |
 | 10 Email verification, password reset, Google sign-in | Provided by Clerk (enable Google in the Clerk dashboard) | |
-| 10 Private document uploads (S3/R2, signed URLs, malware scan) | Not built | |
+| 10 Private document uploads | Built: PDF, PNG, JPEG and Word files, checked by their bytes (not the name); 10 MB and 50-file limits; owner-only list, rename, download and delete; downloads are always attachments; files are included in export and removed by data deletion | `components/documents/DocumentsView.tsx`, `routes/documents.ts`, `lib/documentFiles.ts`, `lib/storage.ts` |
+| 10 Cloud storage (S3/R2) and malware scanning | Not built. Files are kept privately on the server's disk (`STORAGE_DIR`). A cloud store only needs the four functions in `lib/storage.ts` | |
 | 10 Admin catalogue and verification | Existing admin console kept unchanged | `components/admin/*` |
 | 11 Responsive design and accessibility | Built for new pages: tested at 390px and desktop; labelled controls, focus states, no browser dialogs | |
 | 11 Tests | Unit and integration tests added (below). Playwright end-to-end suite not added. | |
@@ -48,9 +49,10 @@ This maps the *UniPath AI Product & Engineering Blueprint* to the code. Status:
 ## Turning on the AI assistant
 
 1. Create an API key with your AI provider (the blueprint names OpenAI).
-2. In Replit, open **Secrets** and add `OPENAI_API_KEY`. Optionally add
+2. Add `OPENAI_API_KEY` to the server's environment: the `.env` file locally,
+   or your host's environment-variable settings in production. Optionally add
    `OPENAI_MODEL` (default `gpt-4o-mini`) and `AI_DAILY_LIMIT_FREE` (default 15).
-3. Restart the app. Until a key is set, `/ai-assistant` shows the earlier
+3. Restart the API. Until a key is set, `/ai-assistant` shows the earlier
    prepared examples and sends nothing anywhere.
 
 The key stays on the server. Students see exactly which profile fields are
@@ -59,19 +61,20 @@ shared, and every answer lists the facts it was given, with sources and dates.
 ## Database changes
 
 All changes are additive: new tables, plus nullable or defaulted columns.
-Replit's post-merge script runs `pnpm --filter @workspace/db run push`, which
-applies them without touching existing rows.
+Run `pnpm run db:push` after pulling schema changes (and against the production
+`DATABASE_URL` when deploying). It applies them without touching existing rows.
 
 ## Tests
 
 ```bash
-# No database needed
-pnpm --filter @workspace/api-server run test:unit
+# No database needed (24 tests)
+pnpm test
 
-# Against a database: student isolation, applications, dashboard, AI quota and
-# privacy (provider stubbed), export and deletion. Uses throwaway users and
+# Against the database in .env (15 tests): student isolation, applications,
+# dashboard, private documents, AI quota and privacy (provider stubbed), export
+# and deletion. Uses throwaway users and a temporary storage folder, and
 # removes what it creates.
-pnpm --filter @workspace/api-server exec tsx src/scripts/tests/testWorkspaceIsolation.ts
+pnpm run test:integration
 ```
 
 ## Known data limitation

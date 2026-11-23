@@ -7,8 +7,7 @@ const apiZodSrc = path.resolve(root, "packages", "api-zod", "src");
 
 // Our exports make assumptions about the title of the API being "Api" (i.e. generated output is `api.ts`).
 const titleTransformer: InputTransformerFn = (config) => {
-  config.info ??= {};
-  config.info.title = "Api";
+  config.info = { ...config.info, title: "Api" };
 
   return config;
 };
@@ -28,7 +27,6 @@ export default defineConfig({
       mode: "split",
       baseUrl: "/api",
       clean: true,
-      prettier: true,
       override: {
         fetch: {
           includeHttpResponseReturnType: false,
@@ -54,15 +52,16 @@ export default defineConfig({
       schemas: { path: "generated/types", type: "typescript" },
       mode: "split",
       clean: true,
-      prettier: true,
       override: {
         zod: {
-          // Orval resolves `auto` from lib/api-spec/package.json, which has no
+          // Orval resolves `auto` from packages/api-spec/package.json, which has no
           // zod dependency, so orval >= 8.23 falls back to Zod 4 syntax while
           // the catalog installs zod 3. Pin to match the catalog.
           version: 3,
+          // Query values already arrive as strings. Coercing strings would turn a
+          // missing required value into "undefined" and a repeated one into "a,b".
           coerce: {
-            query: ['boolean', 'number', 'string'],
+            query: ['boolean', 'number'],
             param: ['boolean', 'number', 'string'],
             body: ['bigint', 'date'],
             response: ['bigint', 'date'],

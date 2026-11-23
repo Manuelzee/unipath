@@ -62,7 +62,7 @@ def verify(archive_path, bundle_path, output):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("archive", type=Path)
-    parser.add_argument("--bundle", type=Path, default=Path("artifacts/api-server/src/data/us-colleges-2025.json"))
-    parser.add_argument("--output", type=Path, default=Path("artifacts/api-server/src/data/ipeds-provenance.json"))
+    parser.add_argument("--bundle", type=Path, default=Path("apps/api/src/data/us-colleges-2025.json"))
+    parser.add_argument("--output", type=Path, default=Path("apps/api/src/data/ipeds-provenance.json"))
     args = parser.parse_args()
     verify(args.archive, args.bundle, args.output)

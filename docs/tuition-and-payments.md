@@ -169,7 +169,7 @@ Run the opt-in tuition-only import in the API package:
 pnpm exec tsx src/scripts/importTuition.ts
 ```
 
-Without `--file`, it uses `COLLEGE_SCORECARD_API_KEY` from server Secrets, retrieves only small
+Without `--file`, it uses `COLLEGE_SCORECARD_API_KEY` from the server environment (`.env`), retrieves only small
 year-qualified batches, stages all pages before writing, and only fills missing
 paired tuition amounts/years. It preserves branding, identities, reviewed
 evidence, and existing tuition. No credential-bearing URLs are logged.
@@ -304,7 +304,7 @@ Do not publish or enable live payments without the owner's approval.
   There are no card inputs, wallets, fabricated transactions or revenue.
 - Student admin requests returned 403. A temporary test-only admin verified
   customer search, canonical plan prices, unavailable revenue and local-only FX
-  preview. Its membership was removed, verified absent, and access returned to 403.
+  in development. Its membership was removed, verified absent, and access returned to 403.
 - Signed-in billing and admin Settings fit a 390×844 viewport without page-level
   horizontal overflow after repairs. Wide history tables scroll inside their panels.
 - Real-school save/list/unsave, application-task create/complete/delete, funding

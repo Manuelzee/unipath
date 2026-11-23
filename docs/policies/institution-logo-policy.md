@@ -15,7 +15,7 @@ all schools have logos until checked.
 **How to apply:** Automatic reuse is deliberately restricted to independently
 identified public-domain/CC0 images. Other licensing or identity ambiguities need
 review, not an assumption that publicly accessible means reusable. Preserve
-source/permission evidence and distinguish preview counts from published counts.
+source/permission evidence and distinguish development counts from production counts.
 
 Commons image downloads can return HTTP 429 even when the identity/image
 metadata API succeeds. Treat this as a source cooldown, not proof a school has

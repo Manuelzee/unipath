@@ -4,7 +4,7 @@
 
 **You do not need to upload a ZIP file or provide another API key for the Canada pilot.**
 The technical setup and the first database import have been handled in this project's
-development/preview database. Use **Discover → Country → Canada** to see the imported
+development database. Use **Discover → Country → Canada** to see the imported
 source-listed institutions/campuses. The coverage panel reads real database counts.
 
 This is **not a complete Canadian directory**, nor confirmation that every listed
@@ -32,7 +32,7 @@ Those fields are honestly unavailable rather than guessed.
 
 ### What you need to do for wider Canadian coverage
 
-1. No action is needed to browse the pilot in Preview.
+1. No action is needed to browse the pilot in a local or development run of the app.
 2. For a broader EduCanada or CICIC import, obtain **written permission for commercial
    storage, extraction and display** or an expressly licensed export/API. Ask the
    directory owner which fields may be stored, update frequency, attribution and

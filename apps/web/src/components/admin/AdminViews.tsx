@@ -73,7 +73,7 @@ export function AdminSetupView() {
         <ol className="adm-steps">
           <li>Copy the ID above (not your email address).</li>
           <li>In the server’s environment (<code className="adm-code">.env</code> locally, or your host’s secret settings) for the <strong>{isProd(a.environment) ? 'production deployment' : 'development environment'}</strong>, set <code className="adm-code">UNIPATH_ADMIN_SETUP_USER_ID</code> to that ID.</li>
-          <li>Preview and production are configured separately. After changing production secrets, republish.</li>
+          <li>Development and production have separate environment variables. After changing production variables, restart or redeploy the API.</li>
           <li>Return here, read the confirmation, and confirm.</li>
         </ol>
       </section>

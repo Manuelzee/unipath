@@ -24,6 +24,6 @@ failed attempts, and show missing/unsupported/conflicting/outdated evidence.
 overwrites, including from background enrichment.
 
 **How to apply:** Distinguish proposed evidence from accepted verification.
-Check preview and production separately and report each requested test as
+Check development and production separately and report each requested test as
 PASS, FAIL or NOT TESTED based on actual observations, not implementation
 or source-code inspection alone.

@@ -2,29 +2,38 @@
  * Integration test for the blueprint workspace APIs against a real database:
  * - students can never read or change another student's records;
  * - applications, tasks, checklists, dashboard, export and deletion work;
+ * - private documents: the real file type is checked, only the owner can read
+ *   or change them, downloads are never rendered inline, and deleting your
+ *   data removes the stored files;
  * - AI requests are quota-limited, provider failures are not charged, and
  *   private profile fields (budget, citizenship, region) never reach the provider.
  *
  * The AI provider is stubbed; no external request is made. Uses throwaway user
- * IDs and removes everything it creates. Existing institutions are read, never
- * modified; a fixture institution is created only if the directory is empty.
+ * IDs and a temporary storage folder, and removes everything it creates.
+ * Existing institutions are read, never modified; a fixture institution is
+ * created only if the directory is empty.
  *
- * Run: DATABASE_URL=... pnpm --filter @workspace/api-server exec tsx src/scripts/tests/testWorkspaceIsolation.ts
+ * Run: pnpm run test:integration (reads DATABASE_URL from .env)
  */
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
+import { mkdtemp, rm } from "node:fs/promises";
 import type { AddressInfo } from "node:net";
+import os from "node:os";
+import path from "node:path";
 import express from "express";
 import { eq, inArray } from "drizzle-orm";
 import {
   aiSavedItemsTable, aiUsageTable, applicationTasksTable, applicationsTable, db, institutionDirectoryTable,
-  jobApplicationsTable, pool, savedUniversitiesTable, studentProfilesTable,
+  jobApplicationsTable, pool, savedUniversitiesTable, studentDocumentsTable, studentProfilesTable,
 } from "@workspace/db";
 import studentRouter from "../../routes/student";
 import applicationsRouter from "../../routes/applications";
 import aiRouter from "../../routes/ai";
 import accountRouter from "../../routes/account";
 import recommendationsRouter from "../../routes/recommendations";
+import documentsRouter from "../../routes/documents";
+import { objectExists } from "../../lib/storage";
 
 const A = `test-iso-a-${randomUUID()}`;
 const B = `test-iso-b-${randomUUID()}`;
@@ -55,7 +64,7 @@ app.use((req, _res, next) => {
   (req as unknown as { log: unknown }).log = { info() {}, warn() {}, error() {} };
   next();
 });
-for (const router of [studentRouter, applicationsRouter, aiRouter, accountRouter, recommendationsRouter]) app.use("/api", router);
+for (const router of [studentRouter, applicationsRouter, aiRouter, accountRouter, recommendationsRouter, documentsRouter]) app.use("/api", router);
 
 let base = "";
 async function call(user: string | null, method: string, path: string, body?: unknown, contentType = "application/json") {
@@ -68,6 +77,25 @@ async function call(user: string | null, method: string, path: string, body?: un
   return { status: res.status, data: text ? JSON.parse(text) : null };
 }
 
+/** Uploads raw bytes the way the web app does (application/octet-stream, metadata in the query). */
+async function upload(user: string | null, query: Record<string, string | number>, bytes: Uint8Array, headers: Record<string, string> = {}) {
+  const qs = new URLSearchParams(Object.entries(query).map(([k, v]) => [k, String(v)]));
+  const res = await realFetch(`${base}/api/me/documents?${qs}`, {
+    method: "POST",
+    headers: { ...(user ? { "x-test-user": user } : {}), "content-type": "application/octet-stream", ...headers },
+    body: bytes,
+  });
+  const text = await res.text();
+  return { status: res.status, data: text ? JSON.parse(text) : null };
+}
+
+async function download(user: string, id: number) {
+  const res = await realFetch(`${base}/api/me/documents/${id}/file`, { headers: { "x-test-user": user } });
+  return { status: res.status, headers: res.headers, bytes: Buffer.from(await res.arrayBuffer()) };
+}
+
+const pdfBytes = (size = 64) => Buffer.concat([Buffer.from("%PDF-1.7\n"), Buffer.alloc(Math.max(0, size - 9), 0x20)]);
+
 const tests: Array<[string, () => Promise<void>]> = [];
 const test = (name: string, fn: () => Promise<void>) => tests.push([name, fn]);
 const nextYear = new Date().getFullYear() + 1;
@@ -77,6 +105,8 @@ let createdFixture = false;
 let appId = 0;
 let taskId = 0;
 let aiItemId = 0;
+let documentId = 0;
+let storageDir = "";
 
 test("unauthenticated requests are rejected", async () => {
   assert.equal((await call(null, "GET", "/api/me/applications")).status, 401);
@@ -154,6 +184,63 @@ test("another student cannot see or change any of it", async () => {
   assert.equal(mine.data[0].status, "preparing_documents", "A's record was not changed by B");
 });
 
+test("documents: upload checks the real file type, size, origin and application owner", async () => {
+  assert.equal((await upload(null, { fileName: "x.pdf" }, pdfBytes())).status, 401);
+  const created = await upload(A, { fileName: "C:\\Users\\me\\Transcript 2026.PDF", title: "  Final transcript ", applicationId: appId }, pdfBytes());
+  assert.equal(created.status, 201, JSON.stringify(created.data));
+  assert.equal(created.data.contentType, "application/pdf");
+  assert.equal(created.data.fileName, "Transcript 2026.pdf");
+  assert.equal(created.data.title, "Final transcript");
+  assert.equal(created.data.applicationId, appId);
+  documentId = created.data.id;
+
+  const html = Buffer.from("<html><script>alert(1)</script></html>");
+  assert.equal((await upload(A, { fileName: "essay.pdf" }, html)).status, 400, "HTML renamed to .pdf is refused");
+  assert.equal((await upload(A, { fileName: "empty.pdf" }, Buffer.alloc(0))).status, 400);
+  assert.equal((await upload(A, { fileName: "x.pdf" }, pdfBytes(), { "content-type": "text/plain" })).status, 415);
+  assert.equal((await upload(A, { fileName: "x.pdf" }, pdfBytes(), { origin: "https://evil.example" })).status, 403);
+  assert.equal((await upload(A, {}, pdfBytes())).status, 400, "a file name is required");
+  assert.equal((await upload(B, { fileName: "x.pdf", applicationId: appId }, pdfBytes())).status, 404, "B cannot attach to A's application");
+  process.env.DOCUMENT_MAX_BYTES = "2048";
+  try { assert.equal((await upload(A, { fileName: "big.pdf" }, pdfBytes(4096))).status, 413); }
+  finally { delete process.env.DOCUMENT_MAX_BYTES; }
+
+  const list = (await call(A, "GET", "/api/me/documents")).data;
+  assert.deepEqual(list.map((d: { id: number }) => d.id), [documentId], "refused uploads leave no record");
+});
+
+test("documents: only the owner can list, download, rename or delete; downloads are attachments", async () => {
+  assert.deepEqual((await call(B, "GET", "/api/me/documents")).data, []);
+  assert.equal((await download(B, documentId)).status, 404);
+  assert.equal((await call(B, "PATCH", `/api/me/documents/${documentId}`, { title: "Mine now" })).status, 404);
+  assert.equal((await call(B, "DELETE", `/api/me/documents/${documentId}`)).status, 404);
+
+  const file = await download(A, documentId);
+  assert.equal(file.status, 200);
+  assert.ok(file.bytes.equals(pdfBytes()), "the stored bytes come back unchanged");
+  assert.match(file.headers.get("content-disposition") ?? "", /^attachment; filename="Transcript 2026\.pdf"/);
+  assert.equal(file.headers.get("x-content-type-options"), "nosniff");
+  assert.match(file.headers.get("content-security-policy") ?? "", /sandbox/);
+  assert.match(file.headers.get("cache-control") ?? "", /no-store/);
+
+  const renamed = await call(A, "PATCH", `/api/me/documents/${documentId}`, { title: "Official transcript" });
+  assert.equal(renamed.status, 200, JSON.stringify(renamed.data));
+  assert.equal(renamed.data.title, "Official transcript");
+  assert.equal((await call(A, "PATCH", `/api/me/documents/${documentId}`, {})).status, 400, "an empty change is refused");
+  assert.equal((await call(A, "GET", "/api/me/documents")).data[0].title, "Official transcript", "B's attempts changed nothing");
+});
+
+test("documents: deleting one removes its stored file", async () => {
+  const extra = await upload(A, { fileName: "photo.png" }, Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3]));
+  assert.equal(extra.status, 201, JSON.stringify(extra.data));
+  const [row] = await db.select().from(studentDocumentsTable).where(eq(studentDocumentsTable.id, extra.data.id));
+  assert.ok(await objectExists(row.storageKey));
+  assert.ok(path.resolve(storageDir, ...row.storageKey.split("/")).startsWith(storageDir + path.sep), "files go to STORAGE_DIR");
+  assert.equal((await call(A, "DELETE", `/api/me/documents/${extra.data.id}`)).status, 204);
+  assert.equal(await objectExists(row.storageKey), false);
+  assert.equal((await download(A, extra.data.id)).status, 404);
+});
+
 test("dashboard summarises only the student's own records", async () => {
   const a = (await call(A, "GET", "/api/me/dashboard")).data;
   assert.equal(a.totalApplications, 1);
@@ -226,15 +313,29 @@ test("export contains only the student's own data", async () => {
   assert.ok(a.tasks.length >= 8);
   assert.equal(a.aiSavedItems.length, 1);
   assert.equal(a.savedUniversities.length, 1);
+  assert.deepEqual(a.documents.map((d: { id: number; title: string }) => [d.id, d.title]), [[documentId, "Official transcript"]]);
+  assert.ok(!JSON.stringify(a.documents).includes("student-documents/"), "storage keys are never exposed");
   const b = (await call(B, "GET", "/api/me/export")).data;
-  assert.deepEqual([b.profile, b.applications.length, b.tasks.length, b.aiSavedItems.length], [null, 0, 0, 0]);
+  assert.deepEqual([b.profile, b.applications.length, b.tasks.length, b.aiSavedItems.length, b.documents.length], [null, 0, 0, 0, 0]);
 });
 
 test("data deletion needs confirmation and removes only the requester's records", async () => {
   await call(B, "POST", "/api/me/saved", { universityId: institutionId });
+  const bDoc = await upload(B, { fileName: "b-passport.jpg" }, Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0, 9]));
+  assert.equal(bDoc.status, 201, JSON.stringify(bDoc.data));
+  const storedFiles = async (user: string) =>
+    (await db.select({ key: studentDocumentsTable.storageKey }).from(studentDocumentsTable).where(eq(studentDocumentsTable.userId, user))).map(r => r.key);
+  const [aFile] = await storedFiles(A);
+  const [bFile] = await storedFiles(B);
+  assert.ok(await objectExists(aFile));
   assert.equal((await call(A, "POST", "/api/me/data-deletion", { confirm: "yes" })).status, 400);
+  assert.ok(await objectExists(aFile), "an unconfirmed request deletes nothing");
   const res = await call(A, "POST", "/api/me/data-deletion", { confirm: "DELETE" });
   assert.equal(res.status, 200);
+  assert.equal(res.data.deleted.documents, 1);
+  assert.equal(await objectExists(aFile), false, "A's stored file is removed");
+  assert.ok(await objectExists(bFile), "B's stored file is untouched");
+  assert.equal((await download(B, bDoc.data.id)).status, 200);
   assert.equal(res.data.deleted.applications, 1);
   assert.equal(res.data.deleted.profiles, 1);
   assert.equal(res.data.deleted.aiSavedItems, 1);
@@ -248,6 +349,7 @@ test("data deletion needs confirmation and removes only the requester's records"
 
 async function cleanup() {
   const users = [A, B];
+  await db.delete(studentDocumentsTable).where(inArray(studentDocumentsTable.userId, users));
   await db.delete(applicationTasksTable).where(inArray(applicationTasksTable.userId, users));
   await db.delete(applicationsTable).where(inArray(applicationsTable.userId, users));
   await db.delete(savedUniversitiesTable).where(inArray(savedUniversitiesTable.userId, users));
@@ -259,6 +361,9 @@ async function cleanup() {
 }
 
 async function main() {
+  // Uploaded test files go to a throwaway folder, never the real storage.
+  storageDir = await mkdtemp(path.join(os.tmpdir(), "unipath-test-storage-"));
+  process.env.STORAGE_DIR = storageDir;
   const [existing] = await db.select({ id: institutionDirectoryTable.id }).from(institutionDirectoryTable)
     .where(eq(institutionDirectoryTable.isActive, true)).limit(1);
   if (existing) institutionId = existing.id;
@@ -281,6 +386,7 @@ async function main() {
     }
   } finally {
     await cleanup();
+    await rm(storageDir, { recursive: true, force: true });
     server.close();
     await pool.end();
   }

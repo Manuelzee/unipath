@@ -1,9 +1,10 @@
 /**
  * Unit tests for blueprint features that do not need a database:
  * match classification, profile completion, AI grounding and prompts,
- * application helpers, entitlements and the burst limiter.
+ * application helpers, document checks, generated request validators,
+ * entitlements and the burst limiter.
  *
- * Run: pnpm --filter @workspace/api-server run test:unit
+ * Run: pnpm test
  */
 import assert from "node:assert/strict";
 import path from "node:path";
@@ -16,6 +17,7 @@ import { checklistDueDate, safeWebUrl, CHECKLIST_ITEMS } from "../../lib/applica
 import { planFor, planLimits } from "../../lib/entitlements";
 import { attachmentHeader, detectDocumentType, safeFileName } from "../../lib/documentFiles";
 import { objectPath } from "../../lib/storage";
+import { GetExchangeRateQueryParams, SearchJobListingsQueryParams, UploadStudentDocumentQueryParams } from "@workspace/api-zod";
 
 const tests: Array<[string, () => void | Promise<void>]> = [];
 const test = (name: string, fn: () => void | Promise<void>) => tests.push([name, fn]);
@@ -212,6 +214,15 @@ test("storage keys cannot escape the storage folder", () => {
   for (const bad of ["../secrets", "student-documents/../../x", "/abs/path", "single", "a/..", `a${backslash}b`]) {
     assert.throws(() => objectPath(bad), /Invalid storage object key/, bad);
   }
+});
+
+// ---------- Generated request validators ----------
+test("query validators refuse missing or repeated text values instead of coercing them", () => {
+  assert.equal(UploadStudentDocumentQueryParams.safeParse({}).success, false, 'no "undefined.pdf"');
+  assert.equal(UploadStudentDocumentQueryParams.safeParse({ fileName: ["a.pdf", "b.pdf"] }).success, false, 'no "a.pdf,b.pdf"');
+  assert.equal(GetExchangeRateQueryParams.safeParse({}).success, false);
+  assert.equal(SearchJobListingsQueryParams.safeParse({}).success, false);
+  assert.equal(UploadStudentDocumentQueryParams.parse({ fileName: "a.pdf", applicationId: "7" }).applicationId, 7, "numbers are still coerced");
 });
 
 // ---------- Entitlements and limits ----------

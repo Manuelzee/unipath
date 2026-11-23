@@ -69,7 +69,7 @@ export const listAdminInstitutionsQueryPageDefault = 1;
 
 
 export const ListAdminInstitutionsQueryParams = zod.object({
-  "search": zod.coerce.string().max(listAdminInstitutionsQuerySearchMax).optional(),
+  "search": zod.string().max(listAdminInstitutionsQuerySearchMax).optional(),
   "page": zod.coerce.number().int().min(1).default(listAdminInstitutionsQueryPageDefault)
 })
 
@@ -289,19 +289,19 @@ export const listUniversitiesQueryPageSizeMax = 100;
 
 export const ListUniversitiesQueryParams = zod.object({
   "maxAnnualTuition": zod.coerce.number().min(listUniversitiesQueryMaxAnnualTuitionMin).max(listUniversitiesQueryMaxAnnualTuitionMax).optional(),
-  "tuitionCurrency": zod.coerce.string().regex(listUniversitiesQueryTuitionCurrencyRegExp).default(listUniversitiesQueryTuitionCurrencyDefault),
+  "tuitionCurrency": zod.string().regex(listUniversitiesQueryTuitionCurrencyRegExp).default(listUniversitiesQueryTuitionCurrencyDefault),
   "tuitionRate": zod.enum(['in_state', 'out_of_state', 'domestic', 'international']).default(listUniversitiesQueryTuitionRateDefault),
-  "countryCode": zod.coerce.string().regex(listUniversitiesQueryCountryCodeRegExp).optional(),
-  "city": zod.coerce.string().optional(),
-  "language": zod.coerce.string().optional(),
+  "countryCode": zod.string().regex(listUniversitiesQueryCountryCodeRegExp).optional(),
+  "city": zod.string().optional(),
+  "language": zod.string().optional(),
   "applicantStatus": zod.enum(['Domestic', 'International']).optional(),
   "fundingOnly": zod.coerce.boolean().default(listUniversitiesQueryFundingOnlyDefault),
-  "search": zod.coerce.string().optional(),
-  "state": zod.coerce.string().optional(),
-  "institutionType": zod.coerce.string().optional(),
-  "ownership": zod.coerce.string().optional(),
-  "degreeLevel": zod.coerce.string().optional(),
-  "major": zod.coerce.string().optional(),
+  "search": zod.string().optional(),
+  "state": zod.string().optional(),
+  "institutionType": zod.string().optional(),
+  "ownership": zod.string().optional(),
+  "degreeLevel": zod.string().optional(),
+  "major": zod.string().optional(),
   "page": zod.coerce.number().int().min(1).default(listUniversitiesQueryPageDefault),
   "pageSize": zod.coerce.number().int().min(1).max(listUniversitiesQueryPageSizeMax).default(listUniversitiesQueryPageSizeDefault)
 })
@@ -446,7 +446,7 @@ export const getExchangeRateQueryCurrencyRegExp = new RegExp('^[A-Z]{3}$');
 
 
 export const GetExchangeRateQueryParams = zod.object({
-  "currency": zod.coerce.string().regex(getExchangeRateQueryCurrencyRegExp)
+  "currency": zod.string().regex(getExchangeRateQueryCurrencyRegExp)
 })
 
 export const GetExchangeRateResponse = zod.object({
@@ -591,7 +591,7 @@ export const listAdminCustomersQueryPageMax = 100000;
 
 
 export const ListAdminCustomersQueryParams = zod.object({
-  "search": zod.coerce.string().max(listAdminCustomersQuerySearchMax).optional(),
+  "search": zod.string().max(listAdminCustomersQuerySearchMax).optional(),
   "page": zod.coerce.number().int().min(1).max(listAdminCustomersQueryPageMax).default(listAdminCustomersQueryPageDefault)
 })
 
@@ -669,7 +669,7 @@ export const listUniversityFactsQueryPageSizeMax = 100;
 
 
 export const ListUniversityFactsQueryParams = zod.object({
-  "institutionId": zod.coerce.string(),
+  "institutionId": zod.string(),
   "kind": zod.enum(['program', 'admissions', 'funding']).default(listUniversityFactsQueryKindDefault),
   "page": zod.coerce.number().int().min(1).default(listUniversityFactsQueryPageDefault),
   "pageSize": zod.coerce.number().int().min(1).max(listUniversityFactsQueryPageSizeMax).default(listUniversityFactsQueryPageSizeDefault)
@@ -1730,12 +1730,12 @@ export const searchJobListingsQueryPageMax = 50;
 
 
 export const SearchJobListingsQueryParams = zod.object({
-  "provider": zod.coerce.string().optional(),
-  "country": zod.coerce.string().min(searchJobListingsQueryCountryMin).max(searchJobListingsQueryCountryMax),
-  "keywords": zod.coerce.string().max(searchJobListingsQueryKeywordsMax).optional(),
-  "city": zod.coerce.string().max(searchJobListingsQueryCityMax).optional(),
-  "university": zod.coerce.string().max(searchJobListingsQueryUniversityMax).optional(),
-  "category": zod.coerce.string().max(searchJobListingsQueryCategoryMax).optional(),
+  "provider": zod.string().optional(),
+  "country": zod.string().min(searchJobListingsQueryCountryMin).max(searchJobListingsQueryCountryMax),
+  "keywords": zod.string().max(searchJobListingsQueryKeywordsMax).optional(),
+  "city": zod.string().max(searchJobListingsQueryCityMax).optional(),
+  "university": zod.string().max(searchJobListingsQueryUniversityMax).optional(),
+  "category": zod.string().max(searchJobListingsQueryCategoryMax).optional(),
   "salaryMin": zod.coerce.number().int().min(searchJobListingsQuerySalaryMinMin).optional(),
   "jobType": zod.enum(['part_time', 'full_time', 'internship', 'graduate']).optional(),
   "remote": zod.coerce.boolean().optional(),
@@ -2970,8 +2970,8 @@ export const uploadStudentDocumentQueryTitleMax = 160;
 
 
 export const UploadStudentDocumentQueryParams = zod.object({
-  "fileName": zod.coerce.string().min(1).max(uploadStudentDocumentQueryFileNameMax),
-  "title": zod.coerce.string().max(uploadStudentDocumentQueryTitleMax).optional(),
+  "fileName": zod.string().min(1).max(uploadStudentDocumentQueryFileNameMax),
+  "title": zod.string().max(uploadStudentDocumentQueryTitleMax).optional(),
   "applicationId": zod.coerce.number().int().optional()
 })
 

@@ -10,7 +10,7 @@ path on the development domain is not a production target.
 **Why:** Clerk has separate development and production identity
 stores. The available browser test sign-in supported the development domain
 only, despite general testing guidance describing arbitrary test users.
-Successful preview persistence tests therefore did not verify live accounts.
+Successful development persistence tests therefore did not verify live accounts.
 
 **How to apply:** Check the current tool schema, since support may change.
 Do not reuse a development ticket on the live site, weaken authentication,

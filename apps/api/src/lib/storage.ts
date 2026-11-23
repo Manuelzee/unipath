@@ -11,7 +11,8 @@ import { repoPath } from "./paths";
  * Objects live under STORAGE_DIR (default: <repo>/.data/storage), which must
  * never be served directly; every read goes through an API route that checks
  * access first. Keys are validated so a key can never escape the root.
- * To use cloud storage instead, implement the same three functions for S3/R2.
+ * To use cloud storage instead, implement objectExists, readObject,
+ * writeObject and deleteObject for S3/R2.
  */
 export function storageRoot() {
   return process.env.STORAGE_DIR ? path.resolve(process.env.STORAGE_DIR) : repoPath(".data", "storage");

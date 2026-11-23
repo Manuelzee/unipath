@@ -88,7 +88,7 @@ Restrict financial and customer data to authorized administrators.
 
 ## 5. Security and Compliance
 
-- Keep all payment API credentials in Replit Secrets.
+- Keep all payment API credentials in server-side environment variables, never in code.
 - Never store raw card numbers, CVVs, private keys, or seed phrases.
 - Use secure hosted checkout.
 - Verify payment provider webhooks.

@@ -31,6 +31,6 @@ async function start() {
 }
 
 start().catch((err: unknown) => {
-  logger.fatal({ code: publicRequestFailure(err).code }, "Cannot initialize institution directory. Check database connection, source identity conflicts and publish-time schema migration; no sample data will be substituted.");
+  logger.fatal({ code: publicRequestFailure(err).code }, "Cannot initialize institution directory. Check the database connection, source identity conflicts and that the schema is applied (pnpm run db:push); no sample data will be substituted.");
   process.exit(1);
 });

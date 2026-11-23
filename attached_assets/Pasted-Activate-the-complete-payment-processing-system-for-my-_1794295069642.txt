@@ -34,7 +34,7 @@ Create recurring subscriptions for Student Plus and Premium. Application Support
 - Do not activate crypto checkout until it is verified.
 
 **6. Security**
-- Store API credentials securely in Replit Secrets.
+- Store API credentials securely in server-side environment variables, never in code.
 - Verify all payment webhooks.
 - Use idempotency protection to prevent duplicate charges.
 - Never store raw card information.
