@@ -138,6 +138,28 @@ export interface InstitutionLogoCoverage {
   rows: InstitutionLogoCoverageRow[];
 }
 
+export type ReadinessStatusStatus = typeof ReadinessStatusStatus[keyof typeof ReadinessStatusStatus];
+
+
+export const ReadinessStatusStatus = {
+  ok: 'ok',
+  unavailable: 'unavailable',
+} as const;
+
+export type ReadinessStatusDatabase = typeof ReadinessStatusDatabase[keyof typeof ReadinessStatusDatabase];
+
+
+export const ReadinessStatusDatabase = {
+  ok: 'ok',
+  unavailable: 'unavailable',
+} as const;
+
+export interface ReadinessStatus {
+  status: ReadinessStatusStatus;
+  database: ReadinessStatusDatabase;
+  checkedAt: string;
+}
+
 export interface HealthStatus {
   status: string;
 }
@@ -1602,6 +1624,17 @@ export interface SavedUniversityReference {
   savedAt: string;
 }
 
+export interface AuthUser {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  emailVerified: boolean;
+  hasPassword: boolean;
+  googleConnected: boolean;
+  createdAt: string;
+}
+
 export type StudentDocumentContentType = typeof StudentDocumentContentType[keyof typeof StudentDocumentContentType];
 
 
@@ -1626,6 +1659,7 @@ export interface StudentDocument {
 export interface StudentDataExport {
   exportedAt: string;
   note: string;
+  account: AuthUser | null;
   profile: StudentProfile | null;
   savedUniversities: SavedUniversityReference[];
   applications: ApplicationRecord[];
@@ -1670,6 +1704,206 @@ export type DataDeletionResultDeleted = {
 export interface DataDeletionResult {
   note: string;
   deleted: DataDeletionResultDeleted;
+}
+
+export type AuthSessionMethods = {
+  password: boolean;
+  emailCode: boolean;
+  google: boolean;
+};
+
+/**
+ * email: codes are emailed. server_log: development only, codes are written to the API server log. unavailable: email codes are off.
+ */
+export type AuthSessionEmailDelivery = typeof AuthSessionEmailDelivery[keyof typeof AuthSessionEmailDelivery];
+
+
+export const AuthSessionEmailDelivery = {
+  email: 'email',
+  server_log: 'server_log',
+  unavailable: 'unavailable',
+} as const;
+
+export interface AuthSession {
+  user: AuthUser | null;
+  methods: AuthSessionMethods;
+  /** email: codes are emailed. server_log: development only, codes are written to the API server log. unavailable: email codes are off. */
+  emailDelivery: AuthSessionEmailDelivery;
+}
+
+export type AuthResultStatus = typeof AuthResultStatus[keyof typeof AuthResultStatus];
+
+
+export const AuthResultStatus = {
+  signed_in: 'signed_in',
+  verification_required: 'verification_required',
+} as const;
+
+export type AuthResultDelivery = typeof AuthResultDelivery[keyof typeof AuthResultDelivery];
+
+
+export const AuthResultDelivery = {
+  email: 'email',
+  server_log: 'server_log',
+} as const;
+
+export interface AuthResult {
+  status: AuthResultStatus;
+  user?: AuthUser;
+  isNewUser?: boolean;
+  /** Where the verification code was sent (verification_required only) */
+  email?: string;
+  delivery?: AuthResultDelivery;
+}
+
+export interface PasswordSignUpInput {
+  /**
+     * @minLength 3
+     * @maxLength 254
+     */
+  email: string;
+  /**
+     * @minLength 8
+     * @maxLength 128
+     */
+  password: string;
+  /**
+     * @minLength 1
+     * @maxLength 60
+     */
+  firstName: string;
+  /** @maxLength 60 */
+  lastName?: string;
+}
+
+export interface PasswordSignInInput {
+  /**
+     * @minLength 3
+     * @maxLength 254
+     */
+  email: string;
+  /**
+     * @minLength 1
+     * @maxLength 128
+     */
+  password: string;
+}
+
+export type AuthCodeRequestPurpose = typeof AuthCodeRequestPurpose[keyof typeof AuthCodeRequestPurpose];
+
+
+export const AuthCodeRequestPurpose = {
+  sign_in: 'sign_in',
+  verify_email: 'verify_email',
+  reset_password: 'reset_password',
+} as const;
+
+export interface AuthCodeRequest {
+  /**
+     * @minLength 3
+     * @maxLength 254
+     */
+  email: string;
+  purpose: AuthCodeRequestPurpose;
+}
+
+export type AuthCodeSentPurpose = typeof AuthCodeSentPurpose[keyof typeof AuthCodeSentPurpose];
+
+
+export const AuthCodeSentPurpose = {
+  sign_in: 'sign_in',
+  verify_email: 'verify_email',
+  reset_password: 'reset_password',
+} as const;
+
+export type AuthCodeSentDelivery = typeof AuthCodeSentDelivery[keyof typeof AuthCodeSentDelivery];
+
+
+export const AuthCodeSentDelivery = {
+  email: 'email',
+  server_log: 'server_log',
+} as const;
+
+export interface AuthCodeSent {
+  email: string;
+  purpose: AuthCodeSentPurpose;
+  delivery: AuthCodeSentDelivery;
+  expiresInSeconds: number;
+  resendAfterSeconds: number;
+}
+
+export type AuthCodeVerificationPurpose = typeof AuthCodeVerificationPurpose[keyof typeof AuthCodeVerificationPurpose];
+
+
+export const AuthCodeVerificationPurpose = {
+  sign_in: 'sign_in',
+  verify_email: 'verify_email',
+} as const;
+
+export interface AuthCodeVerification {
+  /**
+     * @minLength 3
+     * @maxLength 254
+     */
+  email: string;
+  purpose: AuthCodeVerificationPurpose;
+  /**
+     * @minLength 6
+     * @maxLength 6
+     * @pattern ^[0-9]{6}$
+     */
+  code: string;
+  /**
+     * Used only when a code sign-in creates a new account
+     * @maxLength 60
+     */
+  firstName?: string;
+}
+
+export interface PasswordResetInput {
+  /**
+     * @minLength 3
+     * @maxLength 254
+     */
+  email: string;
+  /**
+     * @minLength 6
+     * @maxLength 6
+     * @pattern ^[0-9]{6}$
+     */
+  code: string;
+  /**
+     * @minLength 8
+     * @maxLength 128
+     */
+  password: string;
+}
+
+export interface PasswordChangeInput {
+  /**
+     * Required when the account already has a password
+     * @maxLength 128
+     */
+  currentPassword?: string;
+  /**
+     * @minLength 8
+     * @maxLength 128
+     */
+  newPassword: string;
+}
+
+export interface AccountUpdate {
+  /**
+     * @minLength 1
+     * @maxLength 60
+     */
+  firstName: string;
+  /** @maxLength 60 */
+  lastName: string;
+}
+
+export interface SessionsRevoked {
+  revoked: number;
 }
 
 export type ListAdminInstitutionsParams = {

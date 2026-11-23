@@ -38,7 +38,6 @@ import { objectExists } from "../../lib/storage";
 const A = `test-iso-a-${randomUUID()}`;
 const B = `test-iso-b-${randomUUID()}`;
 const FIXTURE_ID = `test-iso-inst-${randomUUID()}`;
-const CLERK_AUTH_BRAND = Symbol.for("@clerk/express.auth");
 
 // ---- Stub the AI provider (global fetch) ----
 const realFetch = globalThis.fetch;
@@ -54,13 +53,12 @@ globalThis.fetch = (async (input: Parameters<typeof fetch>[0], init?: RequestIni
   return realFetch(input, init);
 }) as typeof fetch;
 
-// ---- App with Clerk-compatible test auth ----
+// ---- App with test auth (sign-in itself is covered by testAuth.ts) ----
 const app = express();
 app.use(express.json());
 app.use((req, _res, next) => {
   const userId = req.get("x-test-user") ?? null;
-  const auth = () => ({ userId, sessionId: userId ? "test-session" : null, tokenType: "session_token", isAuthenticated: !!userId, getToken: async () => null, has: () => false, debug: () => ({}) });
-  (req as unknown as { auth: unknown }).auth = Object.assign(auth, { [CLERK_AUTH_BRAND]: true });
+  req.auth = { userId, sessionId: userId ? "test-session" : null };
   (req as unknown as { log: unknown }).log = { info() {}, warn() {}, error() {} };
   next();
 });

@@ -1,5 +1,5 @@
-import { getAuth } from "@clerk/express";
-import type { RequestHandler } from "express";
+import type { Request, RequestHandler } from "express";
+import { getAuth } from "../auth/session";
 import { db, adminMembershipsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 
@@ -29,6 +29,33 @@ export function trustedOrigins() {
   }
   return origins;
 }
+/** The origin a request arrived on (scheme + Host; X-Forwarded-* only with TRUST_PROXY). */
+const requestOrigin = (req: Request) => req.get("host") ? `${req.protocol}://${req.get("host")}` : null;
+/**
+ * The public site origin for links back to the app (Google's redirect URI):
+ * the request's own origin when trusted, else APP_ORIGIN, else in development
+ * the Vite dev server.
+ */
+export function publicOrigin(req: Request): string | null {
+  const own = requestOrigin(req);
+  if (own && trustedOrigins().has(own)) return own;
+  try { if (process.env.APP_ORIGIN?.trim()) return new URL(process.env.APP_ORIGIN.trim()).origin; } catch { return null; }
+  return runtimeEnvironment() === "production" ? null : `http://localhost:${process.env.WEB_PORT || "5173"}`;
+}
+/**
+ * Request forgery guard for cookie sessions: a state-changing request a
+ * browser sends from another site is refused. Requests without an Origin
+ * header (server-to-server, curl) carry no browser cookies to abuse.
+ */
+export const rejectCrossSiteWrites: RequestHandler = (req, res, next) => {
+  if (["GET", "HEAD", "OPTIONS"].includes(req.method)) { next(); return; }
+  const origin = req.get("origin");
+  const crossSite = req.get("sec-fetch-site") === "cross-site";
+  if (crossSite || (origin && origin !== requestOrigin(req) && !trustedOrigins().has(origin))) {
+    res.status(403).json({ error: "This request must come from the UniPath app. No change was made." }); return;
+  }
+  next();
+};
 export async function administrator(userId: string, database = db) {
   const [membership] = await database.select().from(adminMembershipsTable).where(eq(adminMembershipsTable.userId, userId));
   return membership?.status === "active";

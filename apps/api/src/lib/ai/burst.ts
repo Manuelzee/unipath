@@ -15,4 +15,8 @@ export class BurstLimiter {
     }
     return true;
   }
+  /** True when `take` would refuse right now. Records nothing. */
+  isFull(key: string, now = Date.now()): boolean {
+    return (this.hits.get(key) ?? []).filter(t => now - t < this.windowMs).length >= this.max;
+  }
 }

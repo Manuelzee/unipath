@@ -9,7 +9,7 @@ This maps the *UniPath AI Product & Engineering Blueprint* to the code. Status:
   also says to inspect the existing app before replacing it. The app already
   meets the architecture rules (TypeScript throughout, PostgreSQL, a modular
   monolith, sensitive work on the server), so it was extended instead of
-  rewritten: React + Vite, Express, Drizzle ORM, Clerk, and an OpenAPI contract
+  rewritten: React + Vite, Express, Drizzle ORM, and an OpenAPI contract
   that generates both the server validators and the client hooks.
 - **Existing colors kept.** The live app's palette (navy `#173e62`, teal
   `#378b82`, mint `#87d6c6`, background `#f5f8fa`) is used instead of the
@@ -38,13 +38,14 @@ This maps the *UniPath AI Product & Engineering Blueprint* to the code. Status:
 | 09 Data model | Built: `applications`, `ai_saved_items`, `ai_usage`, `application_tasks.application_id`, and the new profile fields (qualification, grading scale, graduation year, test date) | `packages/db/src/schema/*` |
 | 10 Ownership checks, input validation | Built: every student query is scoped to the signed-in user, every input is validated against the OpenAPI schema, and JSON is required for writes | routes |
 | 10 Settings: export and delete my data | Built | `components/settings/SettingsView.tsx`, `routes/account.ts` |
-| 10 Email verification, password reset, Google sign-in | Provided by Clerk (enable Google in the Clerk dashboard) | |
+| 10 Email verification, password reset, Google sign-in | Built into the app (Clerk was removed): password sign-up verified by an emailed code, email-code sign-in, password reset, Google (OpenID Connect with PKCE), cookie sessions, account settings and deletion. Codes need `SMTP_URL`/`EMAIL_FROM`; Google needs `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` | `routes/auth.ts`, `lib/auth/*`, `components/auth/AuthFlow.tsx`, `components/settings/AccountSettings.tsx` |
 | 10 Private document uploads | Built: PDF, PNG, JPEG and Word files, checked by their bytes (not the name); 10 MB and 50-file limits; owner-only list, rename, download and delete; downloads are always attachments; files are included in export and removed by data deletion | `components/documents/DocumentsView.tsx`, `routes/documents.ts`, `lib/documentFiles.ts`, `lib/storage.ts` |
 | 10 Cloud storage (S3/R2) and malware scanning | Not built. Files are kept privately on the server's disk (`STORAGE_DIR`). A cloud store only needs the four functions in `lib/storage.ts` | |
 | 10 Admin catalogue and verification | Existing admin console kept unchanged | `components/admin/*` |
 | 11 Responsive design and accessibility | Built for new pages: tested at 390px and desktop; labelled controls, focus states, no browser dialogs | |
 | 11 Tests | Unit and integration tests added (below). Playwright end-to-end suite not added. | |
-| 11 Monitoring (Sentry) | Not built | |
+| 11 Operational baseline | Built: `/api/healthz` (process up) and `/api/readyz` (database reachable, 503 when not), slow-request warnings (`SLOW_REQUEST_MS`), structured logs without query strings or secrets, graceful shutdown, and recovery from dropped database connections | `apps/api/src/routes/health.ts`, `app.ts`, `index.ts`, `packages/db/src/index.ts` |
+| 11 Error monitoring (Sentry) | Not built; needs a Sentry project DSN | |
 
 ## Turning on the AI assistant
 

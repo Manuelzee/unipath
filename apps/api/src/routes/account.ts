@@ -1,12 +1,13 @@
 import { Router, type IRouter } from "express";
-import { getAuth } from "@clerk/express";
 import { eq } from "drizzle-orm";
 import { DeleteMyDataBody, DeleteMyDataResponse, ExportMyDataResponse } from "@workspace/api-zod";
 import {
-  aiSavedItemsTable, aiUsageTable, applicationTasksTable, applicationsTable, db,
+  aiSavedItemsTable, aiUsageTable, applicationTasksTable, applicationsTable, authUsersTable, db,
   jobApplicationsTable, savedUniversitiesTable, studentDocumentsTable, studentProfilesTable,
 } from "@workspace/db";
 import { deleteObject } from "../lib/storage";
+import { publicUser } from "../lib/auth/users";
+import { getAuth } from "../lib/auth/session";
 import { toDocument } from "./documents";
 import { requireAuth } from "../middlewares/requireAuth";
 import { requireJson } from "../middlewares/requireJson";
@@ -24,7 +25,8 @@ const iso = (d: Date) => d.toISOString();
 
 router.get("/me/export", requireAuth, async (req, res): Promise<void> => {
   const userId = studentId(req);
-  const [[profile], saved, applications, tasks, aiItems, jobs, documents] = await Promise.all([
+  const [[account], [profile], saved, applications, tasks, aiItems, jobs, documents] = await Promise.all([
+    db.select().from(authUsersTable).where(eq(authUsersTable.id, userId)).limit(1),
     db.select().from(studentProfilesTable).where(eq(studentProfilesTable.userId, userId)).limit(1),
     db.select().from(savedUniversitiesTable).where(eq(savedUniversitiesTable.userId, userId)),
     db.select().from(applicationsTable).where(eq(applicationsTable.userId, userId)),
@@ -36,7 +38,8 @@ router.get("/me/export", requireAuth, async (req, res): Promise<void> => {
   res.setHeader("Cache-Control", "private, no-store");
   res.json(ExportMyDataResponse.parse({
     exportedAt: new Date().toISOString(),
-    note: "Everything UniPath AI stores for your account. Sign-in details are managed by the authentication provider and are not included. AI usage counters hold no message text and are not included. Document files are listed here; download each one from the Documents page.",
+    note: "Everything UniPath AI stores for your account. Your password is stored only as a one-way hash and is not included, nor are sign-in sessions. AI usage counters hold no message text and are not included. Document files are listed here; download each one from the Documents page.",
+    account: account ? publicUser(account) : null,
     profile: profile ? profileResponse(profile) : null,
     savedUniversities: saved.map(s => ({ universityId: s.universityId, savedAt: iso(s.savedAt) })),
     applications: applications.map(a => ({
@@ -50,10 +53,8 @@ router.get("/me/export", requireAuth, async (req, res): Promise<void> => {
   }));
 });
 
-router.post("/me/data-deletion", requireAuth, requireJson, async (req, res): Promise<void> => {
-  const body = DeleteMyDataBody.safeParse(req.body);
-  if (!body.success) { res.status(400).json({ error: 'Type DELETE to confirm. Nothing was deleted.' }); return; }
-  const userId = studentId(req);
+/** Permanently deletes every UniPath record and stored file a student owns (not the account itself). */
+export async function deleteStudentData(userId: string) {
   const files: string[] = [];
   const deleted = await db.transaction(async tx => {
     const count = async (rows: Promise<unknown[]>) => (await rows).length;
@@ -73,10 +74,17 @@ router.post("/me/data-deletion", requireAuth, requireJson, async (req, res): Pro
   });
   // Remove stored files only after the records are gone.
   await Promise.all(files.map(key => deleteObject(key).catch(() => undefined)));
+  return deleted;
+}
+
+router.post("/me/data-deletion", requireAuth, requireJson, async (req, res): Promise<void> => {
+  const body = DeleteMyDataBody.safeParse(req.body);
+  if (!body.success) { res.status(400).json({ error: 'Type DELETE to confirm. Nothing was deleted.' }); return; }
+  const deleted = await deleteStudentData(studentId(req));
   req.log.info({ deleted }, "Student deleted their UniPath data");
   res.json(DeleteMyDataResponse.parse({
     deleted,
-    note: "Your UniPath records were permanently deleted. Your sign-in account still exists; delete it from Account settings if you no longer want it.",
+    note: "Your UniPath records were permanently deleted. Your account still exists, so you can keep signing in; delete the account itself in Settings if you no longer want it.",
   }));
 });
 

@@ -1,4 +1,4 @@
-import { getAuth } from "@clerk/express";
+import { getAuth } from "../lib/auth/session";
 import type { RequestHandler } from "express";
 
 export const requireAuth: RequestHandler = (req, res, next) => {

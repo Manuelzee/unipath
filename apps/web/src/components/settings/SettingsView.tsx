@@ -1,26 +1,19 @@
 import { type FormEvent, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useClerk, useUser } from '@/lib/auth';
 import { Link } from 'wouter';
 import { exportMyData, getGetAiStatusQueryKey, useDeleteMyData, useGetAiStatus } from '@workspace/api-client-react';
 import type { DataDeletionResult } from '@workspace/api-client-react';
-import { ArrowRight, Download, KeyRound, LoaderCircle, ShieldCheck, SlidersHorizontal, Trash2, UserRound } from 'lucide-react';
+import { ArrowRight, Download, LoaderCircle, ShieldCheck, SlidersHorizontal, Trash2 } from 'lucide-react';
 import { PageHeading, errorMessage } from '@/components/workspace/shared';
+import { AccountPanel, DeleteAccount } from './AccountSettings';
 
 export function SettingsView() {
-  const { user } = useUser(); const clerk = useClerk();
   const ai = useGetAiStatus({ query: { queryKey: getGetAiStatusQueryKey(), staleTime: 30_000 } });
-  const email = user?.primaryEmailAddress?.emailAddress;
 
   return <div className="page page-enter">
     <PageHeading kicker="ACCOUNT CONTROLS" title="Settings." body="Manage your sign-in, preferences and the data UniPath keeps for you."/>
     <div className="settings-grid">
-      <section className="ws-panel">
-        <div className="ws-head"><div><span className="eyebrow">ACCOUNT</span><h2>Sign-in &amp; security</h2><p>Email, password, connected accounts and account deletion are handled by our sign-in provider.</p></div><div className="profile-icon"><KeyRound size={19}/></div></div>
-        <div className="settings-item"><div><strong>{user?.fullName || user?.firstName || 'Student'}</strong><span>{email ?? 'No email on file'}</span></div></div>
-        <div className="settings-item"><div><strong>Manage account</strong><span>Change email or password, add Google sign-in, or delete your sign-in account.</span></div>
-          <button className="button button-outline button-small" onClick={() => clerk.openUserProfile()} data-testid="button-manage-account"><UserRound size={14}/> Open account settings</button></div>
-      </section>
+      <AccountPanel/>
 
       <section className="ws-panel">
         <div className="ws-head"><div><span className="eyebrow">PREFERENCES</span><h2>Profile &amp; matching</h2><p>Your answers shape matches and AI context. Change them any time.</p></div><div className="profile-icon"><SlidersHorizontal size={19}/></div></div>
@@ -42,6 +35,7 @@ export function SettingsView() {
       </section>
 
       <DeleteData/>
+      <DeleteAccount/>
     </div>
     <div className="ws-notice"><ShieldCheck size={16}/><span>UniPath stores only what you enter, plus AI usage counts (no message text) to enforce fair-use limits. Your budget is private and never shared with schools.</span></div>
   </div>;
@@ -83,7 +77,7 @@ function DeleteData() {
   };
   const labels: Record<string, string> = { profiles: 'Profile', savedUniversities: 'Saved schools', applications: 'Applications', tasks: 'Tasks', aiSavedItems: 'Saved AI notes', aiUsage: 'AI usage records', jobApplications: 'Tracked jobs' };
   return <section className="ws-panel danger-zone" style={{ gridColumn: '1 / -1' }}>
-    <div className="ws-head"><div><span className="eyebrow">DANGER ZONE</span><h2>Delete my UniPath data</h2><p>Permanently removes your profile, shortlist, applications, tasks, saved AI notes, AI usage records and job tracker. Your sign-in account stays; delete it from account settings if you wish. This cannot be undone.</p></div><div className="profile-icon" style={{ background: '#fbe9e7', color: '#a3463f' }}><Trash2 size={19}/></div></div>
+    <div className="ws-head"><div><span className="eyebrow">DANGER ZONE</span><h2>Delete my UniPath data</h2><p>Permanently removes your profile, shortlist, applications, tasks, saved AI notes, AI usage records and job tracker. Your account stays, so you can start fresh; to remove the account too, use “Delete my account” below. This cannot be undone.</p></div><div className="profile-icon" style={{ background: '#fbe9e7', color: '#a3463f' }}><Trash2 size={19}/></div></div>
     {result ? <div role="status" data-testid="text-deletion-result"><strong>{result.note}</strong>
       <ul className="result-list">{Object.entries(result.deleted).map(([k, v]) => <li key={k}>{labels[k] ?? k}: {v}</li>)}</ul></div>
       : <form className="ws-row" onSubmit={submit} style={{ alignItems: 'flex-end' }}>

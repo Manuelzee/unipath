@@ -270,6 +270,17 @@ export const HealthCheckResponse = zod.object({
 
 
 /**
+ * Ready only when the database answers. Use this for load balancer and orchestrator health checks.
+ * @summary Readiness check
+ */
+export const ReadinessCheckResponse = zod.object({
+  "status": zod.enum(['ok', 'unavailable']),
+  "database": zod.enum(['ok', 'unavailable']),
+  "checkedAt": zod.string()
+})
+
+
+/**
  * @summary Search imported institutions worldwide
  */
 export const listUniversitiesQueryMaxAnnualTuitionMin = 0;
@@ -2821,6 +2832,16 @@ export const exportMyDataResponseProfileOneOneResidenceRegionMax = 100;
 export const ExportMyDataResponse = zod.object({
   "exportedAt": zod.string(),
   "note": zod.string(),
+  "account": zod.union([zod.object({
+  "id": zod.string(),
+  "email": zod.string(),
+  "firstName": zod.string(),
+  "lastName": zod.string(),
+  "emailVerified": zod.boolean(),
+  "hasPassword": zod.boolean(),
+  "googleConnected": zod.boolean(),
+  "createdAt": zod.string()
+}),zod.null()]),
   "profile": zod.union([zod.object({
   "residenceCountry": zod.string(),
   "citizenship": zod.string(),
@@ -3031,5 +3052,280 @@ export const DownloadStudentDocumentParams = zod.object({
 })
 
 export const DownloadStudentDocumentResponse = zod.unknown()
+
+
+/**
+ * @summary The signed-in account (or null) and the sign-in methods this server offers
+ */
+export const GetAuthSessionResponse = zod.object({
+  "user": zod.union([zod.object({
+  "id": zod.string(),
+  "email": zod.string(),
+  "firstName": zod.string(),
+  "lastName": zod.string(),
+  "emailVerified": zod.boolean(),
+  "hasPassword": zod.boolean(),
+  "googleConnected": zod.boolean(),
+  "createdAt": zod.string()
+}),zod.null()]),
+  "methods": zod.object({
+  "password": zod.boolean(),
+  "emailCode": zod.boolean(),
+  "google": zod.boolean()
+}),
+  "emailDelivery": zod.enum(['email', 'server_log', 'unavailable']).describe('email: codes are emailed. server_log: development only, codes are written to the API server log. unavailable: email codes are off.')
+})
+
+
+/**
+ * @summary Create an account with a password; a code is emailed to verify the address
+ */
+export const signUpWithPasswordBodyEmailMin = 3;
+export const signUpWithPasswordBodyEmailMax = 254;
+
+export const signUpWithPasswordBodyPasswordMin = 8;
+export const signUpWithPasswordBodyPasswordMax = 128;
+
+export const signUpWithPasswordBodyFirstNameMax = 60;
+
+export const signUpWithPasswordBodyLastNameMax = 60;
+
+
+
+export const SignUpWithPasswordBody = zod.object({
+  "email": zod.string().min(signUpWithPasswordBodyEmailMin).max(signUpWithPasswordBodyEmailMax),
+  "password": zod.string().min(signUpWithPasswordBodyPasswordMin).max(signUpWithPasswordBodyPasswordMax),
+  "firstName": zod.string().min(1).max(signUpWithPasswordBodyFirstNameMax),
+  "lastName": zod.string().max(signUpWithPasswordBodyLastNameMax).optional()
+})
+
+export const SignUpWithPasswordResponse = zod.object({
+  "status": zod.enum(['signed_in', 'verification_required']),
+  "user": zod.object({
+  "id": zod.string(),
+  "email": zod.string(),
+  "firstName": zod.string(),
+  "lastName": zod.string(),
+  "emailVerified": zod.boolean(),
+  "hasPassword": zod.boolean(),
+  "googleConnected": zod.boolean(),
+  "createdAt": zod.string()
+}).optional(),
+  "isNewUser": zod.boolean().optional(),
+  "email": zod.string().optional().describe('Where the verification code was sent (verification_required only)'),
+  "delivery": zod.enum(['email', 'server_log']).optional()
+})
+
+
+/**
+ * @summary Sign in with email and password
+ */
+export const signInWithPasswordBodyEmailMin = 3;
+export const signInWithPasswordBodyEmailMax = 254;
+
+export const signInWithPasswordBodyPasswordMax = 128;
+
+
+
+export const SignInWithPasswordBody = zod.object({
+  "email": zod.string().min(signInWithPasswordBodyEmailMin).max(signInWithPasswordBodyEmailMax),
+  "password": zod.string().min(1).max(signInWithPasswordBodyPasswordMax)
+})
+
+export const SignInWithPasswordResponse = zod.object({
+  "status": zod.enum(['signed_in', 'verification_required']),
+  "user": zod.object({
+  "id": zod.string(),
+  "email": zod.string(),
+  "firstName": zod.string(),
+  "lastName": zod.string(),
+  "emailVerified": zod.boolean(),
+  "hasPassword": zod.boolean(),
+  "googleConnected": zod.boolean(),
+  "createdAt": zod.string()
+}).optional(),
+  "isNewUser": zod.boolean().optional(),
+  "email": zod.string().optional().describe('Where the verification code was sent (verification_required only)'),
+  "delivery": zod.enum(['email', 'server_log']).optional()
+})
+
+
+/**
+ * @summary Email a one-time code (sign in, verify an email, or reset a password)
+ */
+export const sendAuthCodeBodyEmailMin = 3;
+export const sendAuthCodeBodyEmailMax = 254;
+
+
+
+export const SendAuthCodeBody = zod.object({
+  "email": zod.string().min(sendAuthCodeBodyEmailMin).max(sendAuthCodeBodyEmailMax),
+  "purpose": zod.enum(['sign_in', 'verify_email', 'reset_password'])
+})
+
+export const SendAuthCodeResponse = zod.object({
+  "email": zod.string(),
+  "purpose": zod.enum(['sign_in', 'verify_email', 'reset_password']),
+  "delivery": zod.enum(['email', 'server_log']),
+  "expiresInSeconds": zod.number().int(),
+  "resendAfterSeconds": zod.number().int()
+})
+
+
+/**
+ * @summary Sign in with an emailed code (creates the account on first use) or verify a new account
+ */
+export const verifyAuthCodeBodyEmailMin = 3;
+export const verifyAuthCodeBodyEmailMax = 254;
+
+export const verifyAuthCodeBodyCodeMin = 6;
+export const verifyAuthCodeBodyCodeMax = 6;
+
+
+export const verifyAuthCodeBodyCodeRegExp = new RegExp('^[0-9]{6}$');
+export const verifyAuthCodeBodyFirstNameMax = 60;
+
+
+
+export const VerifyAuthCodeBody = zod.object({
+  "email": zod.string().min(verifyAuthCodeBodyEmailMin).max(verifyAuthCodeBodyEmailMax),
+  "purpose": zod.enum(['sign_in', 'verify_email']),
+  "code": zod.string().min(verifyAuthCodeBodyCodeMin).max(verifyAuthCodeBodyCodeMax).regex(verifyAuthCodeBodyCodeRegExp),
+  "firstName": zod.string().max(verifyAuthCodeBodyFirstNameMax).optional().describe('Used only when a code sign-in creates a new account')
+})
+
+export const VerifyAuthCodeResponse = zod.object({
+  "status": zod.enum(['signed_in', 'verification_required']),
+  "user": zod.object({
+  "id": zod.string(),
+  "email": zod.string(),
+  "firstName": zod.string(),
+  "lastName": zod.string(),
+  "emailVerified": zod.boolean(),
+  "hasPassword": zod.boolean(),
+  "googleConnected": zod.boolean(),
+  "createdAt": zod.string()
+}).optional(),
+  "isNewUser": zod.boolean().optional(),
+  "email": zod.string().optional().describe('Where the verification code was sent (verification_required only)'),
+  "delivery": zod.enum(['email', 'server_log']).optional()
+})
+
+
+/**
+ * @summary Set a new password with an emailed reset code; signs out other sessions
+ */
+export const resetPasswordBodyEmailMin = 3;
+export const resetPasswordBodyEmailMax = 254;
+
+export const resetPasswordBodyCodeMin = 6;
+export const resetPasswordBodyCodeMax = 6;
+
+
+export const resetPasswordBodyCodeRegExp = new RegExp('^[0-9]{6}$');
+export const resetPasswordBodyPasswordMin = 8;
+export const resetPasswordBodyPasswordMax = 128;
+
+
+
+export const ResetPasswordBody = zod.object({
+  "email": zod.string().min(resetPasswordBodyEmailMin).max(resetPasswordBodyEmailMax),
+  "code": zod.string().min(resetPasswordBodyCodeMin).max(resetPasswordBodyCodeMax).regex(resetPasswordBodyCodeRegExp),
+  "password": zod.string().min(resetPasswordBodyPasswordMin).max(resetPasswordBodyPasswordMax)
+})
+
+export const ResetPasswordResponse = zod.object({
+  "status": zod.enum(['signed_in', 'verification_required']),
+  "user": zod.object({
+  "id": zod.string(),
+  "email": zod.string(),
+  "firstName": zod.string(),
+  "lastName": zod.string(),
+  "emailVerified": zod.boolean(),
+  "hasPassword": zod.boolean(),
+  "googleConnected": zod.boolean(),
+  "createdAt": zod.string()
+}).optional(),
+  "isNewUser": zod.boolean().optional(),
+  "email": zod.string().optional().describe('Where the verification code was sent (verification_required only)'),
+  "delivery": zod.enum(['email', 'server_log']).optional()
+})
+
+
+/**
+ * @summary End this browser's session
+ */
+export const SignOutResponse = zod.void()
+
+
+/**
+ * @summary End every other session of the signed-in account
+ */
+export const SignOutOtherSessionsResponse = zod.object({
+  "revoked": zod.number().int()
+})
+
+
+/**
+ * @summary Change the account's name
+ */
+export const updateAccountBodyFirstNameMax = 60;
+
+export const updateAccountBodyLastNameMax = 60;
+
+
+
+export const UpdateAccountBody = zod.object({
+  "firstName": zod.string().min(1).max(updateAccountBodyFirstNameMax),
+  "lastName": zod.string().max(updateAccountBodyLastNameMax)
+})
+
+export const UpdateAccountResponse = zod.object({
+  "id": zod.string(),
+  "email": zod.string(),
+  "firstName": zod.string(),
+  "lastName": zod.string(),
+  "emailVerified": zod.boolean(),
+  "hasPassword": zod.boolean(),
+  "googleConnected": zod.boolean(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Change the password (or add one to a Google or email-code account); signs out other sessions
+ */
+export const changePasswordBodyCurrentPasswordMax = 128;
+
+export const changePasswordBodyNewPasswordMin = 8;
+export const changePasswordBodyNewPasswordMax = 128;
+
+
+
+export const ChangePasswordBody = zod.object({
+  "currentPassword": zod.string().max(changePasswordBodyCurrentPasswordMax).optional().describe('Required when the account already has a password'),
+  "newPassword": zod.string().min(changePasswordBodyNewPasswordMin).max(changePasswordBodyNewPasswordMax)
+})
+
+export const ChangePasswordResponse = zod.object({
+  "id": zod.string(),
+  "email": zod.string(),
+  "firstName": zod.string(),
+  "lastName": zod.string(),
+  "emailVerified": zod.boolean(),
+  "hasPassword": zod.boolean(),
+  "googleConnected": zod.boolean(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Permanently delete the account, its sessions and every UniPath record it owns
+ */
+export const DeleteAccountBody = zod.object({
+  "confirm": zod.enum(['DELETE'])
+})
+
+export const DeleteAccountResponse = zod.void()
 
 

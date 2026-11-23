@@ -8,8 +8,8 @@ the connected database, not hardcoded. The new dashboard cannot silently
 read production while running in development: its environment label tells you
 which database that server is querying.
 
-Development and production Clerk instances are separate. Creating an account
-locally does not create it on the production site.
+Development and production use separate databases, so their accounts are
+separate. Creating an account locally does not create it on the production site.
 
 ## Secure owner setup
 
@@ -18,20 +18,20 @@ locally does not create it on the production site.
    development roles into production.
 2. Open `https://<your-domain>/sign-up` and create your owner account, or
    sign in to your existing **production** owner account.
-   Complete the provider's email/identity verification.
+   Confirm your email address with the emailed code (or use Google).
 3. Open `https://<your-domain>/admin/setup` while signed in.
-   Confirm the page says **Production**, then copy **your own Clerk user ID**.
+   Confirm the page says **Production**, then copy **your own account ID**.
    An email address is not sufficient.
 4. In the production server's environment (your host's secret settings),
    add `UNIPATH_ADMIN_SETUP_USER_ID` with that exact production
    user ID. It must be a server-side value; do not prefix it with `VITE_`.
    Do not put the ID in a shared public configuration or use someone else's
-   account ID. Never supply a password, Clerk secret key or sign-in ticket.
+   account ID. Never supply a password, session cookie or sign-in code.
 5. Restart the production server so it reads the new setting.
 6. Return to `/admin/setup` as that same owner account. Read and tick the
    explicit authorization checkbox, then confirm administrator setup.
    This step is not automatic. The server verifies the signed-in immutable
-   identity against its configured ID and confirms a verified Clerk identity.
+   identity against its configured ID and confirms the account's email is verified.
 7. Open `/admin`. The navigation link appears only after the server grants
    access. Check the **Production** badge, measured database counts and
    actual status-check timestamp.
@@ -71,7 +71,7 @@ and restart the server. Set `APP_ORIGIN` to the main site origin. Administrative
 A development sign-in cannot establish a production session.
 Production account registration, owner grant and signed-in live checks
 remain **NOT TESTED** until someone actually performs them. Do not share
-passwords or one-time sign-in tickets in chat.
+passwords or one-time sign-in codes in chat.
 
 ## Institution source verification
 

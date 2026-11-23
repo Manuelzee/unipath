@@ -23,6 +23,19 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: path.resolve(import.meta.dirname, 'dist/public'),
       emptyOutDir: true,
+      rollupOptions: {
+        output: {
+          // Large libraries change rarely: separate chunks stay cached across app
+          // releases. React stays in the shared `vendor` chunk: splitting it out
+          // creates a circular chunk import and a blank page. Only libraries that
+          // nothing else in `vendor` imports are split off.
+          manualChunks(id) {
+            if (!id.includes('node_modules')) return undefined;
+            if (/[\\/](@radix-ui|@floating-ui|cmdk|vaul)[\\/]/.test(id)) return 'vendor-ui';
+            return 'vendor';
+          },
+        },
+      },
     },
     server: {
       port,

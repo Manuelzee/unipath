@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import express, { Router, type IRouter, type Request } from "express";
-import { getAuth } from "@clerk/express";
+import { getAuth } from "../lib/auth/session";
 import { and, count, desc, eq } from "drizzle-orm";
 import {
   DeleteStudentDocumentParams, DownloadStudentDocumentParams, ListStudentDocumentsResponse,

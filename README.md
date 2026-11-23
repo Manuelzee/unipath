@@ -8,13 +8,13 @@ Requirements: Node.js 22.9 or later, and pnpm (`corepack enable`, or `npx pnpm@1
 
 ```bash
 pnpm install
-cp .env.example .env      # then fill in the Clerk keys
+cp .env.example .env      # works as is for local development
 pnpm db:local             # zero-install Postgres on port 5433 (or: docker compose up -d db)
 pnpm db:push              # create or update the tables
 pnpm dev                  # API on http://localhost:8080, web app on http://localhost:5173
 ```
 
-Public pages work without Clerk keys; signing in needs them (create a free application at https://dashboard.clerk.com). VS Code users can run the API under the debugger with the **Debug API server** launch configuration.
+Sign-up and sign-in work straight away. Until email is configured, each one-time code is written to the API server's terminal instead of being emailed (see [Authentication](#authentication)). VS Code users can run the API under the debugger with the **Debug API server** launch configuration.
 
 ## Commands
 
@@ -24,19 +24,58 @@ Public pages work without Clerk keys; signing in needs them (create a free appli
 | `pnpm build` | Typecheck, then production builds of every package |
 | `pnpm start` | Run the built API, which also serves the built web app |
 | `pnpm test` | Unit tests; no database needed |
-| `pnpm test:integration` | API tests against the database in `.env`; creates and removes throwaway users |
+| `pnpm test:integration` | API tests against the database in `.env` (workspace isolation, then sign-in and accounts); creates and removes throwaway users |
 | `pnpm typecheck` | Typecheck the whole workspace |
 | `pnpm codegen` | Regenerate the API hooks and Zod schemas from the OpenAPI spec |
+| `pnpm db:local` | Start the zero-install development database (reports it if one is already running) |
 | `pnpm db:push` | Apply schema changes to `DATABASE_URL` (additive) |
 | `pnpm db:seed` | Load the bundled tuition snapshots |
 
-Environment variables are documented in [`.env.example`](.env.example). Required: `DATABASE_URL` and the Clerk keys. Optional: `OPENAI_API_KEY` for the AI assistant, `STORAGE_DIR` for uploaded files, Adzuna keys for student jobs.
+Environment variables are documented in [`.env.example`](.env.example). Required: `DATABASE_URL`. For production, also `APP_ORIGIN` and SMTP (`SMTP_URL`, `EMAIL_FROM`) for sign-up emails. Optional: `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` for Google sign-in, `OPENAI_API_KEY` for the AI assistant, `STORAGE_DIR` for uploaded files, Adzuna keys for student jobs.
+
+## Authentication
+
+Accounts are built into the app; there is no outside sign-in service. Students can:
+
+- **Get started** (`/sign-up`) with a name, email and password. A 6-digit code is emailed to confirm the address, then they continue to onboarding.
+- **Sign in** (`/sign-in`) with email and password, or ask for a one-time code instead (a first code sign-in creates the account).
+- **Continue with Google**. The button appears once `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set.
+- Reset a forgotten password with an emailed code, and in Settings change their name or password, sign out other devices, or delete the account.
+
+| Setting | Effect |
+|---|---|
+| `SMTP_URL`, `EMAIL_FROM` | Codes are emailed (any SMTP provider). Without them, development writes each code to the API server's terminal (`[email not configured] … code for …`), and production turns email codes off |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | From a Google Cloud OAuth client of type "Web application". Add `<site origin>/api/auth/google/callback` as an authorized redirect URI (locally `http://localhost:5173/api/auth/google/callback`) |
+| `APP_ORIGIN` | The public HTTPS origin; required in production for Google's redirect and for accepting browser writes |
+
+How it works: passwords are hashed with scrypt; a session is a random token in an HttpOnly, SameSite=Lax cookie (`__Host-` and Secure in production), and only its hash is stored (`auth_sessions`). Sessions last 30 days and renew while in use. Codes are stored hashed, expire after 10 minutes and stop working after 5 wrong tries. State-changing requests from other sites are refused. Sign-in attempts and code requests are rate-limited per server process. The code is in `apps/api/src/lib/auth/` and `apps/api/src/routes/auth.ts`, and the screens are in `apps/web/src/components/auth/AuthFlow.tsx`.
+
+`pnpm start` always runs in production mode, so locally it needs SMTP settings for email codes (or use `pnpm dev`). Production must be served over HTTPS, or browsers will not keep the session cookie.
+
+## Running in production
+
+Hosted setup (Cloudflare Pages for the web app, Render for the API, Supabase for the database, Resend for email): follow [`docs/deployment.md`](docs/deployment.md). The pieces are `render.yaml` and the `/api` proxy in `apps/web/functions/`.
+
+To run everything as one server instead:
+
+```bash
+pnpm build                 # set VITE_* variables first: Vite embeds them at build time
+pnpm start                 # the built server always runs in production mode
+```
+
+One Node process serves the API and the built web app on `PORT`. Set `APP_ORIGIN` to the public site origin, run `pnpm db:push` against the production database during each deployment, and put the server behind HTTPS (set `TRUST_PROXY=1` behind a proxy or load balancer).
+
+- `GET /api/healthz`: the process is up (liveness).
+- `GET /api/readyz`: the database answers; returns 503 when it does not (use for readiness checks).
+- Logs are JSON on stdout. Requests slower than `SLOW_REQUEST_MS` (default 1500) are logged as warnings.
+- On `SIGTERM` the server stops accepting connections, finishes in-flight requests and closes the database pool.
+- Uploaded files live in `STORAGE_DIR`: put it on persistent storage and include it in backups alongside the database.
 
 ## Stack
 
 - pnpm workspaces, Node.js, TypeScript 5.9
-- Web: React 19 + Vite, wouter, TanStack Query, Clerk
-- API: Express 5, Clerk auth, esbuild bundle
+- Web: React 19 + Vite, wouter, TanStack Query
+- API: Express 5, built-in accounts (cookie sessions, scrypt, Nodemailer for SMTP), esbuild bundle
 - Database: PostgreSQL + Drizzle ORM
 - Validation: Zod and `drizzle-zod`
 - API contract: OpenAPI, with Orval generating the client hooks and server validators
@@ -60,6 +99,7 @@ Theme: `apps/web/src/index.css` (the app's palette) and `apps/web/src/components
 - The AI provider is called only from the server with a grounded, numbered fact list; budgets, citizenship and region are never sent; only student-approved output is stored.
 - Match classification checks verified hard requirements separately from the weighted score, so a high score can never hide an unmet requirement.
 - Uploaded documents are checked by their bytes, stored outside any public folder and only ever returned to their owner, as downloads.
+- Sign-in is built in (replacing Clerk) so the app has no outside identity service: account records live in the app's own database (`auth_users`), and every student record keys on that account id.
 - Server-side entitlements resolve every account to Free until a payment provider is connected and tested.
 
 ## Product

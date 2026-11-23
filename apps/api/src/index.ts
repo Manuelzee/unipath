@@ -1,3 +1,4 @@
+import { pool } from "@workspace/db";
 import app from "./app";
 import { logger } from "./lib/logger";
 import { ensureInstitutionDirectory } from "./lib/bootstrapDirectory";
@@ -19,7 +20,7 @@ async function start() {
   logger.info(await applyBrandingManifest(), "Verified branding manifest applied; existing verified fields preserved");
   logger.info(await importVerifiedMatchingEvidence(), "Official matching evidence imported without overwriting existing sources");
   logger.info(directory, directory.imported || directory.factsImported ? "Imported and verified missing source records; existing records preserved" : "Institution and program snapshot already present; no data written");
-  app.listen(port, (err) => {
+  const server = app.listen(port, (err) => {
     if (err) {
       logger.error({ err }, "Error listening on port");
       process.exit(1);
@@ -28,6 +29,22 @@ async function start() {
     logger.info({ port }, "Server listening");
     logger.info("Discovery auto-apply paused: new verification checks are available in the admin review queue; existing logos and branding are preserved.");
   });
+
+  // Graceful shutdown: stop accepting connections, let in-flight requests
+  // finish, then close the database pool. Forced exit after 10 seconds.
+  let stopping = false;
+  const shutdown = (signal: NodeJS.Signals) => {
+    if (stopping) return;
+    stopping = true;
+    logger.info({ signal }, "Shutting down");
+    setTimeout(() => { logger.warn("Forced exit after shutdown timeout"); process.exit(1); }, 10_000).unref();
+    server.close(() => {
+      pool.end().catch(() => undefined).finally(() => process.exit(0));
+    });
+    server.closeIdleConnections();
+  };
+  process.once("SIGTERM", shutdown);
+  process.once("SIGINT", shutdown);
 }
 
 start().catch((err: unknown) => {

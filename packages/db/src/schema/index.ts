@@ -31,3 +31,5 @@ export * from "./applications";
 export * from "./aiAssistant";
 
 export * from "./studentDocuments";
+
+export * from "./auth";

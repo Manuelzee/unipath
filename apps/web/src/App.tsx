@@ -1,7 +1,7 @@
 import { Fragment, type FormEvent, type ReactNode, useEffect, useMemo, useState } from 'react';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
-import { AuthProvider, SignIn, SignUp, Show, useClerk, useUser } from '@/lib/auth';
-import { shadcn } from '@clerk/themes';
+import { AuthProvider, Show, useAuth, useUser } from '@/lib/auth';
+import { AuthFlow } from '@/components/auth/AuthFlow';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { DiscoverView } from '@/components/directory/DiscoverView';
 import { UniversityDetailView } from '@/components/directory/UniversityDetailView';
@@ -35,38 +35,9 @@ import {
   LoaderCircle, Menu, MessageCircle, Scale, Search, Settings, ShieldCheck, Sparkles,
   UserRound, X,
 } from 'lucide-react';
-import { Link, Redirect, Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
+import { Link, Redirect, Route, Switch, useLocation, useSearch, Router as WouterRouter } from 'wouter';
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
-const clerkProxyUrl: string | undefined = import.meta.env.VITE_CLERK_PROXY_URL?.trim() || undefined;
-function stripBase(path: string) { return basePath && path.startsWith(basePath) ? path.slice(basePath.length) || '/' : path; }
-
-const appearance = {
-  theme: shadcn, cssLayerName: 'clerk',
-  options: { logoPlacement: 'inside' as const, logoLinkUrl: basePath || '/', logoImageUrl: `${window.location.origin}${basePath}/logo.svg` },
-  variables: {
-    colorPrimary: '#173e62', colorForeground: '#20354a', colorMutedForeground: '#687b8c',
-    colorDanger: '#b34e47', colorBackground: '#ffffff', colorInput: '#f8fafb',
-    colorInputForeground: '#20354a', colorNeutral: '#dbe4e9', fontFamily: 'DM Sans, sans-serif', borderRadius: '.8rem',
-  },
-  elements: {
-    rootBox: 'w-full flex justify-center',
-    cardBox: 'bg-white rounded-2xl w-[440px] max-w-full overflow-hidden',
-    card: '!shadow-none !border-0 !bg-transparent !rounded-none',
-    footer: '!shadow-none !border-0 !bg-transparent !rounded-none',
-    headerTitle: 'text-[#20354a] font-bold', headerSubtitle: 'text-[#687b8c]',
-    socialButtonsBlockButtonText: 'text-[#20354a] font-semibold', formFieldLabel: 'text-[#324b60] font-semibold',
-    footerActionLink: 'text-[#176b70] font-semibold', footerActionText: 'text-[#687b8c]',
-    dividerText: 'text-[#718392]', identityPreviewEditButton: 'text-[#176b70]',
-    formFieldSuccessText: 'text-[#176b70]', alertText: 'text-[#8f3834]',
-    logoBox: 'mb-2', logoImage: 'max-h-10', socialButtonsBlockButton: 'border-[#dbe4e9] rounded-xl',
-    formButtonPrimary: 'bg-[#173e62] hover:bg-[#245779] rounded-xl',
-    formFieldInput: 'bg-[#f8fafb] border-[#dbe4e9] rounded-xl text-[#20354a]',
-    footerAction: 'mt-4', dividerLine: 'bg-[#dbe4e9]', alert: 'rounded-xl',
-    otpCodeFieldInput: 'rounded-lg border-[#dbe4e9]', formFieldRow: 'mb-4', main: 'gap-4',
-  },
-};
-
 const cn = (...values: Array<string | false | undefined>) => values.filter(Boolean).join(' ');
 // Ordered along the student journey: discover → match → compare → prepare → apply → track.
 const navItems = [
@@ -114,9 +85,10 @@ function Header({ marketing = false }: { marketing?: boolean }) {
 function Shell({ children }: { children: ReactNode }) {
   const [location] = useLocation();
   const { user, isSignedIn } = useUser();
-  const { signOut } = useClerk();
+  const { signOut } = useAuth();
+  const [, setLocation] = useLocation();
   const adminAccess = useGetAdminAccess({ query: { queryKey: getGetAdminAccessQueryKey(), enabled: !!isSignedIn, retry: false } });
-  const initials = user?.firstName?.slice(0, 1) || user?.primaryEmailAddress?.emailAddress?.slice(0, 1) || 'S';
+  const initials = user?.firstName?.slice(0, 1) || user?.email?.slice(0, 1) || 'S';
   return <div className="app-shell">
     <aside className="sidebar">
       <Brand inverse />
@@ -126,7 +98,7 @@ function Shell({ children }: { children: ReactNode }) {
       </nav>
       {adminAccess.data?.isAdmin && <Link href="/admin" data-testid="nav-admin" className={cn('side-link', location.startsWith('/admin') && 'side-link-active')} style={{marginTop:5}}><ShieldCheck size={18}/><span>Admin</span></Link>}
       <div className="sidebar-note"><div className="note-icon"><Globe2 size={17}/></div><strong>Your world is wide open.</strong><span>One step at a time, we’ll help you find your way.</span><Link href="/discover">Explore universities <ArrowRight size={14}/></Link></div>
-      {isSignedIn?<div className="side-user"><div className="user-avatar">{initials.toUpperCase()}</div><div className="user-info"><strong>{user?.firstName || 'Student'}</strong><span>{adminAccess.data?.isAdmin ? 'Admin account' : 'Student account'}</span></div><button className="logout-button" onClick={() => signOut({ redirectUrl: basePath || '/' })} data-testid="button-sign-out">Sign out</button></div>:<div className="side-user"><Link href="/sign-in" className="side-auth-link" data-testid="link-shell-sign-in">Sign in</Link><Link href="/sign-up" className="side-auth-link" data-testid="link-shell-sign-up">Create account <ArrowRight size={13}/></Link></div>}
+      {isSignedIn?<div className="side-user"><div className="user-avatar">{initials.toUpperCase()}</div><div className="user-info"><strong>{user?.firstName || 'Student'}</strong><span>{adminAccess.data?.isAdmin ? 'Admin account' : 'Student account'}</span></div><button className="logout-button" onClick={() => void signOut(() => setLocation('/'))} data-testid="button-sign-out">Sign out</button></div>:<div className="side-user"><Link href="/sign-in" className="side-auth-link" data-testid="link-shell-sign-in">Sign in</Link><Link href="/sign-up" className="side-auth-link" data-testid="link-shell-sign-up">Create account <ArrowRight size={13}/></Link></div>}
     </aside>
     <main className="workspace">{children}</main>
   </div>;
@@ -219,10 +191,14 @@ function Profile() {
 function Plans() { return <Shell><PlansView/></Shell>; }
 
 function AuthPage({ kind }: { kind:'sign-in'|'sign-up' }) {
-  return <div className="auth-page"><div className="auth-side"><Brand inverse/><div><span className="eyebrow">YOUR JOURNEY STARTS HERE</span><h1>Make room for<br/><em>what’s next.</em></h1><p>Keep your plans, school shortlist, and next steps together in one calm place.</p><div className="auth-world"><Globe2 size={68}/><span>Where will curiosity take you?</span></div></div><span className="auth-legal">A supportive place to plan your next chapter.</span></div><div className="auth-panel"><Link href="/" className="auth-back"><ArrowLeft size={15}/> Back to UniPath AI</Link><div className="auth-form-wrap">{kind==='sign-in'?<SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`}/>:<SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} forceRedirectUrl={`${basePath}/onboarding`}/>}</div><p className="auth-footnote">By continuing, you agree to use university information as a starting point and verify all application details directly with the institution.</p></div></div>;
+  const { isLoaded, isSignedIn } = useUser();
+  if (isLoaded && isSignedIn) return <Redirect to="/dashboard"/>;
+  return <div className="auth-page"><div className="auth-side"><Brand inverse/><div><span className="eyebrow">YOUR JOURNEY STARTS HERE</span><h1>Make room for<br/><em>what’s next.</em></h1><p>Keep your plans, school shortlist, and next steps together in one calm place.</p><div className="auth-world"><Globe2 size={68}/><span>Where will curiosity take you?</span></div></div><span className="auth-legal">A supportive place to plan your next chapter.</span></div><div className="auth-panel"><Link href="/" className="auth-back"><ArrowLeft size={15}/> Back to UniPath AI</Link><div className="auth-form-wrap"><AuthFlow key={kind} mode={kind}/></div><p className="auth-footnote">By continuing, you agree to use university information as a starting point and verify all application details directly with the institution.</p></div></div>;
 }
 function Protected({ children }: { children: ReactNode }) {
-  return <><Show when="signed-in">{children}</Show><Show when="signed-out"><Redirect to="/"/></Show></>;
+  const [location] = useLocation(); const search = useSearch();
+  const back = encodeURIComponent(location + (search ? `?${search}` : ''));
+  return <><Show when="signed-in">{children}</Show><Show when="signed-out"><Redirect to={`/sign-in?redirect=${back}`}/></Show></>;
 }
 function UserScopedQueries({ children }: { children: ReactNode }) {
   const { user, isLoaded } = useUser();
@@ -232,12 +208,8 @@ function UserScopedQueries({ children }: { children: ReactNode }) {
   const client = useMemo(() => new QueryClient(), [identity]);
   return <QueryClientProvider client={client}><Fragment key={identity}>{children}</Fragment></QueryClientProvider>;
 }
-function ClerkRoutes() {
-  const [,setLocation]=useLocation();
-  return <AuthProvider proxyUrl={clerkProxyUrl} appearance={appearance}
-    signInUrl={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`}
-    localization={{signIn:{start:{title:'Welcome back',subtitle:'Pick up where your plans left off'}},signUp:{start:{title:'Your next chapter starts here',subtitle:'Create an account to make your plan yours'}}}}
-    routerPush={to=>setLocation(stripBase(to))} routerReplace={to=>setLocation(stripBase(to),{replace:true})}>
+function AppRoutes() {
+  return <AuthProvider>
     <UserScopedQueries><Switch>
       <Route path="/" component={Home}/>
       <Route path="/sign-in/*?" component={()=> <AuthPage kind="sign-in"/>}/>
@@ -273,6 +245,6 @@ function ClerkRoutes() {
   </AuthProvider>;
 }
 function App() {
-  return <TooltipProvider><WouterRouter base={basePath}><ErrorBoundary><ClerkRoutes/></ErrorBoundary></WouterRouter><Toaster/></TooltipProvider>;
+  return <TooltipProvider><WouterRouter base={basePath}><ErrorBoundary><AppRoutes/></ErrorBoundary></WouterRouter><Toaster/></TooltipProvider>;
 }
 export default App;

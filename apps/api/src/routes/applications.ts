@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Response } from "express";
-import { getAuth } from "@clerk/express";
+import { getAuth } from "../lib/auth/session";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import {
   AddApplicationChecklistParams, AddApplicationChecklistResponse,

@@ -18,6 +18,8 @@ tags:
     description: Student employment guidance and job tracking
   - name: ai
     description: Server-side AI guidance with grounding, quotas and student approval
+  - name: auth
+    description: UniPath accounts, sign-in sessions and one-time email codes
 paths:
   /universities/{id}/verification:
     get:
@@ -185,6 +187,23 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /readyz:
+    get:
+      operationId: readinessCheck
+      tags: [health]
+      summary: Readiness check
+      description: Ready only when the database answers. Use this for load balancer and orchestrator health checks.
+      responses:
+        "200":
+          description: Ready to serve requests
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReadinessStatus" }
+        "503":
+          description: The database is unreachable
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReadinessStatus" }
   /universities:
     get:
       operationId: listUniversities
@@ -1092,6 +1111,183 @@ paths:
               schema: { type: string, format: binary }
         "401": { description: Sign in required }
         "404": { description: Not found }
+  # Accounts. Sessions use an HttpOnly cookie set by these endpoints. Google
+  # sign-in is a browser redirect flow outside this contract:
+  # GET /auth/google/start?redirect=/path, then GET /auth/google/callback.
+  /auth/session:
+    get:
+      operationId: getAuthSession
+      tags: [auth]
+      summary: The signed-in account (or null) and the sign-in methods this server offers
+      responses:
+        "200":
+          description: Current session
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthSession" }
+  /auth/sign-up:
+    post:
+      operationId: signUpWithPassword
+      tags: [auth]
+      summary: Create an account with a password; a code is emailed to verify the address
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PasswordSignUpInput" }
+      responses:
+        "200":
+          description: Verification code sent
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthResult" }
+        "400": { description: Invalid input }
+        "409": { description: An account with this email already exists }
+        "429": { description: Too many attempts }
+        "503": { description: Email delivery is not configured }
+  /auth/sign-in:
+    post:
+      operationId: signInWithPassword
+      tags: [auth]
+      summary: Sign in with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PasswordSignInInput" }
+      responses:
+        "200":
+          description: Signed in, or the email must be verified first
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthResult" }
+        "401": { description: Email or password is incorrect }
+        "429": { description: Too many attempts }
+  /auth/codes:
+    post:
+      operationId: sendAuthCode
+      tags: [auth]
+      summary: Email a one-time code (sign in, verify an email, or reset a password)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AuthCodeRequest" }
+      responses:
+        "200":
+          description: Code sent when the request is valid; the response never reveals whether an account exists
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthCodeSent" }
+        "400": { description: Invalid input }
+        "429": { description: Too many codes requested }
+        "503": { description: Email delivery is not configured }
+  /auth/codes/verify:
+    post:
+      operationId: verifyAuthCode
+      tags: [auth]
+      summary: Sign in with an emailed code (creates the account on first use) or verify a new account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AuthCodeVerification" }
+      responses:
+        "200":
+          description: Signed in
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthResult" }
+        "400": { description: The code is wrong or has expired }
+        "429": { description: Too many attempts }
+  /auth/password-reset:
+    post:
+      operationId: resetPassword
+      tags: [auth]
+      summary: Set a new password with an emailed reset code; signs out other sessions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PasswordResetInput" }
+      responses:
+        "200":
+          description: Password changed and signed in
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthResult" }
+        "400": { description: "The code is wrong or has expired, or the password is too weak" }
+        "429": { description: Too many attempts }
+  /auth/sign-out:
+    post:
+      operationId: signOut
+      tags: [auth]
+      summary: End this browser's session
+      responses:
+        "204": { description: Signed out }
+  /auth/sign-out-others:
+    post:
+      operationId: signOutOtherSessions
+      tags: [auth]
+      summary: End every other session of the signed-in account
+      responses:
+        "200":
+          description: Number of sessions ended
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SessionsRevoked" }
+        "401": { description: Sign in required }
+  /auth/me:
+    patch:
+      operationId: updateAccount
+      tags: [auth]
+      summary: Change the account's name
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AccountUpdate" }
+      responses:
+        "200":
+          description: Updated account
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthUser" }
+        "400": { description: Invalid input }
+        "401": { description: Sign in required }
+  /auth/password:
+    post:
+      operationId: changePassword
+      tags: [auth]
+      summary: Change the password (or add one to a Google or email-code account); signs out other sessions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PasswordChangeInput" }
+      responses:
+        "200":
+          description: Updated account
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthUser" }
+        "400": { description: The current password is wrong or the new one is too weak }
+        "401": { description: Sign in required }
+        "429": { description: Too many attempts }
+  /auth/account-deletion:
+    post:
+      operationId: deleteAccount
+      tags: [auth]
+      summary: Permanently delete the account, its sessions and every UniPath record it owns
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DataDeletionRequest" }
+      responses:
+        "204": { description: Account deleted and signed out }
+        "400": { description: Confirmation missing }
+        "401": { description: Sign in required }
 components:
   schemas:
     PublicInstitutionVerification:
@@ -1225,6 +1421,13 @@ components:
         status: { type: string }
         count: { type: integer }
         lastCheckedAt: { type: ["string", "null"] }
+    ReadinessStatus:
+      type: object
+      required: [status, database, checkedAt]
+      properties:
+        status: { type: string, enum: [ok, unavailable] }
+        database: { type: string, enum: [ok, unavailable] }
+        checkedAt: { type: string }
     HealthStatus:
       type: object
       properties:
@@ -2108,10 +2311,14 @@ components:
         savedAt: { type: string }
     StudentDataExport:
       type: object
-      required: [exportedAt, note, profile, savedUniversities, applications, tasks, aiSavedItems, jobApplications, documents]
+      required: [exportedAt, note, account, profile, savedUniversities, applications, tasks, aiSavedItems, jobApplications, documents]
       properties:
         exportedAt: { type: string }
         note: { type: string }
+        account:
+          anyOf:
+            - $ref: "#/components/schemas/AuthUser"
+            - type: "null"
         profile:
           anyOf:
             - $ref: "#/components/schemas/StudentProfile"
@@ -2160,4 +2367,104 @@ components:
             aiUsage: { type: integer }
             jobApplications: { type: integer }
             documents: { type: integer }
-
+    AuthUser:
+      type: object
+      required: [id, email, firstName, lastName, emailVerified, hasPassword, googleConnected, createdAt]
+      properties:
+        id: { type: string }
+        email: { type: string }
+        firstName: { type: string }
+        lastName: { type: string }
+        emailVerified: { type: boolean }
+        hasPassword: { type: boolean }
+        googleConnected: { type: boolean }
+        createdAt: { type: string }
+    AuthSession:
+      type: object
+      required: [user, methods, emailDelivery]
+      properties:
+        user:
+          anyOf:
+            - $ref: "#/components/schemas/AuthUser"
+            - type: "null"
+        methods:
+          type: object
+          required: [password, emailCode, google]
+          properties:
+            password: { type: boolean }
+            emailCode: { type: boolean }
+            google: { type: boolean }
+        emailDelivery:
+          type: string
+          enum: [email, server_log, unavailable]
+          description: "email: codes are emailed. server_log: development only, codes are written to the API server log. unavailable: email codes are off."
+    AuthResult:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [signed_in, verification_required] }
+        user: { $ref: "#/components/schemas/AuthUser" }
+        isNewUser: { type: boolean }
+        email: { type: string, description: "Where the verification code was sent (verification_required only)" }
+        delivery: { type: string, enum: [email, server_log] }
+    PasswordSignUpInput:
+      type: object
+      required: [email, password, firstName]
+      properties:
+        email: { type: string, minLength: 3, maxLength: 254 }
+        password: { type: string, minLength: 8, maxLength: 128 }
+        firstName: { type: string, minLength: 1, maxLength: 60 }
+        lastName: { type: string, maxLength: 60 }
+    PasswordSignInInput:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, minLength: 3, maxLength: 254 }
+        password: { type: string, minLength: 1, maxLength: 128 }
+    AuthCodeRequest:
+      type: object
+      required: [email, purpose]
+      properties:
+        email: { type: string, minLength: 3, maxLength: 254 }
+        purpose: { type: string, enum: [sign_in, verify_email, reset_password] }
+    AuthCodeSent:
+      type: object
+      required: [email, purpose, delivery, expiresInSeconds, resendAfterSeconds]
+      properties:
+        email: { type: string }
+        purpose: { type: string, enum: [sign_in, verify_email, reset_password] }
+        delivery: { type: string, enum: [email, server_log] }
+        expiresInSeconds: { type: integer }
+        resendAfterSeconds: { type: integer }
+    AuthCodeVerification:
+      type: object
+      required: [email, purpose, code]
+      properties:
+        email: { type: string, minLength: 3, maxLength: 254 }
+        purpose: { type: string, enum: [sign_in, verify_email] }
+        code: { type: string, minLength: 6, maxLength: 6, pattern: "^[0-9]{6}$" }
+        firstName: { type: string, maxLength: 60, description: "Used only when a code sign-in creates a new account" }
+    PasswordResetInput:
+      type: object
+      required: [email, code, password]
+      properties:
+        email: { type: string, minLength: 3, maxLength: 254 }
+        code: { type: string, minLength: 6, maxLength: 6, pattern: "^[0-9]{6}$" }
+        password: { type: string, minLength: 8, maxLength: 128 }
+    PasswordChangeInput:
+      type: object
+      required: [newPassword]
+      properties:
+        currentPassword: { type: string, maxLength: 128, description: "Required when the account already has a password" }
+        newPassword: { type: string, minLength: 8, maxLength: 128 }
+    AccountUpdate:
+      type: object
+      required: [firstName, lastName]
+      properties:
+        firstName: { type: string, minLength: 1, maxLength: 60 }
+        lastName: { type: string, maxLength: 60 }
+    SessionsRevoked:
+      type: object
+      required: [revoked]
+      properties:
+        revoked: { type: integer }

@@ -30,7 +30,7 @@
   subscription management, cancellation, wallet addresses or transfer requests.
 - `/admin/billing`: server-authorized customer/profile search, catalog plan
   layout, unavailable revenue/transaction layouts and disabled payment settings.
-  Customer data covers real saved profiles only, not all Clerk registrations;
+  Customer data covers real saved profiles only, not every registered account;
   private student budgets are never included. No fabricated revenue, refunds,
   exports, or financial records.
 

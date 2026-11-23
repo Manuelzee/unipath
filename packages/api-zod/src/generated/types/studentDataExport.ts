@@ -8,6 +8,7 @@
 import type { AiSavedItem } from './aiSavedItem';
 import type { ApplicationRecord } from './applicationRecord';
 import type { ApplicationTask } from './applicationTask';
+import type { AuthUser } from './authUser';
 import type { JobApplication } from './jobApplication';
 import type { SavedUniversityReference } from './savedUniversityReference';
 import type { StudentDocument } from './studentDocument';
@@ -16,6 +17,7 @@ import type { StudentProfile } from './studentProfile';
 export interface StudentDataExport {
   exportedAt: string;
   note: string;
+  account: AuthUser | null;
   profile: StudentProfile | null;
   savedUniversities: SavedUniversityReference[];
   applications: ApplicationRecord[];

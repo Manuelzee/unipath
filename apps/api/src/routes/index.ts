@@ -13,10 +13,12 @@ import applicationsRouter from "./applications";
 import aiRouter from "./ai";
 import accountRouter from "./account";
 import documentsRouter from "./documents";
+import authRouter from "./auth";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
+router.use(authRouter);
 router.use(institutionBrandingRouter);
 router.use(institutionLogosRouter);
 router.use(universityRouter);

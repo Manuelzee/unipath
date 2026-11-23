@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { getAuth } from "@clerk/express";
+import { getAuth } from "../lib/auth/session";
 import { eq } from "drizzle-orm";
 import { db, studentProfilesTable as profiles } from "@workspace/db";
 import { GetBudgetSettingsResponse, SaveBudgetSettingsBody, SaveBudgetSettingsResponse } from "@workspace/api-zod";

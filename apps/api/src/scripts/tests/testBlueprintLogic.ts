@@ -17,6 +17,11 @@ import { checklistDueDate, safeWebUrl, CHECKLIST_ITEMS } from "../../lib/applica
 import { planFor, planLimits } from "../../lib/entitlements";
 import { attachmentHeader, detectDocumentType, safeFileName } from "../../lib/documentFiles";
 import { objectPath } from "../../lib/storage";
+import { hashPassword, passwordProblem, verifyPassword } from "../../lib/auth/password";
+import { cleanName, normalizeEmail, safeRedirect } from "../../lib/auth/validation";
+import { GoogleSignInError, decodeJwtPayload } from "../../lib/auth/google";
+import { codeEmail } from "../../lib/auth/email";
+import { clientIp } from "../../lib/clientIp";
 import { GetExchangeRateQueryParams, SearchJobListingsQueryParams, UploadStudentDocumentQueryParams } from "@workspace/api-zod";
 
 const tests: Array<[string, () => void | Promise<void>]> = [];
@@ -238,6 +243,79 @@ test("burst limiter blocks the request after the limit and recovers after the wi
   assert.ok(!limiter.take("a", 20));
   assert.ok(limiter.take("b", 20), "limits are per user");
   assert.ok(limiter.take("a", 1015));
+});
+test("burst limiter can be checked without recording a hit", () => {
+  const limiter = new BurstLimiter(1, 1000);
+  assert.ok(!limiter.isFull("a", 0));
+  assert.ok(!limiter.isFull("a", 0), "checking twice records nothing");
+  assert.ok(limiter.take("a", 0));
+  assert.ok(limiter.isFull("a", 10));
+  assert.ok(!limiter.isFull("a", 1001));
+});
+
+// ---------- Accounts ----------
+test("passwords are salted scrypt hashes that verify only the right password", async () => {
+  const one = await hashPassword("correct horse battery");
+  const two = await hashPassword("correct horse battery");
+  assert.match(one, /^scrypt\$32768\$8\$1\$[\w-]{22}\$[\w-]{43}$/);
+  assert.notEqual(one, two, "each hash has its own salt");
+  assert.ok(await verifyPassword("correct horse battery", one));
+  assert.ok(!await verifyPassword("correct horse batterY", one));
+  assert.ok(!await verifyPassword("anything", null), "accounts without a password never match");
+  assert.ok(!await verifyPassword("anything", "scrypt$broken"));
+  assert.ok(!await verifyPassword("anything", "scrypt$99999999$8$1$c2FsdA$aGFzaA"), "absurd costs are refused, not computed");
+});
+test("password rules explain what to fix", () => {
+  assert.match(passwordProblem("short")!, /at least 8/);
+  assert.match(passwordProblem("x".repeat(129))!, /at most 128/);
+  assert.match(passwordProblem("        ")!, /only spaces/);
+  assert.match(passwordProblem("aaaaaaaaaa")!, /repeated/);
+  assert.match(passwordProblem("Ada@Example.com", "ada@example.com")!, /email/);
+  assert.equal(passwordProblem("a long passphrase"), null);
+});
+test("emails are trimmed and lower-cased; impossible addresses are refused", () => {
+  assert.equal(normalizeEmail("  Ada@Example.COM "), "ada@example.com");
+  for (const bad of ["ada", "ada@", "ada@example", "ada @example.com", "<ada>@example.com", "ada@example.c", `${"a".repeat(250)}@example.com`])
+    assert.equal(normalizeEmail(bad), null, bad);
+  assert.equal(cleanName("  Ada\u0000 Lovelace\n "), "Ada Lovelace");
+  assert.equal(cleanName("x".repeat(80)).length, 60);
+});
+test("sign-in redirects stay on this site", () => {
+  assert.equal(safeRedirect("/compare?ids=a,b"), "/compare?ids=a,b");
+  for (const bad of ["//evil.example", "/\\evil.example", "https://evil.example", "javascript:alert(1)", "/sign-in", "/sign-up?x=1", "", 42, undefined])
+    assert.equal(safeRedirect(bad), "/dashboard", String(bad));
+});
+test("Google ID token payloads are parsed strictly", () => {
+  const token = (payload: unknown) => `e30.${Buffer.from(JSON.stringify(payload)).toString("base64url")}.sig`;
+  assert.deepEqual(decodeJwtPayload(token({ sub: "1" })), { sub: "1" });
+  assert.throws(() => decodeJwtPayload("not-a-jwt"), GoogleSignInError);
+  assert.throws(() => decodeJwtPayload(token([1, 2])), GoogleSignInError);
+  assert.throws(() => decodeJwtPayload("e30.!!!.sig"), GoogleSignInError);
+});
+test("the visitor IP from the web proxy is trusted only with the shared secret", () => {
+  const request = (headers: Record<string, string>) => ({ ip: "10.0.0.9", get: (name: string) => headers[name.toLowerCase()] }) as unknown as Parameters<typeof clientIp>[0];
+  const forwarded = { "x-unipath-client-ip": "203.0.113.7", "x-unipath-proxy-secret": "s3cret-value" };
+  const saved = process.env.PROXY_SHARED_SECRET;
+  try {
+    delete process.env.PROXY_SHARED_SECRET;
+    assert.equal(clientIp(request(forwarded)), "10.0.0.9", "ignored when no secret is configured");
+    process.env.PROXY_SHARED_SECRET = "s3cret-value";
+    assert.equal(clientIp(request(forwarded)), "203.0.113.7");
+    assert.equal(clientIp(request({ ...forwarded, "x-unipath-proxy-secret": "guess" })), "10.0.0.9", "a wrong secret is ignored");
+    assert.equal(clientIp(request({ "x-unipath-client-ip": "203.0.113.7" })), "10.0.0.9", "a missing secret is ignored");
+  } finally {
+    if (saved === undefined) delete process.env.PROXY_SHARED_SECRET; else process.env.PROXY_SHARED_SECRET = saved;
+  }
+});
+test("code emails carry the code, its lifetime and a phishing warning", () => {
+  const email = codeEmail("ada@example.com", "042917", "reset_password", 10);
+  assert.equal(email.subject, "Reset your UniPath AI password: 042917");
+  for (const part of [email.text, email.html]) {
+    assert.ok(part.includes("042917"));
+    assert.match(part, /10 minutes/);
+    assert.match(part, /Never share it/);
+  }
+  assert.match(email.text, /Your password stays the same/);
 });
 
 let failed = 0;

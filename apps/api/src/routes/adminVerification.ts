@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { clerkClient, getAuth } from "@clerk/express";
+import { getAuth } from "../lib/auth/session";
+import { findUserById } from "../lib/auth/users";
 import { createHash } from "node:crypto";
 import { desc, eq, ilike, or, sql } from "drizzle-orm";
 import { db, adminMembershipsTable, institutionDirectoryTable as institutions,
@@ -58,9 +59,9 @@ router.post("/me/admin-setup", requireAuth, requireAdminMutationOrigin, action(a
   const before = await access(userId);
   if (before.isAdmin) { res.json(before); return; }
   if (!before.canSetup) throw new AdminError(403, "This account is not the server-configured owner, or setup has already been used. No role was changed.");
-  const identity = await clerkClient.users.getUser(userId);
-  if (identity.id !== userId || !identity.emailAddresses.some(email => email.verification?.status === "verified"))
-    throw new AdminError(403, "Complete email/identity verification with your sign-in provider before owner setup.");
+  const identity = await findUserById(userId);
+  if (identity?.id !== userId || !identity.emailVerifiedAt)
+    throw new AdminError(403, "Verify your email address before owner setup.");
   // The server-configured immutable identity AND explicit signed-in confirmation
   // authorize this one-time grant. Revoked records are deliberately never re-granted.
   await db.insert(adminMembershipsTable).values({ userId, status: "active", grantSource: "owner_configured_id_and_explicit_confirmation" })

@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { getAuth } from "@clerk/express";
+import { getAuth } from "../lib/auth/session";
 import { and, desc, eq } from "drizzle-orm";
 import {
   CreateApplicationTaskBody,

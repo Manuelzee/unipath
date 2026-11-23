@@ -1,13 +1,15 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
-import express, { type Express, type Request, type Response, type NextFunction, type RequestHandler } from "express";
+import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
-import { clerkMiddleware } from "@clerk/express";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { publicRequestFailure } from "./lib/requestErrors";
-import { trustedOrigins } from "./lib/admin/security";
+import { rejectCrossSiteWrites, trustedOrigins } from "./lib/admin/security";
+import { sessionMiddleware } from "./lib/auth/session";
+import { emailDelivery } from "./lib/auth/email";
+import { googleConfigured } from "./lib/auth/google";
 import { repoPath } from "./lib/paths";
 
 const app: Express = express();
@@ -30,6 +32,20 @@ app.use(
   }),
 );
 
+// Flag slow requests (default 1.5 s; set SLOW_REQUEST_MS). Logs the method,
+// path, status and duration only: never query strings, bodies or headers.
+const slowRequestMs = Number(process.env.SLOW_REQUEST_MS) > 0 ? Number(process.env.SLOW_REQUEST_MS) : 1500;
+app.use((req, res, next) => {
+  const started = process.hrtime.bigint();
+  res.once("finish", () => {
+    const durationMs = Math.round(Number(process.hrtime.bigint() - started) / 1e6);
+    if (durationMs >= slowRequestMs) {
+      req.log.warn({ method: req.method, path: req.originalUrl.split("?")[0], status: res.statusCode, durationMs }, "Slow request");
+    }
+  });
+  next();
+});
+
 // Baseline security headers for every response.
 app.use((_req, res, next) => {
   res.setHeader("X-Content-Type-Options", "nosniff");
@@ -44,18 +60,13 @@ app.use(cors({ credentials: true, origin: (origin, callback) => callback(null, !
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const clerkConfigured = !!process.env.CLERK_SECRET_KEY && !!process.env.CLERK_PUBLISHABLE_KEY;
-/**
- * Without Clerk keys every request is treated as signed out: public pages keep
- * working and protected routes return 401. Nothing is ever signed in by default.
- */
-const signedOut: RequestHandler = (req, _res, next) => {
-  const auth = () => ({ userId: null, sessionId: null, tokenType: "session_token", isAuthenticated: false, getToken: async () => null, has: () => false, debug: () => ({}) });
-  (req as unknown as { auth: unknown }).auth = Object.assign(auth, { [Symbol.for("@clerk/express.auth")]: true });
-  next();
-};
-if (!clerkConfigured) logger.warn("CLERK_SECRET_KEY / CLERK_PUBLISHABLE_KEY are not set: sign-in is disabled and protected routes return 401.");
-app.use(clerkConfigured ? clerkMiddleware({ publishableKey: process.env.CLERK_PUBLISHABLE_KEY, secretKey: process.env.CLERK_SECRET_KEY }) : signedOut);
+// Cookie sessions (lib/auth/session.ts), behind the cross-site write guard
+// that cookie authentication needs.
+app.use("/api", rejectCrossSiteWrites, sessionMiddleware);
+const delivery = emailDelivery();
+if (delivery === "server_log") logger.warn("SMTP_URL / EMAIL_FROM are not set: sign-in codes are written to this log instead of being emailed (development only).");
+if (delivery === "unavailable") logger.warn("SMTP_URL / EMAIL_FROM are not set: email sign-up, sign-in codes and password resets are off. Google and existing passwords still work.");
+if (!googleConfigured()) logger.info("GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET are not set: Continue with Google is hidden.");
 
 app.use("/api", router);
 app.use("/api", (_req, res) => { res.status(404).json({ error: "Not found." }); });

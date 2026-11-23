@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { getAuth } from "@clerk/express";
+import { getAuth } from "../lib/auth/session";
 import { and, desc, eq } from "drizzle-orm";
 import {
   AskAiAssistantBody, AskAiAssistantResponse, DeleteAiSavedItemParams, GetAiStatusResponse,
