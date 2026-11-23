@@ -14,6 +14,10 @@ export type EmailDelivery = "email" | "server_log" | "unavailable";
 export class EmailUnavailableError extends Error {
   constructor() { super("Email delivery is not configured."); }
 }
+/** The provider refused or could not take the message; the reason is in the server log. */
+export class EmailSendError extends Error {
+  constructor() { super("The email could not be sent."); }
+}
 
 let replacement: Mailer | null = null;
 /** Swap the delivery method (used by the integration tests). Pass null to restore SMTP. */
@@ -66,6 +70,15 @@ export async function sendCodeEmail(to: string, code: string, purpose: CodePurpo
     logger.warn(`[email not configured] ${purpose} code for ${to}: ${code} (valid ${validMinutes} minutes). Set SMTP_URL and EMAIL_FROM to send real emails.`);
     return "server_log";
   }
-  await deliver(codeEmail(to, code, purpose, validMinutes));
+  try {
+    await deliver(codeEmail(to, code, purpose, validMinutes));
+  } catch (error) {
+    // For the operator: the provider's reason (for example Resend's test mode
+    // only delivering to the account owner). Never the code or credentials.
+    const e = error as { code?: string; responseCode?: number; response?: string; message?: string };
+    logger.error({ purpose, code: e.code, responseCode: e.responseCode, reason: (e.response ?? e.message ?? "").slice(0, 300) },
+      "Could not send a sign-in code email");
+    throw new EmailSendError();
+  }
   return "email";
 }

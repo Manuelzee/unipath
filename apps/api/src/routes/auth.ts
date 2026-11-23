@@ -13,7 +13,7 @@ import { BurstLimiter } from "../lib/ai/burst";
 import { publicOrigin } from "../lib/admin/security";
 import { clientIp } from "../lib/clientIp";
 import { CODE_TTL_SECONDS, consumeCode, issueCode, type CodeCheck, type CodePurpose } from "../lib/auth/codes";
-import { EmailUnavailableError, emailDelivery, sendCodeEmail } from "../lib/auth/email";
+import { EmailSendError, EmailUnavailableError, emailDelivery, sendCodeEmail } from "../lib/auth/email";
 import { GoogleSignInError, createGoogleRequest, exchangeGoogleCode, googleConfigured } from "../lib/auth/google";
 import { hashPassword, passwordProblem, verifyPassword } from "../lib/auth/password";
 import { cookieBase, endOtherSessions, endSession, getAuth, readCookie, sessionCookieName, startSession } from "../lib/auth/session";
@@ -61,6 +61,9 @@ const handle = (handler: Handler) => async (req: Request, res: Response, next: (
   try { await handler(req, res); } catch (error) {
     if (error instanceof AuthFailure) { res.status(error.status).json({ error: error.message }); return; }
     if (error instanceof EmailUnavailableError) { const e = emailOff(); res.status(e.status).json({ error: e.message }); return; }
+    if (error instanceof EmailSendError) {
+      res.status(502).json({ error: "We couldn’t send the email with your code just now. Please try again in a few minutes." }); return;
+    }
     next(error);
   }
 };

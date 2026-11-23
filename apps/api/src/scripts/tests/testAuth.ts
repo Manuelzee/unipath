@@ -342,6 +342,17 @@ test("Google refuses a bad state, a wrong audience, a wrong nonce and an unverif
   assert.equal((await db.select().from(authUsersTable).where(eq(authUsersTable.email, mail("x")))).length, 0);
 });
 
+test("a refused email gives a clear error instead of a server failure", async () => {
+  setMailer(async () => { throw Object.assign(new Error("Can't send mail"), { responseCode: 450, response: "450 You can only send testing emails to your own email address" }); });
+  try {
+    const res = await new Browser().post("/api/auth/sign-up", { email: mail("refused"), password: "correct horse battery", firstName: "Rae" });
+    assert.equal(res.status, 502);
+    assert.match(res.data.error, /couldn’t send the email/);
+  } finally {
+    setMailer(async message => { outbox.push(message); });
+  }
+});
+
 test("deleting the account removes it, its sessions and its data", async () => {
   const b = new Browser();
   await signUpAndVerify(b, mail("leaving"));
