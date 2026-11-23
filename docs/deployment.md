@@ -5,7 +5,7 @@ How the pieces fit together:
 ```
 browser ──► Cloudflare Pages ──(/api/*)──► Render (API) ──► Supabase (PostgreSQL)
             web app + proxy function                │
-                                                     └──► Resend (sign-in code emails, over SMTP)
+                                                     └──► Resend (sign-in code emails, API)
 ```
 
 The web app calls `/api/...` on its own site. A Cloudflare Pages Function
@@ -20,7 +20,7 @@ into another; never put it in the repository or a chat.
 | You will collect | Where it comes from | Where it goes |
 |---|---|---|
 | `DATABASE_URL` | Supabase | Render |
-| `SMTP_URL`, `EMAIL_FROM` | Resend | Render |
+| `RESEND_API_KEY`, `EMAIL_FROM` | Resend | Render |
 | `PROXY_SHARED_SECRET` | Render (generated) | Cloudflare Pages |
 | API address (`https://….onrender.com`) | Render | Cloudflare Pages `API_ORIGIN` |
 | Site address (`https://….pages.dev`) | Cloudflare Pages | Render `APP_ORIGIN` |
@@ -47,8 +47,8 @@ into another; never put it in the repository or a chat.
 3. Build the two email values:
 
    ```
-   SMTP_URL=smtps://resend:<API key>@smtp.resend.com:465
-   EMAIL_FROM=UniPath AI <no-reply@your-domain.example>
+   RESEND_API_KEY=re_...
+   EMAIL_FROM="UniPath AI <no-reply@your-domain.example>"
    ```
 
 ## 3. Code on GitHub
@@ -61,7 +61,7 @@ Render and Cloudflare build from the `main` branch of the GitHub repository. Mak
 2. Fill in the values it asks for:
    - `DATABASE_URL`: from step 1.
    - `APP_ORIGIN`: the Cloudflare site address, for example `https://unipath.pages.dev` (no trailing slash). If you don't know it yet, enter `https://unipath.pages.dev` and correct it in step 6.
-   - `SMTP_URL` and `EMAIL_FROM`: from step 2.
+   - `RESEND_API_KEY` and `EMAIL_FROM`: from step 2.
 3. **Apply.** The build installs packages, bundles the API and creates the database tables (`pnpm db:push`). A schema change that could lose data stops the build instead of being applied. On first start the API loads the institution directory into the empty database, which can take a few minutes.
 4. When it is live, note the service address (for example `https://unipath-api.onrender.com`) and check `<address>/api/readyz`. It should answer `{"status":"ok", …}`.
 5. Open the service's **Environment** tab and copy the generated `PROXY_SHARED_SECRET` value.

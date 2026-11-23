@@ -31,8 +31,8 @@ services:
       # The Cloudflare Pages site, e.g. https://unipath.pages.dev
       - key: APP_ORIGIN
         sync: false
-      # smtps://resend:<RESEND_API_KEY>@smtp.resend.com:465
-      - key: SMTP_URL
+      # Resend API key with Sending access, limited to the verified domain.
+      - key: RESEND_API_KEY
         sync: false
       # e.g. UniPath AI <no-reply@your-domain>
       - key: EMAIL_FROM

@@ -20,13 +20,30 @@ import { objectPath } from "../../lib/storage";
 import { hashPassword, passwordProblem, verifyPassword } from "../../lib/auth/password";
 import { cleanName, normalizeEmail, safeRedirect } from "../../lib/auth/validation";
 import { GoogleSignInError, decodeJwtPayload } from "../../lib/auth/google";
-import { codeEmail } from "../../lib/auth/email";
+import { codeEmail, emailDelivery, EmailSendError, sendCodeEmail } from "../../lib/auth/email";
 import { clientIp } from "../../lib/clientIp";
 import { chatName, cleanChatMessage } from "../../lib/chat";
 import { GetExchangeRateQueryParams, SearchJobListingsQueryParams, UploadStudentDocumentQueryParams } from "@workspace/api-zod";
 
 const tests: Array<[string, () => void | Promise<void>]> = [];
 const test = (name: string, fn: () => void | Promise<void>) => tests.push([name, fn]);
+const emailEnvKeys = ["RESEND_API_KEY", "SMTP_URL", "EMAIL_FROM"] as const;
+async function withResendConfig(run: () => Promise<void>) {
+  const savedEnv = new Map(emailEnvKeys.map(key => [key, process.env[key]]));
+  const savedFetch = globalThis.fetch;
+  try {
+    process.env.RESEND_API_KEY = "resend-unit-test-key";
+    process.env.EMAIL_FROM = "UniPath AI <no-reply@example.com>";
+    delete process.env.SMTP_URL;
+    await run();
+  } finally {
+    for (const key of emailEnvKeys) {
+      const value = savedEnv.get(key);
+      if (value === undefined) delete process.env[key]; else process.env[key] = value;
+    }
+    globalThis.fetch = savedFetch;
+  }
+}
 
 // ---------- Match classification ----------
 test("unmet verified requirement wins over a perfect score", () => {
@@ -326,6 +343,31 @@ test("code emails carry the code, its lifetime and a phishing warning", () => {
   }
   assert.match(email.text, /Your password stays the same/);
 });
+test("Resend API sends code emails with the configured sender and bearer key", async () => withResendConfig(async () => {
+  let url = "";
+  let init: RequestInit | undefined;
+  globalThis.fetch = async (input, options) => {
+    url = String(input);
+    init = options;
+    return new Response(JSON.stringify({ id: "email-id" }), { status: 200 });
+  };
+
+  assert.equal(emailDelivery(), "email");
+  assert.equal(await sendCodeEmail("ada@example.com", "042917", "verify_email", 10), "email");
+  assert.equal(url, "https://api.resend.com/emails");
+  const headers = new Headers(init?.headers);
+  assert.equal(headers.get("authorization"), "Bearer resend-unit-test-key");
+  assert.equal(headers.get("content-type"), "application/json");
+  assert.deepEqual(JSON.parse(String(init?.body)), {
+    ...codeEmail("ada@example.com", "042917", "verify_email", 10),
+    from: "UniPath AI <no-reply@example.com>",
+    to: ["ada@example.com"],
+  });
+}));
+test("Resend API failures fail email delivery", async () => withResendConfig(async () => {
+  globalThis.fetch = async () => new Response(JSON.stringify({ message: "Invalid API key" }), { status: 401 });
+  await assert.rejects(() => sendCodeEmail("ada@example.com", "042917", "verify_email", 10), EmailSendError);
+}));
 
 let failed = 0;
 for (const [name, fn] of tests) {

@@ -32,7 +32,7 @@ Sign-up and sign-in work straight away. Until email is configured, each one-time
 | `pnpm db:push` | Apply schema changes to `DATABASE_URL` (additive) |
 | `pnpm db:seed` | Load the bundled tuition snapshots |
 
-Environment variables are documented in [`.env.example`](.env.example). Required: `DATABASE_URL`. For production, also `APP_ORIGIN` and SMTP (`SMTP_URL`, `EMAIL_FROM`) for sign-up emails. Optional: `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` for Google sign-in, `OPENAI_API_KEY` for the AI assistant, `STORAGE_DIR` for uploaded files, Adzuna keys for student jobs.
+Environment variables are documented in [`.env.example`](.env.example). Required: `DATABASE_URL`. For production, also `APP_ORIGIN`, `RESEND_API_KEY` and `EMAIL_FROM` for sign-up emails. Existing SMTP setups can use `SMTP_URL` instead. Optional: `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` for Google sign-in, `OPENAI_API_KEY` for the AI assistant, `STORAGE_DIR` for uploaded files, Adzuna keys for student jobs.
 
 ## Authentication
 
@@ -45,13 +45,13 @@ Accounts are built into the app; there is no outside sign-in service. Students c
 
 | Setting | Effect |
 |---|---|
-| `SMTP_URL`, `EMAIL_FROM` | Codes are emailed (any SMTP provider). Without them, development writes each code to the API server's terminal (`[email not configured] … code for …`), and production turns email codes off |
+| `RESEND_API_KEY`, `EMAIL_FROM` | Codes are sent through the Resend API. Existing SMTP providers can use `SMTP_URL` with `EMAIL_FROM`. Without either configuration, development writes each code to the API server's terminal (`[email not configured] … code for …`), and production turns email codes off |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | From a Google Cloud OAuth client of type "Web application". Add `<site origin>/api/auth/google/callback` as an authorized redirect URI (locally `http://localhost:5173/api/auth/google/callback`) |
 | `APP_ORIGIN` | The public HTTPS origin; required in production for Google's redirect and for accepting browser writes |
 
 How it works: passwords are hashed with scrypt; a session is a random token in an HttpOnly, SameSite=Lax cookie (`__Host-` and Secure in production), and only its hash is stored (`auth_sessions`). Sessions last 30 days and renew while in use. Codes are stored hashed, expire after 10 minutes and stop working after 5 wrong tries. State-changing requests from other sites are refused. Sign-in attempts and code requests are rate-limited per server process. The code is in `apps/api/src/lib/auth/` and `apps/api/src/routes/auth.ts`, and the screens are in `apps/web/src/components/auth/AuthFlow.tsx`.
 
-`pnpm start` always runs in production mode, so locally it needs SMTP settings for email codes (or use `pnpm dev`). Production must be served over HTTPS, or browsers will not keep the session cookie.
+`pnpm start` always runs in production mode, so locally it needs Resend or SMTP settings for email codes (or use `pnpm dev`). Production must be served over HTTPS, or browsers will not keep the session cookie.
 
 ## Running in production
 

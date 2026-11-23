@@ -64,8 +64,8 @@ app.use(express.urlencoded({ extended: true }));
 // that cookie authentication needs.
 app.use("/api", rejectCrossSiteWrites, sessionMiddleware);
 const delivery = emailDelivery();
-if (delivery === "server_log") logger.warn("SMTP_URL / EMAIL_FROM are not set: sign-in codes are written to this log instead of being emailed (development only).");
-if (delivery === "unavailable") logger.warn("SMTP_URL / EMAIL_FROM are not set: email sign-up, sign-in codes and password resets are off. Google and existing passwords still work.");
+if (delivery === "server_log") logger.warn("RESEND_API_KEY / EMAIL_FROM (or SMTP_URL / EMAIL_FROM) are not set: sign-in codes are written to this log instead of being emailed (development only).");
+if (delivery === "unavailable") logger.warn("RESEND_API_KEY / EMAIL_FROM (or SMTP_URL / EMAIL_FROM) are not set: email sign-up, sign-in codes and password resets are off. Google and existing passwords still work.");
 if (!googleConfigured()) logger.info("GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET are not set: Continue with Google is hidden.");
 
 app.use("/api", router);

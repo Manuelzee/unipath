@@ -3,9 +3,9 @@ import { logger } from "../logger";
 import type { CodePurpose } from "./codes";
 
 /**
- * Sends one-time codes. With SMTP_URL and EMAIL_FROM set, codes are emailed.
- * Without them, development writes each code to the API server log so sign-up
- * can be tried locally; production turns email codes off instead.
+ * Sends one-time codes through Resend or SMTP. Without provider credentials,
+ * development writes each code to the API server log; production turns email
+ * codes off instead.
  */
 export type OutgoingEmail = { to: string; subject: string; text: string; html: string };
 export type Mailer = (message: OutgoingEmail) => Promise<void>;
@@ -24,18 +24,38 @@ let replacement: Mailer | null = null;
 export function setMailer(mailer: Mailer | null) { replacement = mailer; }
 
 const smtpUrl = () => process.env.SMTP_URL?.trim() ?? "";
+const resendApiKey = () => process.env.RESEND_API_KEY?.trim() ?? "";
 const fromAddress = () => process.env.EMAIL_FROM?.trim() ?? "";
 
 export function emailDelivery(): EmailDelivery {
-  if (replacement || (smtpUrl() && fromAddress())) return "email";
+  if (replacement || ((resendApiKey() || smtpUrl()) && fromAddress())) return "email";
   return process.env.NODE_ENV === "production" ? "unavailable" : "server_log";
 }
 
 let transport: Transporter | null = null;
 async function deliver(message: OutgoingEmail) {
   if (replacement) { await replacement(message); return; }
-  transport ??= nodemailer.createTransport({ url: smtpUrl(), connectionTimeout: 10_000, greetingTimeout: 10_000, socketTimeout: 20_000 });
-  await transport.sendMail({ from: fromAddress(), ...message });
+  const apiKey = resendApiKey();
+  const from = fromAddress();
+  if (apiKey && from) {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from, to: [message.to], subject: message.subject, text: message.text, html: message.html }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!response.ok) {
+      throw Object.assign(new Error(`Resend request failed with status ${response.status}.`), {
+        code: "RESEND_API_ERROR",
+        responseCode: response.status,
+      });
+    }
+    return;
+  }
+  const url = smtpUrl();
+  if (!url || !from) throw new Error("Email delivery is not configured.");
+  transport ??= nodemailer.createTransport({ url, connectionTimeout: 10_000, greetingTimeout: 10_000, socketTimeout: 20_000 });
+  await transport.sendMail({ from, ...message });
 }
 
 const COPY: Record<CodePurpose, { subject: string; intro: string }> = {
@@ -66,7 +86,7 @@ export async function sendCodeEmail(to: string, code: string, purpose: CodePurpo
   const mode = emailDelivery();
   if (mode === "unavailable") throw new EmailUnavailableError();
   if (mode === "server_log") {
-    logger.warn(`[email not configured] ${purpose} code for ${to}: ${code} (valid ${validMinutes} minutes). Set SMTP_URL and EMAIL_FROM to send real emails.`);
+    logger.warn(`[email not configured] ${purpose} code for ${to}: ${code} (valid ${validMinutes} minutes). Set RESEND_API_KEY and EMAIL_FROM to send real emails.`);
     return "server_log";
   }
   try {
