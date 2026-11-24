@@ -24,8 +24,23 @@ let replacement: Mailer | null = null;
 export function setMailer(mailer: Mailer | null) { replacement = mailer; }
 
 const smtpUrl = () => process.env.SMTP_URL?.trim() ?? "";
-const resendApiKey = () => process.env.RESEND_API_KEY?.trim() ?? "";
 const fromAddress = () => process.env.EMAIL_FROM?.trim() ?? "";
+
+/**
+ * The Resend API key: RESEND_API_KEY, or the password of an SMTP_URL that
+ * points at smtp.resend.com (Resend's SMTP password is the same API key).
+ * Resend is always used through its HTTPS API, because hosts such as Render's
+ * free plan block outgoing SMTP ports and every send would time out.
+ */
+export function resendApiKey(env: NodeJS.ProcessEnv = process.env): string {
+  const explicit = env.RESEND_API_KEY?.trim();
+  if (explicit) return explicit;
+  try {
+    const url = new URL(env.SMTP_URL?.trim() ?? "");
+    if (url.hostname.toLowerCase() === "smtp.resend.com" && url.password) return decodeURIComponent(url.password);
+  } catch { /* SMTP_URL unset or not a URL */ }
+  return "";
+}
 
 export function emailDelivery(): EmailDelivery {
   if (replacement || ((resendApiKey() || smtpUrl()) && fromAddress())) return "email";
@@ -45,9 +60,17 @@ async function deliver(message: OutgoingEmail) {
       signal: AbortSignal.timeout(10_000),
     });
     if (!response.ok) {
-      throw Object.assign(new Error(`Resend request failed with status ${response.status}.`), {
+      // Resend explains refusals, e.g. a sender whose domain is not verified
+      // can only email the account owner. Keep that for the server log.
+      let reason = "";
+      try {
+        const body = await response.json() as { name?: unknown; message?: unknown };
+        reason = [body.name, body.message].filter(part => typeof part === "string" && part).join(": ");
+      } catch { /* not JSON */ }
+      throw Object.assign(new Error(`Resend refused the email (status ${response.status}).`), {
         code: "RESEND_API_ERROR",
         responseCode: response.status,
+        response: reason || `HTTP ${response.status}`,
       });
     }
     return;

@@ -20,7 +20,7 @@ import { objectPath } from "../../lib/storage";
 import { hashPassword, passwordProblem, verifyPassword } from "../../lib/auth/password";
 import { cleanName, normalizeEmail, safeRedirect } from "../../lib/auth/validation";
 import { GoogleSignInError, decodeJwtPayload } from "../../lib/auth/google";
-import { codeEmail, emailDelivery, EmailSendError, sendCodeEmail } from "../../lib/auth/email";
+import { codeEmail, emailDelivery, EmailSendError, resendApiKey, sendCodeEmail } from "../../lib/auth/email";
 import { clientIp } from "../../lib/clientIp";
 import { chatName, cleanChatMessage } from "../../lib/chat";
 import { GetExchangeRateQueryParams, SearchJobListingsQueryParams, UploadStudentDocumentQueryParams } from "@workspace/api-zod";
@@ -363,6 +363,20 @@ test("Resend API sends code emails with the configured sender and bearer key", a
     from: "UniPath AI <no-reply@example.com>",
     to: ["ada@example.com"],
   });
+}));
+test("a Resend SMTP_URL is sent through the HTTPS API with the same key", async () => withResendConfig(async () => {
+  delete process.env.RESEND_API_KEY;
+  process.env.SMTP_URL = "smtps://resend:re_from%2Bsmtp@smtp.resend.com:465";
+  let authorization = "";
+  globalThis.fetch = async (_input, options) => {
+    authorization = new Headers(options?.headers).get("authorization") ?? "";
+    return new Response(JSON.stringify({ id: "email-id" }), { status: 200 });
+  };
+  assert.equal(await sendCodeEmail("ada@example.com", "042917", "verify_email", 10), "email");
+  assert.equal(authorization, "Bearer re_from+smtp", "no SMTP connection; the key is reused");
+  assert.equal(resendApiKey({ SMTP_URL: "smtps://user:pw@smtp.example.com:465" }), "", "other SMTP providers keep using SMTP");
+  assert.equal(resendApiKey({ RESEND_API_KEY: " re_explicit ", SMTP_URL: "smtps://resend:re_other@smtp.resend.com:465" }), "re_explicit");
+  assert.equal(resendApiKey({ SMTP_URL: "not a url" }), "");
 }));
 test("Resend API failures fail email delivery", async () => withResendConfig(async () => {
   globalThis.fetch = async () => new Response(JSON.stringify({ message: "Invalid API key" }), { status: 401 });

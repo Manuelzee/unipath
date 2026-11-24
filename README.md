@@ -45,7 +45,7 @@ Accounts are built into the app; there is no outside sign-in service. Students c
 
 | Setting | Effect |
 |---|---|
-| `RESEND_API_KEY`, `EMAIL_FROM` | Codes are sent through the Resend API. Existing SMTP providers can use `SMTP_URL` with `EMAIL_FROM`. Without either configuration, development writes each code to the API server's terminal (`[email not configured] … code for …`), and production turns email codes off |
+| `RESEND_API_KEY`, `EMAIL_FROM` | Codes are sent through Resend's HTTPS API. An `SMTP_URL` pointing at `smtp.resend.com` is also sent through the API with the same key, because hosts such as Render's free plan block outgoing SMTP. Other SMTP providers can use `SMTP_URL` with `EMAIL_FROM`. Without either configuration, development writes each code to the API server's terminal (`[email not configured] … code for …`), and production turns email codes off |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | From a Google Cloud OAuth client of type "Web application". Add `<site origin>/api/auth/google/callback` as an authorized redirect URI (locally `http://localhost:5173/api/auth/google/callback`) |
 | `APP_ORIGIN` | The public HTTPS origin; required in production for Google's redirect and for accepting browser writes |
 

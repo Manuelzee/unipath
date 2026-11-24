@@ -31,7 +31,9 @@ services:
       # The Cloudflare Pages site, e.g. https://unipath.pages.dev
       - key: APP_ORIGIN
         sync: false
-      # Resend API key with Sending access, limited to the verified domain.
+      # Resend API key with Sending access. Optional when SMTP_URL already holds
+      # it (smtps://resend:<key>@smtp.resend.com:465); either way the app sends
+      # through Resend's HTTPS API, since Render's free plan blocks SMTP ports.
       - key: RESEND_API_KEY
         sync: false
       # e.g. UniPath AI <no-reply@your-domain>
