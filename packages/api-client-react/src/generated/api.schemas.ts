@@ -1733,6 +1733,8 @@ export const AuthSessionEmailDelivery = {
 } as const;
 
 export interface AuthSession {
+  /** True when registration requires the emailed code (and password resets are offered). Off until a verified sending domain exists. */
+  emailVerification: boolean;
   user: AuthUser | null;
   methods: AuthSessionMethods;
   /** email: codes are emailed. server_log: development only, codes are written to the API server log. unavailable: registration and password resets are off. */

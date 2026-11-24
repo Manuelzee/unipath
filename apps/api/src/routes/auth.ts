@@ -24,9 +24,10 @@ import { requireJson } from "../middlewares/requireJson";
 import { deleteStudentData } from "./account";
 
 /**
- * UniPath accounts. Registration takes a name, email and password, then the
- * 6-digit code emailed to that address; the account can be used only after
- * the code is entered. Signing in is email + password (or Google) and never
+ * UniPath accounts. Registration takes a name, email and password. With
+ * EMAIL_VERIFICATION=required the 6-digit code emailed to that address must be
+ * entered before the account can be used; otherwise the student is signed in
+ * at once (see emailVerificationRequired). Signing in is email + password (or Google) and never
  * asks for a code. Successful sign-ins set the session cookie; see
  * lib/auth/session.ts.
  */
@@ -118,6 +119,15 @@ async function createVerifiedUser(values: Omit<typeof authUsersTable.$inferInser
   }
 }
 
+/**
+ * Whether registration must be confirmed with an emailed code. Off by default:
+ * Resend delivers only to the account owner until a sending domain is
+ * verified, so codes cannot reach students yet. Set EMAIL_VERIFICATION=required
+ * once a domain is verified; accounts created meanwhile then confirm their
+ * email at their next sign-in.
+ */
+export const emailVerificationRequired = () => process.env.EMAIL_VERIFICATION?.trim().toLowerCase() === "required";
+
 router.get("/auth/session", handle(async (req, res) => {
   const { userId } = getAuth(req);
   const user = userId ? await findUserById(userId) : undefined;
@@ -127,6 +137,7 @@ router.get("/auth/session", handle(async (req, res) => {
     user: user ? publicUser(user) : null,
     methods: { password: true, google: googleConfigured() },
     emailDelivery: delivery,
+    emailVerification: emailVerificationRequired(),
   }));
 }));
 
@@ -139,10 +150,25 @@ router.post("/auth/sign-up", handle(async (req, res) => {
   const problem = passwordProblem(body.data.password, email);
   if (problem) throw fail(400, problem);
   take(limits.signUpsByIp, ip(req));
-  if (emailDelivery() === "unavailable") throw emailOff();
+  const verify = emailVerificationRequired();
+  if (verify && emailDelivery() === "unavailable") throw emailOff();
   const existing = await findUserByEmail(email);
   if (existing?.emailVerifiedAt) throw fail(409, "An account with this email already exists. Sign in instead, or reset your password.");
+  // Without verification nothing proves who owns an address, so an existing
+  // account can never be taken over by registering its email again.
+  if (existing && !verify) throw fail(409, "An account with this email already exists. Sign in with your password instead.");
   const values = { passwordHash: await hashPassword(body.data.password), firstName, lastName: cleanName(body.data.lastName) };
+  if (!verify) {
+    let user;
+    try {
+      [user] = await db.insert(authUsersTable).values({ id: newUserId(), email, ...values }).returning();
+    } catch (error) {
+      if (isUniqueViolation(error)) throw fail(409, "An account with this email was just created. Sign in instead.");
+      throw error;
+    }
+    await signIn(req, res, user, true);
+    return;
+  }
   // An unverified account belongs to whoever proves the address first, so a
   // repeat sign-up replaces its password rather than being refused.
   if (existing) await updateUser(existing.id, values);
@@ -168,8 +194,8 @@ router.post("/auth/sign-in", handle(async (req, res) => {
     limits.failedSignInsByEmail.take(email);
     throw fail(401, "That email and password don’t match. Check them and try again, or reset your password.");
   }
-  // Registration is finished only once the emailed code is entered.
-  if (!user.emailVerifiedAt) {
+  // With verification on, registration is finished only once the emailed code is entered.
+  if (!user.emailVerifiedAt && emailVerificationRequired()) {
     const delivery = await sendCode(email, "verify_email", { quietCooldown: true });
     res.json(AuthResultSchema.parse({ status: "verification_required", email, delivery }));
     return;

@@ -5570,7 +5570,7 @@ export const getSignUpWithPasswordUrl = () => {
 }
 
 /**
- * @summary Create an account with a password; a code is emailed to verify the address
+ * @summary Create an account with a password. With email verification on, a code is emailed and must be entered first; otherwise the student is signed in at once
  */
 export const signUpWithPassword = async (passwordSignUpInput: PasswordSignUpInput, options?: Parameters<typeof customFetch>[1]): Promise<AuthResult> => {
 
@@ -5636,7 +5636,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type SignUpWithPasswordMutationVariables = {data: BodyType<PasswordSignUpInput>}
 
     /**
- * @summary Create an account with a password; a code is emailed to verify the address
+ * @summary Create an account with a password. With email verification on, a code is emailed and must be entered first; otherwise the student is signed in at once
  */
 export const useSignUpWithPassword = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signUpWithPassword>>, TError,SignUpWithPasswordMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}

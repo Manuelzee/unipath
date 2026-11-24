@@ -15,6 +15,7 @@ import type { AddressInfo } from "node:net";
 import { eq, inArray, like } from "drizzle-orm";
 
 process.env.LOG_LEVEL = "silent";
+process.env.EMAIL_VERIFICATION = "required";
 
 const { default: app } = await import("../../app");
 const { adminMembershipsTable, announcementsTable, authCodesTable, authUsersTable, chatMessagesTable, db, pool, studentProfilesTable } = await import("@workspace/db");

@@ -38,13 +38,14 @@ Environment variables are documented in [`.env.example`](.env.example). Required
 
 Accounts are built into the app; there is no outside sign-in service. Students can:
 
-- **Get started** (`/sign-up`) with a name, email and password. A 6-digit code is emailed to confirm the address, then they continue to onboarding.
+- **Get started** (`/sign-up`) with a name, email and password, then continue to onboarding. With `EMAIL_VERIFICATION=required`, a 6-digit code is emailed first and must be entered before the account can be used.
 - **Sign in** (`/sign-in`) with email and password, or ask for a one-time code instead (a first code sign-in creates the account).
 - **Continue with Google**. The button appears once `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set.
 - Reset a forgotten password with an emailed code, and in Settings change their name or password, sign out other devices, or delete the account.
 
 | Setting | Effect |
 |---|---|
+| `EMAIL_VERIFICATION` | `required` makes new accounts enter an emailed code before they can be used, and shows "Forgot password?". Off by default (sign-up signs the student in at once, and an email that already has an account cannot be registered again), because Resend delivers only to its account owner until a sending domain is verified. Turn it on after verifying a domain; accounts created meanwhile confirm their email at their next sign-in |
 | `RESEND_API_KEY`, `EMAIL_FROM` | Codes are sent through Resend's HTTPS API. An `SMTP_URL` pointing at `smtp.resend.com` is also sent through the API with the same key, because hosts such as Render's free plan block outgoing SMTP. Other SMTP providers can use `SMTP_URL` with `EMAIL_FROM`. Without either configuration, development writes each code to the API server's terminal (`[email not configured] … code for …`), and production turns email codes off |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | From a Google Cloud OAuth client of type "Web application". Add `<site origin>/api/auth/google/callback` as an authorized redirect URI (locally `http://localhost:5173/api/auth/google/callback`) |
 | `APP_ORIGIN` | The public HTTPS origin; required in production for Google's redirect and for accepting browser writes |

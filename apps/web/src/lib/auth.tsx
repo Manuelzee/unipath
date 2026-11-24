@@ -17,6 +17,8 @@ type AuthContextValue = {
   user: AuthUser | null;
   methods: Methods;
   emailDelivery: Delivery;
+  /** True when registration needs the emailed code and password resets are offered. */
+  emailVerification: boolean;
   /** True when the API could not be reached and nobody was signed in. */
   unavailable: boolean;
   /** True while the API is being retried (it sleeps when idle and takes up to a minute to wake). */
@@ -34,11 +36,11 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 const RETRY_DELAYS_MS = [1500, 3000, 5000, 8000, 10000, 12000, 15000];
 /** Network failures and server-side errors can clear up on their own; other errors will not. */
 const transient = (error: unknown) => !(error instanceof ApiError) || error.status >= 500 || error.status === 429;
-type State = { isLoaded: boolean; user: AuthUser | null; methods: Methods; emailDelivery: Delivery; unavailable: boolean; waking: boolean };
+type State = { isLoaded: boolean; user: AuthUser | null; methods: Methods; emailDelivery: Delivery; emailVerification: boolean; unavailable: boolean; waking: boolean };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<State>(
-    { isLoaded: false, user: null, methods: defaultMethods, emailDelivery: 'email', unavailable: false, waking: false });
+    { isLoaded: false, user: null, methods: defaultMethods, emailDelivery: 'email', emailVerification: false, unavailable: false, waking: false });
   const lastCheck = useRef(0);
   const latestRun = useRef(0);
 
@@ -49,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const session = await getAuthSession({ cache: 'no-store' });
         if (run !== latestRun.current) return;
-        setState({ isLoaded: true, user: session.user ?? null, methods: session.methods, emailDelivery: session.emailDelivery, unavailable: false, waking: false });
+        setState({ isLoaded: true, user: session.user ?? null, methods: session.methods, emailDelivery: session.emailDelivery, emailVerification: session.emailVerification, unavailable: false, waking: false });
         return;
       } catch (error) {
         if (run !== latestRun.current) return;

@@ -41,6 +41,8 @@ into another; never put it in the repository or a chat.
 
 ## 2. Resend (email)
 
+Until a domain is verified, leave `EMAIL_VERIFICATION` unset on Render: students then register without an emailed code. After the domain is verified and `EMAIL_FROM` uses it, set `EMAIL_VERIFICATION=required` on Render to require the code (and offer password resets).
+
 1. **Add your domain** under **Domains**, add the DNS records Resend shows, and wait until it says **Verified**.
    Without a verified domain, Resend only delivers mail sent from `onboarding@resend.dev` to your own Resend account address. That is enough to try the site yourself, but students would never receive their codes.
 2. **Create an API key** under **API Keys**, with **Sending access**, limited to that domain. It is shown only once.

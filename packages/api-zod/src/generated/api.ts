@@ -3065,6 +3065,7 @@ export const DownloadStudentDocumentResponse = zod.unknown()
  * @summary The signed-in account (or null) and the sign-in methods this server offers
  */
 export const GetAuthSessionResponse = zod.object({
+  "emailVerification": zod.boolean().describe('True when registration requires the emailed code (and password resets are offered). Off until a verified sending domain exists.'),
   "user": zod.union([zod.object({
   "id": zod.string(),
   "email": zod.string(),
@@ -3084,7 +3085,7 @@ export const GetAuthSessionResponse = zod.object({
 
 
 /**
- * @summary Create an account with a password; a code is emailed to verify the address
+ * @summary Create an account with a password. With email verification on, a code is emailed and must be entered first; otherwise the student is signed in at once
  */
 export const signUpWithPasswordBodyEmailMin = 3;
 export const signUpWithPasswordBodyEmailMax = 254;

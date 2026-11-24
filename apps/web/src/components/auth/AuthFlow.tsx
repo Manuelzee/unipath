@@ -57,7 +57,8 @@ export function AuthFlow({ mode }: { mode: Mode }) {
     setLocation(result.isNewUser ? '/onboarding' : returnTo ?? '/dashboard');
     auth.setUser(result.user ?? null);
   };
-  const emailOff = auth.emailDelivery === 'unavailable';
+  // Registration needs email only while verification is on.
+  const emailOff = auth.emailVerification && auth.emailDelivery === 'unavailable';
   const signUp = mode === 'sign-up';
 
   if (auth.unavailable) return <Card title="We can’t reach UniPath right now" sub="Check your connection, then try again.">
@@ -116,7 +117,7 @@ export function AuthFlow({ mode }: { mode: Mode }) {
   // Password step: the sign-in or sign-up form.
   return <PasswordStep mode={mode} email={email} setEmail={setEmail} firstName={firstName} setFirstName={setFirstName}
     busy={busy} emailOff={emailOff} methods={auth.methods} returnTo={returnTo} carry={carry} feedback={<Feedback error={error} notice={notice}/>}
-    onForgot={() => go({ kind: 'reset-email' })}
+    onForgot={auth.emailVerification ? () => go({ kind: 'reset-email' }) : undefined}
     onSignIn={password => run(async () => finish(await signInWithPassword({ email, password }), email))}
     onSignUp={(lastName, password) => run(async () => finish(await signUpWithPassword({ email, password, firstName, lastName }), email))}/>;
 }
@@ -124,7 +125,7 @@ export function AuthFlow({ mode }: { mode: Mode }) {
 function PasswordStep(props: {
   mode: Mode; email: string; setEmail: (v: string) => void; firstName: string; setFirstName: (v: string) => void;
   busy: boolean; emailOff: boolean; methods: AuthSession['methods']; returnTo: string | null; carry: string; feedback: ReactNode;
-  onForgot: () => void; onSignIn: (password: string) => void; onSignUp: (lastName: string, password: string) => void;
+  onForgot?: () => void; onSignIn: (password: string) => void; onSignUp: (lastName: string, password: string) => void;
 }) {
   const [password, setPassword] = useState('');
   const [lastName, setLastName] = useState('');
@@ -149,7 +150,7 @@ function PasswordStep(props: {
       </div>}
       <EmailField value={props.email} onChange={props.setEmail}/>
       <PasswordField value={password} onChange={setPassword} isNew={signUp}
-        action={!signUp && <button type="button" className="auth-text-button auth-forgot" onClick={props.onForgot} data-testid="button-forgot-password">Forgot password?</button>}/>
+        action={!signUp && props.onForgot && <button type="button" className="auth-text-button auth-forgot" onClick={props.onForgot} data-testid="button-forgot-password">Forgot password?</button>}/>
       <Submit busy={props.busy} label={signUp ? 'Create account' : 'Sign in'} testId={signUp ? 'button-sign-up' : 'button-sign-in'}/>
     </form>}
     {problem ? <p className="auth-error" role="alert">{problem}</p> : props.feedback}

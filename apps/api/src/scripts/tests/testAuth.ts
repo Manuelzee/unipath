@@ -21,6 +21,8 @@ import type { AddressInfo } from "node:net";
 import { eq, like } from "drizzle-orm";
 
 process.env.LOG_LEVEL = "silent";
+// Most tests cover the verified flow; one switches verification off.
+process.env.EMAIL_VERIFICATION = "required";
 process.env.GOOGLE_CLIENT_ID = "test-client.apps.googleusercontent.com";
 process.env.GOOGLE_CLIENT_SECRET = "test-secret";
 delete process.env.APP_ORIGIN;
@@ -362,6 +364,32 @@ test("a refused email gives a clear error instead of a server failure", async ()
     assert.match(res.data.error, /couldn’t send the email/);
   } finally {
     setMailer(async message => { outbox.push(message); });
+  }
+});
+
+test("with email verification off, sign-up signs in at once and existing emails cannot be taken over", async () => {
+  process.env.EMAIL_VERIFICATION = "off";
+  try {
+    const b = new Browser();
+    assert.equal((await b.get("/api/auth/session")).data.emailVerification, false);
+    const email = mail("noverify");
+    const before = outbox.length;
+    const res = await b.post("/api/auth/sign-up", { email, password: "correct horse battery", firstName: "Nia" });
+    assert.equal(res.status, 200, JSON.stringify(res.data));
+    assert.deepEqual([res.data.status, res.data.isNewUser, res.data.user.emailVerified], ["signed_in", true, false]);
+    assert.equal(outbox.length, before, "no email is sent");
+    assert.equal((await b.me())?.email, email);
+    const again = await new Browser().post("/api/auth/sign-up", { email, password: "someone else's password", firstName: "Eve" });
+    assert.equal(again.status, 409, "an existing account cannot be re-registered");
+    assert.equal((await new Browser().post("/api/auth/sign-in", { email, password: "someone else's password" })).status, 401);
+    const signIn = await new Browser().post("/api/auth/sign-in", { email, password: "correct horse battery" });
+    assert.equal(signIn.data.status, "signed_in", "unverified accounts can sign in while verification is off");
+    // Turning verification on later asks these accounts to confirm their email.
+    process.env.EMAIL_VERIFICATION = "required";
+    const later = await new Browser().post("/api/auth/sign-in", { email, password: "correct horse battery" });
+    assert.equal(later.data.status, "verification_required");
+  } finally {
+    process.env.EMAIL_VERIFICATION = "required";
   }
 });
 
