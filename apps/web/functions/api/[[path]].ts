@@ -37,7 +37,29 @@ export async function onRequest({ request, env }: { request: Request; env: Env }
   headers.set("x-forwarded-host", incoming.host);
   headers.set("x-forwarded-proto", "https");
 
-  const hasBody = request.method !== "GET" && request.method !== "HEAD";
+  const readOnly = request.method === "GET" || request.method === "HEAD";
   // Redirects (Google sign-in) and Set-Cookie headers go back to the browser unchanged.
-  return fetch(target, { method: request.method, headers, body: hasBody ? request.body : undefined, redirect: "manual" });
+  const send = () => fetch(target, { method: request.method, headers, body: readOnly ? undefined : request.body, redirect: "manual" });
+
+  // The API's hosting plan sleeps when idle and takes up to about a minute to
+  // wake. Read-only requests are retried through that window. Writes are not:
+  // the first attempt may already have been processed.
+  for (let attempt = 0; ; attempt++) {
+    const last = !readOnly || attempt >= RETRY_DELAYS_MS.length;
+    try {
+      const response = await send();
+      if (last || !WAKING_STATUSES.has(response.status)) return response;
+      await response.body?.cancel();
+    } catch {
+      if (last) return startingUp();
+    }
+    await new Promise(resolve => setTimeout(resolve, RETRY_DELAYS_MS[attempt]));
+  }
 }
+
+const WAKING_STATUSES = new Set([502, 503, 504]);
+const RETRY_DELAYS_MS = [1000, 2000, 3000, 5000, 7000, 9000, 10000, 10000];
+const startingUp = () => Response.json(
+  { error: "UniPath is starting up after a quiet period. Please try again in a few seconds." },
+  { status: 503, headers: { "retry-after": "10", "cache-control": "no-store" } },
+);

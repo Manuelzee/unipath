@@ -4,7 +4,7 @@
  * the API who is signed in and which sign-in methods it offers.
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { getAuthSession, signOut as signOutRequest } from '@workspace/api-client-react';
+import { ApiError, getAuthSession, signOut as signOutRequest } from '@workspace/api-client-react';
 import type { AuthSession, AuthUser } from '@workspace/api-client-react';
 
 export type { AuthUser };
@@ -17,8 +17,10 @@ type AuthContextValue = {
   user: AuthUser | null;
   methods: Methods;
   emailDelivery: Delivery;
-  /** True when the API could not be reached; everyone is treated as signed out. */
+  /** True when the API could not be reached and nobody was signed in. */
   unavailable: boolean;
+  /** True while the API is being retried (it sleeps when idle and takes up to a minute to wake). */
+  waking: boolean;
   refresh: () => Promise<void>;
   /** Apply the account an auth endpoint just returned, without another request. */
   setUser: (user: AuthUser | null) => void;
@@ -28,19 +30,37 @@ type AuthContextValue = {
 
 const defaultMethods: Methods = { password: true, google: false };
 const AuthContext = createContext<AuthContextValue | null>(null);
+// About a minute in all: long enough for the API's hosting plan to wake from sleep.
+const RETRY_DELAYS_MS = [1500, 3000, 5000, 8000, 10000, 12000, 15000];
+/** Network failures and server-side errors can clear up on their own; other errors will not. */
+const transient = (error: unknown) => !(error instanceof ApiError) || error.status >= 500 || error.status === 429;
+type State = { isLoaded: boolean; user: AuthUser | null; methods: Methods; emailDelivery: Delivery; unavailable: boolean; waking: boolean };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<{ isLoaded: boolean; user: AuthUser | null; methods: Methods; emailDelivery: Delivery; unavailable: boolean }>(
-    { isLoaded: false, user: null, methods: defaultMethods, emailDelivery: 'email', unavailable: false });
+  const [state, setState] = useState<State>(
+    { isLoaded: false, user: null, methods: defaultMethods, emailDelivery: 'email', unavailable: false, waking: false });
   const lastCheck = useRef(0);
+  const latestRun = useRef(0);
 
   const refresh = useCallback(async () => {
     lastCheck.current = Date.now();
-    try {
-      const session = await getAuthSession({ cache: 'no-store' });
-      setState({ isLoaded: true, user: session.user ?? null, methods: session.methods, emailDelivery: session.emailDelivery, unavailable: false });
-    } catch {
-      setState(current => ({ ...current, isLoaded: true, user: null, unavailable: true }));
+    const run = ++latestRun.current;
+    for (let attempt = 0; ; attempt++) {
+      try {
+        const session = await getAuthSession({ cache: 'no-store' });
+        if (run !== latestRun.current) return;
+        setState({ isLoaded: true, user: session.user ?? null, methods: session.methods, emailDelivery: session.emailDelivery, unavailable: false, waking: false });
+        return;
+      } catch (error) {
+        if (run !== latestRun.current) return;
+        if (!transient(error) || attempt >= RETRY_DELAYS_MS.length) {
+          // A failed check is not a sign-out: whoever was signed in stays signed in.
+          setState(current => ({ ...current, isLoaded: true, waking: false, unavailable: !current.user }));
+          return;
+        }
+        setState(current => (current.waking ? current : { ...current, waking: true }));
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAYS_MS[attempt]));
+      }
     }
   }, []);
 
@@ -58,7 +78,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [setUser]);
 
   const value = useMemo<AuthContextValue>(() => ({ ...state, isSignedIn: !!state.user, refresh, setUser, signOut }), [state, refresh, setUser, signOut]);
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={value}>
+    {children}
+    {state.waking && <div className="waking-toast" role="status" aria-live="polite" data-testid="toast-waking">
+      <span className="waking-spinner" aria-hidden="true"/>
+      <span><strong>Starting UniPath…</strong> The server rests when it’s quiet and can take up to a minute to wake. You don’t need to do anything.</span>
+    </div>}
+  </AuthContext.Provider>;
 }
 
 export function useAuth(): AuthContextValue {

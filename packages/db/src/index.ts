@@ -13,6 +13,10 @@ if (!process.env.DATABASE_URL) {
 
 export const pool = new Pool({
   ...connectionConfig(process.env.DATABASE_URL),
+  // Hosted poolers cap clients per user (Supabase's free session pooler: 15).
+  // Keep each process well under it, so the old and new servers can overlap
+  // during a deploy without "max clients reached" errors.
+  max: Number(process.env.DB_POOL_MAX) > 0 ? Number(process.env.DB_POOL_MAX) : 5,
   // Fail fast instead of hanging when the database is unreachable.
   connectionTimeoutMillis: 10_000,
   idleTimeoutMillis: 30_000,
