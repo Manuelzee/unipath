@@ -8,6 +8,7 @@
 
 export interface OwnChatMessage {
   id: number;
+  room: string;
   body: string;
   createdAt: string;
 }

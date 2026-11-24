@@ -17,7 +17,7 @@ import { eq, inArray, like } from "drizzle-orm";
 process.env.LOG_LEVEL = "silent";
 
 const { default: app } = await import("../../app");
-const { adminMembershipsTable, authCodesTable, authUsersTable, chatMessagesTable, db, pool } = await import("@workspace/db");
+const { adminMembershipsTable, announcementsTable, authCodesTable, authUsersTable, chatMessagesTable, db, pool, studentProfilesTable } = await import("@workspace/db");
 const { setMailer } = await import("../../lib/auth/email");
 
 const DOMAIN = `chat-test-${randomUUID().slice(0, 8)}.example.invalid`;
@@ -51,6 +51,13 @@ async function student(name: string, firstName: string, lastName: string) {
   const ok = await b.post("/api/auth/codes/verify", { email, purpose: "verify_email", code });
   assert.equal(ok.data.status, "signed_in");
   return { b, id: ok.data.user.id as string, email };
+}
+
+async function setStudyCountry(userId: string, studyCountry: string) {
+  await db.insert(studentProfilesTable).values({
+    userId, residenceCountry: "", citizenship: "", studyCountry, degreeLevel: "", major: "", grades: "",
+    annualBudgetUsd: 0, preferredLanguage: "", englishTest: "", englishScore: "",
+  }).onConflictDoUpdate({ target: studentProfilesTable.userId, set: { studyCountry } });
 }
 
 const tests: Array<[string, () => Promise<void>]> = [];
@@ -101,6 +108,36 @@ test("pages come oldest first, with a cursor for earlier messages", async () => 
   assert.equal((await ada.b.get("/api/chat/messages?limit=500")).status, 400);
 });
 
+test("country rooms follow each student's study destination", async () => {
+  await setStudyCountry(ada.id, "USA or Canada");
+  const rooms = (await ada.b.get("/api/chat/rooms")).data;
+  assert.deepEqual(rooms.rooms.map((r: { id: string }) => r.id), ["general", "us", "ca"]);
+  assert.deepEqual(rooms.rooms.map((r: { name: string }) => r.name), ["General", "US students", "Canada students"]);
+  assert.deepEqual([rooms.studyCountryKnown, rooms.isAdmin], [true, false]);
+  const none = (await ben.b.get("/api/chat/rooms")).data;
+  assert.deepEqual(none.rooms.map((r: { id: string }) => r.id), ["general"], "no study country: General only");
+  assert.equal(none.studyCountryKnown, false);
+});
+
+test("only students heading to a country can read or post in its room", async () => {
+  const sent = await ada.b.post("/api/chat/messages", { room: "us", body: "Anyone else going to the US?" });
+  assert.equal(sent.status, 201);
+  assert.equal(sent.data.room, "us");
+  assert.ok((await ada.b.get("/api/chat/messages?room=us")).data.items.some((m: { id: number }) => m.id === sent.data.id));
+  assert.ok(!(await ada.b.get("/api/chat/messages")).data.items.some((m: { id: number }) => m.id === sent.data.id), "room messages stay in their room");
+  const outsider = await ben.b.get("/api/chat/messages?room=us");
+  assert.equal(outsider.status, 403);
+  assert.match(outsider.data.error, /study in the United States/);
+  assert.equal((await ben.b.post("/api/chat/messages", { room: "us", body: "let me in" })).status, 403);
+  assert.equal((await ada.b.get("/api/chat/messages?room=gb")).status, 403);
+  assert.equal((await ada.b.get("/api/chat/messages?room=zz")).status, 400, "not a country");
+  assert.equal((await ada.b.get("/api/chat/messages?room=..%2Fgeneral")).status, 400);
+  await setStudyCountry(ben.id, "the UK");
+  assert.equal((await ben.b.get("/api/chat/messages?room=gb")).status, 200, "a profile change opens the new room");
+  await setStudyCountry(ada.id, "Germany");
+  assert.equal((await ada.b.get("/api/chat/messages?room=us")).status, 403, "and closes the old one");
+});
+
 test("only the author or an administrator can delete a message", async () => {
   const mine = (await ben.b.post("/api/chat/messages", { body: "delete me later" })).data;
   assert.equal((await ada.b.request("DELETE", `/api/chat/messages/${mine.id}`)).status, 403);
@@ -112,6 +149,29 @@ test("only the author or an administrator can delete a message", async () => {
   const asAdmin = (await cam.b.get("/api/chat/messages")).data.items.find((m: { id: number }) => m.id === other.id);
   assert.equal(asAdmin.canDelete, true);
   assert.equal((await cam.b.request("DELETE", `/api/chat/messages/${other.id}`)).status, 204);
+  // Administrators can open every country room that has messages, to moderate it.
+  const adminRooms = (await cam.b.get("/api/chat/rooms")).data;
+  assert.equal(adminRooms.isAdmin, true);
+  assert.ok(adminRooms.rooms.some((r: { id: string }) => r.id === "us"));
+  assert.equal((await cam.b.get("/api/chat/messages?room=us")).status, 200);
+});
+
+test("students read announcements; only administrators publish or remove them", async () => {
+  assert.equal((await new Browser().get("/api/announcements")).status, 401);
+  assert.equal((await ada.b.get("/api/announcements")).data.canPost, false);
+  assert.equal((await ada.b.post("/api/announcements", { title: "Hi", body: "Not allowed" })).status, 403);
+  assert.equal((await cam.b.get("/api/announcements")).data.canPost, true);
+  assert.equal((await cam.b.post("/api/announcements", { title: "   ", body: "text" })).status, 400);
+  const made = await cam.b.post("/api/announcements", { title: " Application week\n", body: "Deadlines are close.\n\nGood luck!" });
+  assert.equal(made.status, 201);
+  assert.equal(made.data.title, "Application week");
+  const seen = (await ada.b.get("/api/announcements")).data.items.find((a: { id: number }) => a.id === made.data.id);
+  assert.deepEqual([seen.title, seen.body, seen.canDelete], ["Application week", "Deadlines are close.\n\nGood luck!", false]);
+  assert.ok(!JSON.stringify(seen).includes(cam.id), "the author is never exposed");
+  assert.equal((await ada.b.request("DELETE", `/api/announcements/${made.data.id}`)).status, 403);
+  assert.equal((await cam.b.request("DELETE", `/api/announcements/${made.data.id}`, undefined, { origin: "https://evil.example" })).status, 403);
+  assert.equal((await cam.b.request("DELETE", `/api/announcements/${made.data.id}`)).status, 204);
+  assert.equal((await cam.b.request("DELETE", `/api/announcements/${made.data.id}`)).status, 404);
 });
 
 test("chat is in the data export and removed by data deletion", async () => {
@@ -126,7 +186,12 @@ test("chat is in the data export and removed by data deletion", async () => {
 
 async function cleanup() {
   const users = await db.select({ id: authUsersTable.id }).from(authUsersTable).where(like(authUsersTable.email, `%@${DOMAIN}`));
-  if (users.length) await db.delete(adminMembershipsTable).where(inArray(adminMembershipsTable.userId, users.map(u => u.id)));
+  if (users.length) {
+    const ids = users.map(u => u.id);
+    await db.delete(adminMembershipsTable).where(inArray(adminMembershipsTable.userId, ids));
+    await db.delete(announcementsTable).where(inArray(announcementsTable.authorId, ids));
+    await db.delete(studentProfilesTable).where(inArray(studentProfilesTable.userId, ids));
+  }
   await db.delete(authUsersTable).where(like(authUsersTable.email, `%@${DOMAIN}`));
   await db.delete(authCodesTable).where(like(authCodesTable.email, `%@${DOMAIN}`));
 }

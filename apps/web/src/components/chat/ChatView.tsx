@@ -1,13 +1,16 @@
 import { type FormEvent, type KeyboardEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { Link, useLocation, useSearch } from 'wouter';
 import {
-  getListChatMessagesQueryKey, listChatMessages, useDeleteChatMessage, useListChatMessages, useSendChatMessage,
+  ApiError, getListChatMessagesQueryKey, getListChatRoomsQueryKey, listChatMessages, useDeleteChatMessage, useListChatMessages,
+  useListChatRooms, useSendChatMessage,
 } from '@workspace/api-client-react';
-import type { ChatMessage, ChatMessagePage } from '@workspace/api-client-react';
-import { ArrowUp, LoaderCircle, MessagesSquare, ShieldCheck, Trash2 } from 'lucide-react';
+import type { ChatMessage, ChatMessagePage, ChatRoom } from '@workspace/api-client-react';
+import { ArrowUp, Globe2, LoaderCircle, MapPin, MessagesSquare, ShieldCheck, Trash2 } from 'lucide-react';
 import { PageHeading, errorMessage } from '@/components/workspace/shared';
 
-const PAGE = { limit: 50 };
+const PAGE_SIZE = 50;
+const GENERAL: ChatRoom = { id: 'general', name: 'General', kind: 'general' };
 const MAX_LENGTH = 1000;
 const POLL_MS = 4000;
 
@@ -20,13 +23,52 @@ const dayLabel = (iso: string) => {
   if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
   return date.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: date.getFullYear() === today.getFullYear() ? undefined : 'numeric' });
 };
+const regionNames = new Intl.DisplayNames(['en'], { type: 'region' });
+// Countries whose English name takes "the" ("study in the United States").
+const WITH_THE = new Set(['US', 'GB', 'NL', 'PH', 'AE', 'BS', 'GM', 'DO', 'MV', 'MH', 'SB', 'SC', 'CF', 'KM']);
+/** "the United States" for "us"; the code itself if the browser does not know it. */
+const countryLabel = (code: string) => {
+  const upper = code.toUpperCase();
+  let name = upper;
+  try { name = regionNames.of(upper) ?? upper; } catch { /* unknown code */ }
+  return WITH_THE.has(upper) ? `the ${name}` : name;
+};
 const timeLabel = (iso: string) => new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 
-/** The community chat room every signed-in student shares. */
+/**
+ * Community chat: General for every student, plus a room for each country the
+ * student plans to study in (from their profile). The server enforces which
+ * rooms a student may read and post in.
+ */
 export function ChatView() {
+  const rooms = useListChatRooms({ query: { queryKey: getListChatRoomsQueryKey(), staleTime: 60_000 } });
+  const [, setLocation] = useLocation();
+  const wanted = new URLSearchParams(useSearch()).get('room') ?? GENERAL.id;
+  const list = rooms.data?.rooms ?? [GENERAL];
+  const active = list.find(room => room.id === wanted) ?? list[0];
+  const choose = (id: string) => setLocation(id === GENERAL.id ? '/chat' : `/chat?room=${encodeURIComponent(id)}`, { replace: true });
+  return <div className="page page-enter chat-page">
+    <PageHeading kicker="COMMUNITY" title="Student lounge." body="Swap tips, ask questions and meet other students heading to the same country."/>
+    <div className="chat-rooms" role="tablist" aria-label="Chat rooms">
+      {list.map(room => <button key={room.id} role="tab" aria-selected={room.id === active.id} className={`chat-room-tab${room.id === active.id ? ' chat-room-active' : ''}`}
+        onClick={() => choose(room.id)} data-testid={`tab-room-${room.id}`}>
+        {room.kind === 'country' ? <MapPin size={14}/> : <Globe2 size={14}/>}{room.name}</button>)}
+    </div>
+    <p className="chat-room-hint" data-testid="text-room-hint">
+      {active.kind === 'country' ? <>For students planning to study in {countryLabel(active.id)}.{rooms.data?.isAdmin ? ' You can see every country room as an administrator.' : ''}</>
+        : rooms.data && !rooms.data.studyCountryKnown ? <>Everyone is welcome here. Add the country you plan to study in to <Link href="/profile" className="text-link-inline">your profile</Link> to also join its room, such as US students.</>
+        : <>Everyone is welcome here. Your country rooms are in the tabs above.</>}
+    </p>
+    <RoomFeed key={active.id} room={active}/>
+    <div className="ws-notice"><ShieldCheck size={16}/><span>Every signed-in student in a room can read it. Others see only your first name and last initial. Be kind, and never share passwords, codes or contact details here.</span></div>
+  </div>;
+}
+
+function RoomFeed({ room }: { room: ChatRoom }) {
   const qc = useQueryClient();
-  const key = getListChatMessagesQueryKey(PAGE);
-  const latest = useListChatMessages(PAGE, { query: { queryKey: key, refetchInterval: POLL_MS } });
+  const params = { room: room.id, limit: PAGE_SIZE };
+  const key = getListChatMessagesQueryKey(params);
+  const latest = useListChatMessages(params, { query: { queryKey: key, refetchInterval: POLL_MS, retry: (count, error) => !(error instanceof ApiError && error.status === 403) && count < 2 } });
   const [older, setOlder] = useState<ChatMessage[]>([]);
   const [olderHasMore, setOlderHasMore] = useState<boolean | null>(null);
   const [loadingOlder, setLoadingOlder] = useState(false);
@@ -59,7 +101,7 @@ export function ChatView() {
     if (!first || loadingOlder) return;
     setLoadingOlder(true); setOlderError(false);
     try {
-      const page = await listChatMessages({ before: first.id, limit: PAGE.limit });
+      const page = await listChatMessages({ room: room.id, before: first.id, limit: PAGE_SIZE });
       if (list.current) keepOffset.current = list.current.scrollHeight - list.current.scrollTop;
       setOlder(current => merge(page.items, current));
       setOlderHasMore(page.hasMore);
@@ -75,7 +117,7 @@ export function ChatView() {
     e?.preventDefault();
     const body = draft.trim();
     if (!body || send.isPending) return;
-    send.mutate({ data: { body } }, { onSuccess: message => {
+    send.mutate({ data: { body, room: room.id } }, { onSuccess: message => {
       setDraft(''); stickToBottom.current = true;
       updateLatest(items => merge(items, [message]));
       void qc.invalidateQueries({ queryKey: key });
@@ -98,12 +140,10 @@ export function ChatView() {
     } });
   };
 
-  return <div className="page page-enter chat-page">
-    <PageHeading kicker="COMMUNITY" title="Student lounge." body="Swap tips, ask questions and meet other students planning their next chapter."/>
-    <section className="ws-panel chat-panel" aria-label="Community chat">
+  return <section className="ws-panel chat-panel" aria-label={`${room.name} chat`} role="tabpanel">
       <div className="chat-list" ref={list} onScroll={onScroll} role="log" aria-live="polite" aria-relevant="additions" data-testid="chat-list">
         {latest.isLoading ? <div className="chat-state"><LoaderCircle size={20} className="spin"/> Loading the conversation…</div>
-          : latest.isError && !latest.data ? <div className="chat-state" role="alert">We couldn’t load the chat. <button className="ws-link" onClick={() => void latest.refetch()}>Try again</button></div>
+          : latest.isError && !latest.data ? <div className="chat-state" role="alert">{errorMessage(latest.error, 'We couldn’t load the chat.')} <button className="ws-link" onClick={() => void latest.refetch()}>Try again</button></div>
           : messages.length === 0 ? <div className="chat-state chat-empty"><div className="state-icon"><MessagesSquare size={22}/></div><strong>No messages yet.</strong><span>Start the conversation and say hello.</span></div>
           : <>
             {hasMore && <div className="chat-older">
@@ -135,7 +175,7 @@ export function ChatView() {
       <form className="chat-composer" onSubmit={submit}>
         <label className="sr-only" htmlFor="chat-input">Message</label>
         <textarea id="chat-input" value={draft} onChange={e => setDraft(e.target.value.slice(0, MAX_LENGTH))} onKeyDown={onKeyDown} rows={2}
-          maxLength={MAX_LENGTH} placeholder="Write a message… (Enter to send, Shift+Enter for a new line)" data-testid="input-chat-message"/>
+          maxLength={MAX_LENGTH} placeholder={`Message ${room.name}… (Enter to send, Shift+Enter for a new line)`} data-testid="input-chat-message"/>
         <div className="chat-composer-side">
           <small aria-live="polite">{draft.length > MAX_LENGTH - 100 ? `${MAX_LENGTH - draft.length} left` : ''}</small>
           <button className="button button-primary chat-send" disabled={!draft.trim() || send.isPending} aria-label="Send message" data-testid="button-chat-send">
@@ -143,7 +183,5 @@ export function ChatView() {
         </div>
       </form>
       {(send.isError || remove.isError) && <p className="form-error chat-error" role="alert">{errorMessage(send.error ?? remove.error, 'That didn’t go through. Please try again.')}</p>}
-    </section>
-    <div className="ws-notice"><ShieldCheck size={16}/><span>Every signed-in student can read this room. Others see only your first name and last initial. Be kind, and never share passwords, codes or contact details here.</span></div>
-  </div>;
+    </section>;
 }

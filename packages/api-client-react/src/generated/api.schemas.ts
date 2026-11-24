@@ -1658,6 +1658,7 @@ export interface StudentDocument {
 
 export interface OwnChatMessage {
   id: number;
+  room: string;
   body: string;
   createdAt: string;
 }
@@ -1911,10 +1912,16 @@ export interface ChatMessageInput {
      * @maxLength 1000
      */
   body: string;
+  /**
+     * general (default) or a lower-case country code such as us
+     * @maxLength 20
+     */
+  room?: string;
 }
 
 export interface ChatMessage {
   id: number;
+  room: string;
   body: string;
   createdAt: string;
   /** First name and last initial only; never an email address */
@@ -1927,6 +1934,55 @@ export interface ChatMessagePage {
   items: ChatMessage[];
   /** Older messages exist before the first item */
   hasMore: boolean;
+}
+
+export type ChatRoomKind = typeof ChatRoomKind[keyof typeof ChatRoomKind];
+
+
+export const ChatRoomKind = {
+  general: 'general',
+  country: 'country',
+} as const;
+
+export interface ChatRoom {
+  /** general, or a lower-case country code such as us */
+  id: string;
+  name: string;
+  kind: ChatRoomKind;
+}
+
+export interface ChatRoomList {
+  rooms: ChatRoom[];
+  /** False when the profile names no study country, so only General is open */
+  studyCountryKnown: boolean;
+  /** Administrators can open every room that has messages */
+  isAdmin: boolean;
+}
+
+export interface Announcement {
+  id: number;
+  title: string;
+  body: string;
+  createdAt: string;
+  canDelete: boolean;
+}
+
+export interface AnnouncementList {
+  items: Announcement[];
+  canPost: boolean;
+}
+
+export interface AnnouncementInput {
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  title: string;
+  /**
+     * @minLength 1
+     * @maxLength 4000
+     */
+  body: string;
 }
 
 export type ListAdminInstitutionsParams = {
@@ -2097,9 +2153,22 @@ applicationId?: number;
 
 export type ListChatMessagesParams = {
 /**
+ * general (default) or a lower-case country code such as us
+ * @maxLength 20
+ */
+room?: string;
+/**
  * @minimum 1
  */
 before?: number;
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: number;
+};
+
+export type ListAnnouncementsParams = {
 /**
  * @minimum 1
  * @maximum 100

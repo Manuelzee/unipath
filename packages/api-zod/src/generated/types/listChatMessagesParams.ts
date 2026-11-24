@@ -8,6 +8,11 @@
 
 export type ListChatMessagesParams = {
 /**
+ * general (default) or a lower-case country code such as us
+ * @maxLength 20
+ */
+room?: string;
+/**
  * @minimum 1
  */
 before?: number;

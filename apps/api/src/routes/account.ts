@@ -51,7 +51,7 @@ router.get("/me/export", requireAuth, async (req, res): Promise<void> => {
     aiSavedItems: aiItems.map(i => ({ ...i, createdAt: iso(i.createdAt) })),
     jobApplications: jobs.map(j => ({ ...j, createdAt: iso(j.createdAt), updatedAt: iso(j.updatedAt) })),
     documents: documents.map(toDocument),
-    chatMessages: chat.map(m => ({ id: m.id, body: m.body, createdAt: iso(m.createdAt) })),
+    chatMessages: chat.map(m => ({ id: m.id, room: m.room, body: m.body, createdAt: iso(m.createdAt) })),
   }));
 });
 

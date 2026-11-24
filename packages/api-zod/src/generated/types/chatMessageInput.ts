@@ -12,4 +12,9 @@ export interface ChatMessageInput {
      * @maxLength 1000
      */
   body: string;
+  /**
+     * general (default) or a lower-case country code such as us
+     * @maxLength 20
+     */
+  room?: string;
 }

@@ -2942,6 +2942,7 @@ export const ExportMyDataResponse = zod.object({
 })),
   "chatMessages": zod.array(zod.object({
   "id": zod.number().int(),
+  "room": zod.string(),
   "body": zod.string(),
   "createdAt": zod.string()
 }))
@@ -3332,14 +3333,31 @@ export const DeleteAccountResponse = zod.void()
 
 
 /**
- * @summary The most recent community messages (oldest first), or the page before a message id
+ * @summary The rooms this student may use - General, plus one per country in their study destination
  */
+export const ListChatRoomsResponse = zod.object({
+  "rooms": zod.array(zod.object({
+  "id": zod.string().describe('general, or a lower-case country code such as us'),
+  "name": zod.string(),
+  "kind": zod.enum(['general', 'country'])
+})),
+  "studyCountryKnown": zod.boolean().describe('False when the profile names no study country, so only General is open'),
+  "isAdmin": zod.boolean().describe('Administrators can open every room that has messages')
+})
+
+
+/**
+ * @summary The most recent messages in a room (oldest first), or the page before a message id
+ */
+export const listChatMessagesQueryRoomMax = 20;
+
 
 export const listChatMessagesQueryLimitMax = 100;
 
 
 
 export const ListChatMessagesQueryParams = zod.object({
+  "room": zod.string().max(listChatMessagesQueryRoomMax).optional().describe('general (default) or a lower-case country code such as us'),
   "before": zod.coerce.number().int().min(1).optional(),
   "limit": zod.coerce.number().int().min(1).max(listChatMessagesQueryLimitMax).optional()
 })
@@ -3347,6 +3365,7 @@ export const ListChatMessagesQueryParams = zod.object({
 export const ListChatMessagesResponse = zod.object({
   "items": zod.array(zod.object({
   "id": zod.number().int(),
+  "room": zod.string(),
   "body": zod.string(),
   "createdAt": zod.string(),
   "authorName": zod.string().describe('First name and last initial only; never an email address'),
@@ -3362,14 +3381,18 @@ export const ListChatMessagesResponse = zod.object({
  */
 export const sendChatMessageBodyBodyMax = 1000;
 
+export const sendChatMessageBodyRoomMax = 20;
+
 
 
 export const SendChatMessageBody = zod.object({
-  "body": zod.string().min(1).max(sendChatMessageBodyBodyMax)
+  "body": zod.string().min(1).max(sendChatMessageBodyBodyMax),
+  "room": zod.string().max(sendChatMessageBodyRoomMax).optional().describe('general (default) or a lower-case country code such as us')
 })
 
 export const SendChatMessageResponse = zod.object({
   "id": zod.number().int(),
+  "room": zod.string(),
   "body": zod.string(),
   "createdAt": zod.string(),
   "authorName": zod.string().describe('First name and last initial only; never an email address'),
@@ -3386,5 +3409,61 @@ export const DeleteChatMessageParams = zod.object({
 })
 
 export const DeleteChatMessageResponse = zod.void()
+
+
+/**
+ * @summary Announcements from the site administrators, newest first
+ */
+export const listAnnouncementsQueryLimitMax = 100;
+
+
+
+export const ListAnnouncementsQueryParams = zod.object({
+  "limit": zod.coerce.number().int().min(1).max(listAnnouncementsQueryLimitMax).optional()
+})
+
+export const ListAnnouncementsResponse = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.number().int(),
+  "title": zod.string(),
+  "body": zod.string(),
+  "createdAt": zod.string(),
+  "canDelete": zod.boolean()
+})),
+  "canPost": zod.boolean()
+})
+
+
+/**
+ * @summary Publish an announcement to every student (administrators only)
+ */
+export const createAnnouncementBodyTitleMax = 120;
+
+export const createAnnouncementBodyBodyMax = 4000;
+
+
+
+export const CreateAnnouncementBody = zod.object({
+  "title": zod.string().min(1).max(createAnnouncementBodyTitleMax),
+  "body": zod.string().min(1).max(createAnnouncementBodyBodyMax)
+})
+
+export const CreateAnnouncementResponse = zod.object({
+  "id": zod.number().int(),
+  "title": zod.string(),
+  "body": zod.string(),
+  "createdAt": zod.string(),
+  "canDelete": zod.boolean()
+})
+
+
+/**
+ * @summary Remove an announcement (administrators only)
+ */
+export const DeleteAnnouncementParams = zod.object({
+  "id": zod.coerce.number().int()
+})
+
+export const DeleteAnnouncementResponse = zod.void()
 
 

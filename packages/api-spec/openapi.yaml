@@ -21,7 +21,9 @@ tags:
   - name: auth
     description: UniPath accounts, sign-in sessions and one-time email codes
   - name: chat
-    description: Community chat room for signed-in students
+    description: Community chat rooms for signed-in students (general, and one per study country)
+  - name: announcements
+    description: Announcements from the site administrators to every student
 paths:
   /universities/{id}/verification:
     get:
@@ -1290,12 +1292,25 @@ paths:
         "204": { description: Account deleted and signed out }
         "400": { description: Confirmation missing }
         "401": { description: Sign in required }
+  /chat/rooms:
+    get:
+      operationId: listChatRooms
+      tags: [chat]
+      summary: The rooms this student may use - General, plus one per country in their study destination
+      responses:
+        "200":
+          description: Rooms
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ChatRoomList" }
+        "401": { description: Sign in required }
   /chat/messages:
     get:
       operationId: listChatMessages
       tags: [chat]
-      summary: The most recent community messages (oldest first), or the page before a message id
+      summary: The most recent messages in a room (oldest first), or the page before a message id
       parameters:
+        - { in: query, name: room, required: false, schema: { type: string, maxLength: 20 }, description: "general (default) or a lower-case country code such as us" }
         - { in: query, name: before, required: false, schema: { type: integer, minimum: 1 } }
         - { in: query, name: limit, required: false, schema: { type: integer, minimum: 1, maximum: 100 } }
       responses:
@@ -1305,6 +1320,7 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/ChatMessagePage" }
         "401": { description: Sign in required }
+        "403": { description: Not a member of this room }
     post:
       operationId: sendChatMessage
       tags: [chat]
@@ -1322,6 +1338,7 @@ paths:
               schema: { $ref: "#/components/schemas/ChatMessage" }
         "400": { description: Empty or too long }
         "401": { description: Sign in required }
+        "403": { description: Not a member of this room }
         "429": { description: Sending too quickly }
   /chat/messages/{id}:
     delete:
@@ -1334,6 +1351,50 @@ paths:
         "204": { description: Deleted }
         "401": { description: Sign in required }
         "403": { description: Not your message }
+        "404": { description: Not found }
+  /announcements:
+    get:
+      operationId: listAnnouncements
+      tags: [announcements]
+      summary: Announcements from the site administrators, newest first
+      parameters:
+        - { in: query, name: limit, required: false, schema: { type: integer, minimum: 1, maximum: 100 } }
+      responses:
+        "200":
+          description: Announcements
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AnnouncementList" }
+        "401": { description: Sign in required }
+    post:
+      operationId: createAnnouncement
+      tags: [announcements]
+      summary: Publish an announcement to every student (administrators only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AnnouncementInput" }
+      responses:
+        "201":
+          description: The new announcement
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Announcement" }
+        "400": { description: Missing title or text }
+        "401": { description: Sign in required }
+        "403": { description: Administrators only }
+  /announcements/{id}:
+    delete:
+      operationId: deleteAnnouncement
+      tags: [announcements]
+      summary: Remove an announcement (administrators only)
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: integer } }
+      responses:
+        "204": { description: Deleted }
+        "401": { description: Sign in required }
+        "403": { description: Administrators only }
         "404": { description: Not found }
 components:
   schemas:
@@ -2520,11 +2581,13 @@ components:
       required: [body]
       properties:
         body: { type: string, minLength: 1, maxLength: 1000 }
+        room: { type: string, maxLength: 20, description: "general (default) or a lower-case country code such as us" }
     ChatMessage:
       type: object
-      required: [id, body, createdAt, authorName, mine, canDelete]
+      required: [id, room, body, createdAt, authorName, mine, canDelete]
       properties:
         id: { type: integer }
+        room: { type: string }
         body: { type: string }
         createdAt: { type: string }
         authorName: { type: string, description: "First name and last initial only; never an email address" }
@@ -2538,8 +2601,44 @@ components:
         hasMore: { type: boolean, description: "Older messages exist before the first item" }
     OwnChatMessage:
       type: object
-      required: [id, body, createdAt]
+      required: [id, room, body, createdAt]
       properties:
         id: { type: integer }
+        room: { type: string }
         body: { type: string }
         createdAt: { type: string }
+    ChatRoom:
+      type: object
+      required: [id, name, kind]
+      properties:
+        id: { type: string, description: "general, or a lower-case country code such as us" }
+        name: { type: string }
+        kind: { type: string, enum: [general, country] }
+    ChatRoomList:
+      type: object
+      required: [rooms, studyCountryKnown, isAdmin]
+      properties:
+        rooms: { type: array, items: { $ref: "#/components/schemas/ChatRoom" } }
+        studyCountryKnown: { type: boolean, description: "False when the profile names no study country, so only General is open" }
+        isAdmin: { type: boolean, description: "Administrators can open every room that has messages" }
+    Announcement:
+      type: object
+      required: [id, title, body, createdAt, canDelete]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        body: { type: string }
+        createdAt: { type: string }
+        canDelete: { type: boolean }
+    AnnouncementList:
+      type: object
+      required: [items, canPost]
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/Announcement" } }
+        canPost: { type: boolean }
+    AnnouncementInput:
+      type: object
+      required: [title, body]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 120 }
+        body: { type: string, minLength: 1, maxLength: 4000 }

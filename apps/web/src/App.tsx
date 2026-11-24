@@ -22,6 +22,7 @@ import { AssistantView } from '@/components/assistant/AssistantView';
 import { SettingsView } from '@/components/settings/SettingsView';
 import { DocumentsView } from '@/components/documents/DocumentsView';
 import { ChatView } from '@/components/chat/ChatView';
+import { AnnouncementsView, useUnreadAnnouncements } from '@/components/announcements/AnnouncementsView';
 import '@/components/workspace/workspace.css';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -33,7 +34,7 @@ import type { StudentProfileInput } from '@workspace/api-client-react';
 import {
   ArrowDownRight, ArrowLeft, ArrowRight, Bookmark, Briefcase, Check, CheckCircle2,
   ClipboardList, Compass, CreditCard, FileText, Gem, Globe2, GraduationCap, LayoutDashboard,
-  LoaderCircle, Menu, MessageCircle, MessagesSquare, Scale, Search, Settings, ShieldCheck, Sparkles,
+  LoaderCircle, Megaphone, Menu, MessageCircle, MessagesSquare, Scale, Search, Settings, ShieldCheck, Sparkles,
   UserRound, X,
 } from 'lucide-react';
 import { Link, Redirect, Route, Switch, useLocation, useSearch, Router as WouterRouter } from 'wouter';
@@ -43,6 +44,7 @@ const cn = (...values: Array<string | false | undefined>) => values.filter(Boole
 // Ordered along the student journey: discover → match → compare → prepare → apply → track.
 const navItems = [
   { href: '/dashboard', label: 'My plan', icon: LayoutDashboard },
+  { href: '/announcements', label: 'Announcements', icon: Megaphone },
   { href: '/discover', label: 'Discover', icon: Compass },
   { href: '/recommendations', label: 'Matches', icon: GraduationCap },
   { href: '/saved', label: 'Shortlist', icon: Bookmark },
@@ -89,6 +91,7 @@ function Shell({ children }: { children: ReactNode }) {
   const { user, isSignedIn } = useUser();
   const { signOut } = useAuth();
   const [, setLocation] = useLocation();
+  const unread = useUnreadAnnouncements();
   const adminAccess = useGetAdminAccess({ query: { queryKey: getGetAdminAccessQueryKey(), enabled: !!isSignedIn, retry: false } });
   const initials = user?.firstName?.slice(0, 1) || user?.email?.slice(0, 1) || 'S';
   return <div className="app-shell">
@@ -96,7 +99,7 @@ function Shell({ children }: { children: ReactNode }) {
       <Brand inverse />
       <p className="side-label">YOUR SPACE</p>
       <nav className="side-nav">
-        {navItems.map(item => { const Icon = item.icon; const active = location === item.href; return <Link key={item.href} href={item.href} aria-current={active ? 'page' : undefined} data-testid={'testId' in item ? item.testId : `nav-${item.label.toLowerCase().replaceAll(' ', '-')}`} className={cn('side-link', active && 'side-link-active')}><Icon size={18}/><span>{item.label}</span></Link>; })}
+        {navItems.map(item => { const Icon = item.icon; const active = location === item.href; return <Link key={item.href} href={item.href} aria-current={active ? 'page' : undefined} data-testid={'testId' in item ? item.testId : `nav-${item.label.toLowerCase().replaceAll(' ', '-')}`} className={cn('side-link', active && 'side-link-active')}><Icon size={18}/><span>{item.label}</span>{item.href === '/announcements' && unread > 0 && <span className="side-badge" aria-label={`${unread} new`} data-testid="badge-announcements">{unread > 9 ? '9+' : unread}</span>}</Link>; })}
       </nav>
       {adminAccess.data?.isAdmin && <Link href="/admin" data-testid="nav-admin" className={cn('side-link', location.startsWith('/admin') && 'side-link-active')} style={{marginTop:5}}><ShieldCheck size={18}/><span>Admin</span></Link>}
       <div className="sidebar-note"><div className="note-icon"><Globe2 size={17}/></div><strong>Your world is wide open.</strong><span>One step at a time, we’ll help you find your way.</span><Link href="/discover">Explore universities <ArrowRight size={14}/></Link></div>
@@ -237,6 +240,7 @@ function AppRoutes() {
       <Route path="/applications">{()=><Protected><Shell><ApplicationsView/></Shell></Protected>}</Route>
       <Route path="/ai-assistant">{()=><Protected><Shell><AssistantView/></Shell></Protected>}</Route>
       <Route path="/chat">{()=><Protected><Shell><ChatView/></Shell></Protected>}</Route>
+      <Route path="/announcements">{()=><Protected><Shell><AnnouncementsView/></Shell></Protected>}</Route>
       <Route path="/documents">{()=><Protected><Shell><DocumentsView/></Shell></Protected>}</Route>
       <Route path="/settings">{()=><Protected><Shell><SettingsView/></Shell></Protected>}</Route>
       <Route path="/profile">{()=><Protected><Profile/></Protected>}</Route>

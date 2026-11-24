@@ -22,7 +22,8 @@ import { cleanName, normalizeEmail, safeRedirect } from "../../lib/auth/validati
 import { GoogleSignInError, decodeJwtPayload } from "../../lib/auth/google";
 import { codeEmail, emailDelivery, EmailSendError, resendApiKey, sendCodeEmail } from "../../lib/auth/email";
 import { clientIp } from "../../lib/clientIp";
-import { chatName, cleanChatMessage } from "../../lib/chat";
+import { chatName, cleanChatMessage, cleanTitle } from "../../lib/chat";
+import { countriesIn, countryRoomName, isCountryCode } from "../../lib/countries";
 import { GetExchangeRateQueryParams, SearchJobListingsQueryParams, UploadStudentDocumentQueryParams } from "@workspace/api-zod";
 
 const tests: Array<[string, () => void | Promise<void>]> = [];
@@ -324,6 +325,23 @@ test("the visitor IP from the web proxy is trusted only with the shared secret",
   } finally {
     if (saved === undefined) delete process.env.PROXY_SHARED_SECRET; else process.env.PROXY_SHARED_SECRET = saved;
   }
+});
+test("study destinations are read as countries for chat rooms", () => {
+  const cases: Array<[string, string[]]> = [
+    ["USA", ["US"]], ["United States", ["US"]], ["us", ["US"]], ["Let us see", []], ["Canada or the UK", ["CA", "GB"]],
+    ["I'd like to study in Germany, maybe France", ["DE", "FR"]], ["Any country", []], ["still exploring", []],
+    ["South Korea", ["KR"]], ["Holland / Netherlands", ["NL"]], ["Turkey", ["TR"]], ["South America", []],
+    ["England", ["GB"]], ["Northern Ireland", ["GB"]], ["Ireland", ["IE"]], ["Niger", ["NE"]], ["Nigeria", ["NG"]],
+    ["Australia & New Zealand", ["AU", "NZ"]], ["Dominican Republic", ["DO"]], ["UAE", ["AE"]], ["", []],
+  ];
+  for (const [text, expected] of cases) assert.deepEqual(countriesIn(text), expected, text);
+  assert.deepEqual([countryRoomName("us"), countryRoomName("gb"), countryRoomName("ca")], ["US students", "UK students", "Canada students"]);
+  assert.deepEqual([isCountryCode("ng"), isCountryCode("eu"), isCountryCode("zz"), isCountryCode("dd"), isCountryCode("general")], [true, false, false, false, false]);
+});
+test("announcement titles are one clean line", () => {
+  assert.equal(cleanTitle("  Application\n week ‮ "), "Application week");
+  assert.equal(cleanTitle("x".repeat(200)).length, 120);
+  assert.equal(cleanChatMessage("a".repeat(5000), 4000).length, 4000);
 });
 test("chat shows first name and last initial and cleans message text", () => {
   assert.equal(chatName("Ada", "lovelace"), "Ada L.");

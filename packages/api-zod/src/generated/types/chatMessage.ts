@@ -8,6 +8,7 @@
 
 export interface ChatMessage {
   id: number;
+  room: string;
   body: string;
   createdAt: string;
   /** First name and last initial only; never an email address */

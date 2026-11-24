@@ -348,3 +348,29 @@
   .chat-message { max-width:90%; }
   .chat-bubble { font-size:12px; }
 }
+
+/* Chat room tabs */
+.chat-rooms { margin-top:18px; display:flex; gap:8px; overflow-x:auto; padding-bottom:2px; scrollbar-width:thin; }
+.chat-room-tab { flex:none; display:inline-flex; align-items:center; gap:6px; min-height:36px; padding:0 14px; border:1px solid #dbe4e9; border-radius:20px; background:#fff; color:#36536a; font:700 12px 'DM Sans',sans-serif; cursor:pointer; transition:background .15s,border-color .15s,color .15s; }
+.chat-room-tab:hover { border-color:#b9cfd6; }
+.chat-room-tab:focus-visible { outline:2px solid #378b82; outline-offset:2px; }
+.chat-room-active { background:#173e62; border-color:#173e62; color:#fff; }
+.chat-room-hint { margin:10px 2px 0; color:#7c8b93; font-size:11px; line-height:1.6; }
+.chat-room-hint .text-link-inline { color:#327c74; font-weight:700; }
+.chat-rooms + .chat-room-hint + .chat-panel { margin-top:12px; }
+
+/* Announcements (components/announcements/AnnouncementsView.tsx) */
+.ann-composer { display:flex; flex-direction:column; gap:12px; }
+.ann-composer .ws-head { margin-bottom:0; }
+.ann-list { margin-top:16px; display:flex; flex-direction:column; gap:12px; }
+.ann-card { margin-top:0; }
+.ann-head { display:flex; align-items:flex-start; gap:11px; }
+.ann-icon { flex:none; width:34px; height:34px; display:grid; place-items:center; border-radius:10px; background:#e8f4f0; color:#327c74; }
+.ann-title { flex:1; min-width:0; }
+.ann-title h2 { margin:0; color:#20354a; font:700 16px/1.35 'Manrope',sans-serif; overflow-wrap:anywhere; }
+.ann-title span { color:#7c8b93; font-size:11px; }
+.ann-new { flex:none; padding:3px 9px; border-radius:20px; background:#fdf1e2; color:#a66a1f; font-size:10px; font-weight:800; letter-spacing:.5px; text-transform:uppercase; }
+.ann-delete { opacity:1; align-self:flex-start; }
+.ann-body { margin:12px 0 0 45px; color:#324b60; font-size:13px; line-height:1.65; white-space:pre-wrap; overflow-wrap:anywhere; }
+.side-badge { margin-left:auto; min-width:19px; height:19px; padding:0 6px; display:grid; place-items:center; border-radius:10px; background:#df9f58; color:#fff; font-size:10px; font-weight:800; }
+@media (max-width:760px) { .ann-body { margin-left:0; } }
