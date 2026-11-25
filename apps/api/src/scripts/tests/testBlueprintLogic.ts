@@ -24,6 +24,7 @@ import { codeEmail, emailDelivery, EmailSendError, resendApiKey, sendCodeEmail }
 import { clientIp } from "../../lib/clientIp";
 import { chatName, cleanChatMessage, cleanTitle } from "../../lib/chat";
 import { countriesIn, countryRoomName, isCountryCode } from "../../lib/countries";
+import { keepAwakeUrl } from "../../lib/keepAwake";
 import { GetExchangeRateQueryParams, SearchJobListingsQueryParams, UploadStudentDocumentQueryParams } from "@workspace/api-zod";
 
 const tests: Array<[string, () => void | Promise<void>]> = [];
@@ -337,6 +338,13 @@ test("study destinations are read as countries for chat rooms", () => {
   for (const [text, expected] of cases) assert.deepEqual(countriesIn(text), expected, text);
   assert.deepEqual([countryRoomName("us"), countryRoomName("gb"), countryRoomName("ca")], ["US students", "UK students", "Canada students"]);
   assert.deepEqual([isCountryCode("ng"), isCountryCode("eu"), isCountryCode("zz"), isCountryCode("dd"), isCountryCode("general")], [true, false, false, false, false]);
+});
+test("the keep-awake ping targets the public health check, and only over HTTPS", () => {
+  assert.equal(keepAwakeUrl({ RENDER_EXTERNAL_URL: "https://unipath-api.onrender.com" }), "https://unipath-api.onrender.com/api/healthz");
+  assert.equal(keepAwakeUrl({ KEEP_AWAKE_URL: "https://example.com/ping?x=1", RENDER_EXTERNAL_URL: "https://a.onrender.com" }), "https://example.com/ping?x=1");
+  assert.equal(keepAwakeUrl({}), null, "nothing to keep awake locally");
+  assert.equal(keepAwakeUrl({ RENDER_EXTERNAL_URL: "http://insecure.example" }), null);
+  assert.equal(keepAwakeUrl({ RENDER_EXTERNAL_URL: "https://a.onrender.com", KEEP_AWAKE: "off" }), null);
 });
 test("announcement titles are one clean line", () => {
   assert.equal(cleanTitle("  Application\n week ‮ "), "Application week");

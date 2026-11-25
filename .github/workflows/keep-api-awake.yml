@@ -1,6 +1,8 @@
-# Render's free plan stops the API after 15 minutes without traffic, and the
-# next visitor then waits up to a minute while it starts. This pings the
-# readiness check every 10 minutes so it stays awake; the check also runs a
+# Backup keep-awake ping. The main one runs inside the database (Supabase
+# pg_cron + pg_net, scheduled by the API at start-up; see
+# apps/api/src/lib/keepAwake.ts) because GitHub runs these schedules very
+# irregularly (2 runs in 28 hours in practice). Render's free plan stops the
+# API after 15 minutes without traffic; the readiness check below also runs a
 # tiny database query, which keeps the free Supabase project from pausing.
 #
 # Notes: one always-on free service uses about 744 of Render's 750 free hours a

@@ -1,27 +1,9 @@
-import { Fragment, type FormEvent, type ReactNode, Suspense, lazy, useEffect, useMemo, useState } from 'react';
+import { type ComponentType, Fragment, type FormEvent, type ReactNode, Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { AuthProvider, Show, useAuth, useUser } from '@/lib/auth';
 import { AuthFlow } from '@/components/auth/AuthFlow';
 import { ErrorBoundary } from '@/components/error-boundary';
-import { DiscoverView } from '@/components/directory/DiscoverView';
-import { UniversityDetailView } from '@/components/directory/UniversityDetailView';
-import { FundingFinder } from '@/components/directory/FundingFinder';
 import { PreferenceFields, invalidLivingExpenses, thisYear } from '@/components/profile/PreferenceFields';
-import { AdminDashboardView, AdminSetupView } from '@/components/admin/AdminViews';
-import { PlansView } from '@/components/plans/PlansView';
-import { JobsView } from '@/components/jobs/JobsView';
-import { RecommendationsView } from '@/components/recommendations/RecommendationsView';
-import { BillingView } from '@/components/billing/BillingViews';
-import { AdminBillingView } from '@/components/billing/AdminBillingView';
-import { OnboardingWizard } from '@/components/profile/OnboardingWizard';
-import { DashboardView } from '@/components/dashboard/DashboardView';
-import { ApplicationsView } from '@/components/applications/ApplicationsView';
-import { SavedView } from '@/components/saved/SavedView';
-import { CompareView } from '@/components/compare/CompareView';
-import { AssistantView } from '@/components/assistant/AssistantView';
-import { SettingsView } from '@/components/settings/SettingsView';
-import { DocumentsView } from '@/components/documents/DocumentsView';
-import { ChatView } from '@/components/chat/ChatView';
 import { AnnouncementsView, useUnreadAnnouncements } from '@/components/announcements/AnnouncementsView';
 import '@/components/workspace/workspace.css';
 import { Toaster } from '@/components/ui/toaster';
@@ -38,6 +20,46 @@ import {
   UserRound, X,
 } from 'lucide-react';
 import { Link, Redirect, Route, Switch, useLocation, useSearch, Router as WouterRouter } from 'wouter';
+
+/**
+ * Pages load on first visit, so the first page of the site downloads less.
+ * After a deploy, a tab opened earlier may ask for a page file that no longer
+ * exists: it reloads once to get the current version.
+ */
+const RELOAD_FLAG = 'unipath:reloaded-for-update';
+function page<P extends object>(load: () => Promise<ComponentType<P>>) {
+  return lazy(async () => {
+    try {
+      const component = await load();
+      try { sessionStorage.removeItem(RELOAD_FLAG); } catch { /* storage unavailable */ }
+      return { default: component };
+    } catch (error) {
+      let reloaded = true;
+      try { reloaded = !!sessionStorage.getItem(RELOAD_FLAG); if (!reloaded) sessionStorage.setItem(RELOAD_FLAG, '1'); } catch { /* storage unavailable */ }
+      if (!reloaded) { window.location.reload(); return new Promise<never>(() => undefined); }
+      throw error;
+    }
+  });
+}
+const DiscoverView = page(() => import('@/components/directory/DiscoverView').then(m => m.DiscoverView));
+const UniversityDetailView = page(() => import('@/components/directory/UniversityDetailView').then(m => m.UniversityDetailView));
+const FundingFinder = page(() => import('@/components/directory/FundingFinder').then(m => m.FundingFinder));
+const PlansView = page(() => import('@/components/plans/PlansView').then(m => m.PlansView));
+const JobsView = page(() => import('@/components/jobs/JobsView').then(m => m.JobsView));
+const RecommendationsView = page(() => import('@/components/recommendations/RecommendationsView').then(m => m.RecommendationsView));
+const BillingView = page(() => import('@/components/billing/BillingViews').then(m => m.BillingView));
+const AdminBillingView = page(() => import('@/components/billing/AdminBillingView').then(m => m.AdminBillingView));
+const OnboardingWizard = page(() => import('@/components/profile/OnboardingWizard').then(m => m.OnboardingWizard));
+const DashboardView = page(() => import('@/components/dashboard/DashboardView').then(m => m.DashboardView));
+const ApplicationsView = page(() => import('@/components/applications/ApplicationsView').then(m => m.ApplicationsView));
+const SavedView = page(() => import('@/components/saved/SavedView').then(m => m.SavedView));
+const CompareView = page(() => import('@/components/compare/CompareView').then(m => m.CompareView));
+const AssistantView = page(() => import('@/components/assistant/AssistantView').then(m => m.AssistantView));
+const SettingsView = page(() => import('@/components/settings/SettingsView').then(m => m.SettingsView));
+const DocumentsView = page(() => import('@/components/documents/DocumentsView').then(m => m.DocumentsView));
+const ChatView = page(() => import('@/components/chat/ChatView').then(m => m.ChatView));
+const AdminDashboardView = page(() => import('@/components/admin/AdminViews').then(m => m.AdminDashboardView));
+const AdminSetupView = page(() => import('@/components/admin/AdminViews').then(m => m.AdminSetupView));
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
 const cn = (...values: Array<string | false | undefined>) => values.filter(Boolean).join(' ');
@@ -105,7 +127,7 @@ function Shell({ children }: { children: ReactNode }) {
       <div className="sidebar-note"><div className="note-icon"><Globe2 size={17}/></div><strong>Your world is wide open.</strong><span>One step at a time, we’ll help you find your way.</span><Link href="/discover">Explore universities <ArrowRight size={14}/></Link></div>
       {isSignedIn?<div className="side-user"><div className="user-avatar">{initials.toUpperCase()}</div><div className="user-info"><strong>{user?.firstName || 'Student'}</strong><span>{adminAccess.data?.isAdmin ? 'Admin account' : 'Student account'}</span></div><button className="logout-button" onClick={() => void signOut(() => setLocation('/'))} data-testid="button-sign-out">Sign out</button></div>:<div className="side-user"><Link href="/sign-in" className="side-auth-link" data-testid="link-shell-sign-in">Sign in</Link><Link href="/sign-up" className="side-auth-link" data-testid="link-shell-sign-up">Create account <ArrowRight size={13}/></Link></div>}
     </aside>
-    <main className="workspace">{children}</main>
+    <main className="workspace"><Suspense fallback={<div className="page"><LoadingState/></div>}>{children}</Suspense></main>
   </div>;
 }
 
@@ -220,7 +242,7 @@ function UserScopedQueries({ children }: { children: ReactNode }) {
 }
 function AppRoutes() {
   return <AuthProvider>
-    <UserScopedQueries><Switch>
+    <UserScopedQueries><Suspense fallback={<div className="page"><LoadingState/></div>}><Switch>
       <Route path="/" component={Home}/>
       <Route path="/sign-in/*?" component={()=> <AuthPage kind="sign-in"/>}/>
       <Route path="/sign-up/*?" component={()=> <AuthPage kind="sign-up"/>}/>
@@ -253,7 +275,7 @@ function AppRoutes() {
       <Route path="/admin/setup">{()=><Protected><Shell><AdminSetupView/></Shell></Protected>}</Route>
       <Route path="/admin">{()=><Protected><Shell><AdminDashboardView/></Shell></Protected>}</Route>
       <Route><div className="not-found"><Brand/><div className="state-icon"><Compass size={22}/></div><h1>That path isn’t on the map.</h1><p>The page may have moved. Let’s find your way back.</p><Link href="/" className="button button-primary">Go home <ArrowRight size={15}/></Link></div></Route>
-    </Switch></UserScopedQueries>
+    </Switch></Suspense></UserScopedQueries>
   </AuthProvider>;
 }
 function App() {

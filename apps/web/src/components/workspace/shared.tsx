@@ -98,12 +98,21 @@ export const todayIso = () => {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 };
 
-/** A readable message from an API failure, preferring the server's own wording. */
+export const CONNECTION_PROBLEM = 'We couldn’t reach UniPath just now. The server may be waking up after a quiet period; please try again in a few seconds.';
+
+/**
+ * A readable message from an API failure, preferring the server's own wording.
+ * Failures that never reached the app (no connection, or a host error page
+ * while the server wakes) get a connection message instead of `fallback`.
+ */
 export function errorMessage(error: unknown, fallback = 'Something went wrong. Please try again.') {
   if (error instanceof ApiError) {
     const data = error.data as { error?: unknown } | null | undefined;
     if (data && typeof data.error === 'string' && data.error.trim()) return data.error;
+    if (error.status >= 500) return CONNECTION_PROBLEM;
+    return fallback;
   }
+  if (error instanceof TypeError || (error instanceof Error && /fetch|network|load failed/i.test(error.message))) return CONNECTION_PROBLEM;
   return fallback;
 }
 export function errorCode(error: unknown): string | null {

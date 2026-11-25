@@ -38,23 +38,52 @@ export async function onRequest({ request, env }: { request: Request; env: Env }
   headers.set("x-forwarded-proto", "https");
 
   const readOnly = request.method === "GET" || request.method === "HEAD";
+  // Buffered so a write can be sent again after the API wakes (uploads are at most 10 MB).
+  const body = readOnly ? undefined : await request.arrayBuffer();
   // Redirects (Google sign-in) and Set-Cookie headers go back to the browser unchanged.
-  const send = () => fetch(target, { method: request.method, headers, body: readOnly ? undefined : request.body, redirect: "manual" });
+  const send = () => fetch(target, { method: request.method, headers, body, redirect: "manual" });
 
   // The API's hosting plan sleeps when idle and takes up to about a minute to
-  // wake. Read-only requests are retried through that window. Writes are not:
-  // the first attempt may already have been processed.
-  for (let attempt = 0; ; attempt++) {
-    const last = !readOnly || attempt >= RETRY_DELAYS_MS.length;
-    try {
-      const response = await send();
-      if (last || !WAKING_STATUSES.has(response.status)) return response;
-      await response.body?.cancel();
-    } catch {
-      if (last) return startingUp();
+  // wake. Read-only requests are retried through that window.
+  if (readOnly) {
+    for (let attempt = 0; ; attempt++) {
+      const last = attempt >= RETRY_DELAYS_MS.length;
+      try {
+        const response = await send();
+        if (last || !WAKING_STATUSES.has(response.status)) return response;
+        await response.body?.cancel();
+      } catch {
+        if (last) return startingUp();
+      }
+      await wait(RETRY_DELAYS_MS[attempt]);
     }
-    await new Promise(resolve => setTimeout(resolve, RETRY_DELAYS_MS[attempt]));
   }
+
+  // A write is sent again only when the reply proves the app never saw it:
+  // an error page from the host while the API was asleep or restarting (the
+  // app itself always answers in JSON). Then wait for the API and resend once.
+  let response: Response;
+  try { response = await send(); } catch { return startingUp(); }
+  if (!WAKING_STATUSES.has(response.status) || fromApp(response)) return response;
+  await response.body?.cancel();
+  if (!await awake(apiOrigin)) return startingUp();
+  try { return await send(); } catch { return startingUp(); }
+}
+
+const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const fromApp = (response: Response) => (response.headers.get("content-type") ?? "").includes("application/json");
+
+/** Polls the API's health check until it answers (about a minute at most). */
+async function awake(apiOrigin: string): Promise<boolean> {
+  for (const delay of [0, ...RETRY_DELAYS_MS]) {
+    await wait(delay);
+    try {
+      const health = await fetch(`${apiOrigin}/api/healthz`, { headers: { accept: "application/json" } });
+      await health.body?.cancel();
+      if (health.ok) return true;
+    } catch { /* still waking */ }
+  }
+  return false;
 }
 
 const WAKING_STATUSES = new Set([502, 503, 504]);
