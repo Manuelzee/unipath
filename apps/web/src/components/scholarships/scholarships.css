@@ -1,0 +1,40 @@
+/* Scholarships & sponsorships. Uses the app palette: navy #173e62, teal #368a83, mint #87d6c6. */
+.sch-filters { display:grid;grid-template-columns:minmax(0,1.6fr) repeat(3,minmax(0,1fr));gap:12px;align-items:end;margin:18px 0 6px;padding:16px;border:1px solid #dfe9e6;border-radius:14px;background:#fff; }
+.sch-search { display:flex;align-items:center;gap:8px;height:42px;padding:0 11px;border:1px solid #dce6e4;border-radius:9px;background:#fbfdfc;color:#6a808c; }
+.sch-search input { flex:1;min-width:0;border:0;outline:0;background:none;color:#2d4858;font:500 13px 'DM Sans',sans-serif; }
+.sch-search:focus-within { border-color:#5b9b8e;box-shadow:0 0 0 3px rgba(49,126,110,.11); }
+.sch-count { margin:14px 2px 10px;color:#5d7081;font-size:12px;font-weight:700; }
+.sch-list { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px; }
+.sch-list-compact { grid-template-columns:1fr;margin-top:8px; }
+.sch-card { display:flex;flex-direction:column;gap:10px;padding:17px;border:1px solid #e1ebe7;border-radius:13px;background:#fcfefd; }
+.sch-top { display:flex;align-items:flex-start;gap:12px; }
+.sch-icon { width:36px;height:36px;display:grid;place-items:center;flex:none;border-radius:11px;background:#e7f4f1;color:#368a83; }
+.sch-titles { flex:1;min-width:0; }
+.sch-kicker { color:#6f8e86;font-size:9px;font-weight:800;letter-spacing:.09em;text-transform:uppercase; }
+.sch-titles h3 { margin:4px 0 2px;color:#173e62;font:700 16px/1.3 'Manrope',sans-serif; }
+.sch-sponsor { margin:0;color:#6f8189;font-size:11px; }
+.sch-scope { flex:none;padding:5px 8px;border-radius:7px;font-size:9px;font-weight:800;white-space:nowrap; }
+.sch-scope-institution { background:#173e62;color:#fff; }
+.sch-scope-country { background:#eef3f6;color:#36536a; }
+.sch-summary { margin:0;color:#3f5a68;font-size:12px;line-height:1.6; }
+.sch-tags { display:flex;flex-wrap:wrap;gap:6px; }
+.sch-tags span { padding:4px 8px;border-radius:999px;background:#f0f5f7;color:#40596b;font-size:10px;font-weight:700; }
+.sch-tags .sch-funding-full { background:#e2f5ef;color:#24715f; }
+.sch-tags .sch-funding-partial { background:#eef6f0;color:#4f7a63; }
+.sch-tags .sch-funding-varies { background:#f5f3ea;color:#7a6a45; }
+.sch-eligibility,.sch-schools { margin:0;color:#56707b;font-size:11px;line-height:1.6; }
+.sch-eligibility strong { color:#2f4f61; }
+.sch-schools a { color:#2c7a73;font-weight:700; }
+.sch-foot { display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-top:auto;padding-top:10px;border-top:1px solid #e9efed; }
+.sch-foot>span { display:inline-flex;align-items:center;gap:5px;color:#7f8f95;font-size:10px; }
+.sch-discover-link { display:inline-flex;align-items:center;gap:5px;flex:none;margin-left:auto;color:#2c7a73;font-size:11px;font-weight:800;text-decoration:none; }
+.detail-panel .sch-discover-link { margin:12px 0 0; }
+@media (max-width: 860px) {
+  .sch-filters { grid-template-columns:1fr 1fr; }
+  .sch-search { grid-column:1/-1; }
+  .sch-list { grid-template-columns:1fr; }
+}
+@media (max-width: 520px) {
+  .sch-filters { grid-template-columns:1fr; }
+  .funding-trust-note { flex-wrap:wrap; }
+}

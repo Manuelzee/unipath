@@ -82,6 +82,7 @@ import type {
   ListAdminInstitutionsParams,
   ListAnnouncementsParams,
   ListChatMessagesParams,
+  ListScholarshipsParams,
   ListUniversitiesParams,
   ListUniversitiesResult,
   ListUniversityFactsParams,
@@ -95,6 +96,7 @@ import type {
   RecommendationResult,
   SaveUniversityInput,
   SavedUniversity,
+  ScholarshipList,
   SearchJobListingsParams,
   SessionsRevoked,
   StudentDataExport,
@@ -106,6 +108,7 @@ import type {
   TuitionSearchError,
   University,
   UniversityFilterOptions,
+  UniversityScholarships,
   UploadStudentDocumentParams,
   WorkGuidance
 } from './api.schemas';
@@ -2463,6 +2466,167 @@ export function useGetUniversity<TData = Awaited<ReturnType<typeof getUniversity
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetUniversityQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListUniversityScholarshipsUrl = (id: string,) => {
+
+
+
+
+  return `/api/universities/${id}/scholarships`
+}
+
+/**
+ * @summary Scholarship and sponsorship programmes for this university, then for its country
+ */
+export const listUniversityScholarships = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<UniversityScholarships> => {
+
+  return customFetch<UniversityScholarships>(getListUniversityScholarshipsUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListUniversityScholarshipsQueryKey = (id: string,) => {
+    return [
+    `/api/universities/${id}/scholarships`
+    ] as const;
+    }
+
+
+export const getListUniversityScholarshipsQueryOptions = <TData = Awaited<ReturnType<typeof listUniversityScholarships>>, TError = ErrorType<void>>(id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listUniversityScholarships>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListUniversityScholarshipsQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listUniversityScholarships>>> = ({ signal }) => listUniversityScholarships(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listUniversityScholarships>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListUniversityScholarshipsQueryResult = NonNullable<Awaited<ReturnType<typeof listUniversityScholarships>>>
+export type ListUniversityScholarshipsQueryError = ErrorType<void>
+
+
+/**
+ * @summary Scholarship and sponsorship programmes for this university, then for its country
+ */
+
+export function useListUniversityScholarships<TData = Awaited<ReturnType<typeof listUniversityScholarships>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listUniversityScholarships>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListUniversityScholarshipsQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListScholarshipsUrl = (params?: ListScholarshipsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/scholarships?${stringifiedParams}` : `/api/scholarships`
+}
+
+/**
+ * @summary Scholarship and sponsorship programmes for study outside Africa
+ */
+export const listScholarships = async (params?: ListScholarshipsParams, options?: Parameters<typeof customFetch>[1]): Promise<ScholarshipList> => {
+
+  return customFetch<ScholarshipList>(getListScholarshipsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListScholarshipsQueryKey = (params?: ListScholarshipsParams,) => {
+    return [
+    `/api/scholarships`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListScholarshipsQueryOptions = <TData = Awaited<ReturnType<typeof listScholarships>>, TError = ErrorType<void>>(params?: ListScholarshipsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listScholarships>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListScholarshipsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listScholarships>>> = ({ signal }) => listScholarships(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listScholarships>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListScholarshipsQueryResult = NonNullable<Awaited<ReturnType<typeof listScholarships>>>
+export type ListScholarshipsQueryError = ErrorType<void>
+
+
+/**
+ * @summary Scholarship and sponsorship programmes for study outside Africa
+ */
+
+export function useListScholarships<TData = Awaited<ReturnType<typeof listScholarships>>, TError = ErrorType<void>>(
+ params?: ListScholarshipsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listScholarships>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListScholarshipsQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

@@ -44,7 +44,7 @@ export function DashboardView() {
         <div className="dash-stack"><DeadlinesPanel summary={s}/><StatusOverview summary={s}/></div>
         <div className="dash-stack"><RecommendedPanel/><ActivityPanel summary={s}/></div>
       </div>
-      <div className="dashboard-footnote"><ShieldCheck size={16}/> School records come from imported official sources (partial U.S. and Canada coverage); verify cost, admissions, and program details with each institution.</div>
+      <div className="dashboard-footnote"><ShieldCheck size={16}/> School records come from imported sources (the U.S., Canada and more than 150 other countries outside Africa); verify cost, admissions, and program details with each institution.</div>
     </>}
   </div>;
 }

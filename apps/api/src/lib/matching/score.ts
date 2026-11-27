@@ -1,4 +1,5 @@
-import { eq } from "drizzle-orm";
+import { and, eq, inArray, isNull, notLike, or } from "drizzle-orm";
+import { countriesIn } from "../countries";
 import { db, institutionDirectoryTable as institutions, institutionFactsTable as facts,
   matchingEvidenceTable as evidence, type StudentProfileRecord, type InstitutionDirectoryRecord,
   type MatchingEvidence } from "@workspace/db";
@@ -15,7 +16,7 @@ const undergrad = (s: string) => ["undergraduate","bachelor","associate"].includ
 const undergraduateSchool = (s: StudentProfileRecord) => undergrad(s.degreeLevel);
 const countryMatch = (value: string, school: InstitutionDirectoryRecord) => {
   const n = named(value);
-  return n === named(school.country) || n === named(school.countryCode) ||
+  return n === named(school.country) || n === named(school.countryCode) || countriesIn(value).includes(school.countryCode) ||
     (["usa","us","unitedstatesofamerica"].includes(n) && school.countryCode === "US") ||
     (["ca","can"].includes(n) && school.countryCode === "CA");
 };
@@ -157,10 +158,15 @@ function factors(profile: StudentProfileRecord, school: InstitutionDirectoryReco
 }
 
 export async function getRecommendations(profile: StudentProfileRecord) {
-  const active = await db.select().from(institutions).where(eq(institutions.isActive, true));
   const country = profile.studyCountry.trim();
-  const candidates = country && !/^(any|any country|still exploring)$/i.test(country)
-    ? active.filter(school => countryMatch(country, school)) : active;
+  const chosen = country && !/^(any|any country|still exploring)$/i.test(country);
+  // Narrow in the database: the worldwide directory has tens of thousands of
+  // schools. Without a study country, ROR-only entries (name, city and website,
+  // nothing to match on) are left out to keep this fast.
+  const codes = chosen ? countriesIn(country) : [];
+  const active = await db.select().from(institutions).where(and(eq(institutions.isActive, true),
+    codes.length ? inArray(institutions.countryCode, codes) : chosen ? undefined : or(isNull(institutions.sourceKey), notLike(institutions.sourceKey, "ror:%"))));
+  const candidates = chosen ? active.filter(school => countryMatch(country, school)) : active;
   const [evidenceRows, programRows] = await Promise.all([
     db.select().from(evidence),
     db.select({ institutionId: facts.institutionId, title: facts.title, fieldsOfStudy: facts.fieldsOfStudy })

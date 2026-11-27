@@ -22,6 +22,7 @@ import {
   type InstitutionDirectoryRecord,
 } from "@workspace/db";
 import { universityTuition } from "./tuition";
+import { SCHOLARSHIP_INSTITUTION_IDS } from "./scholarships";
 import { getReferenceRate } from "./exchangeRates";
 
 export type University = typeof GetUniversityResponse._output;
@@ -168,11 +169,12 @@ export async function searchUniversities(
   if (filters.language) conditions.push(arrayContains(institutionDirectoryTable.languages, [filters.language]));
   if (filters.applicantStatus) conditions.push(arrayContains(institutionDirectoryTable.applicantStatuses, [filters.applicantStatus]));
   if (filters.fundingOnly) {
-    conditions.push(sql`exists (
+    // Source-reported funding records, or a scholarship programme of the university's own.
+    conditions.push(or(sql`exists (
       select 1 from ${institutionFactsTable}
       where ${institutionFactsTable.institutionId} = ${institutionDirectoryTable.id}
       and ${institutionFactsTable.kind} = 'funding'
-    )`);
+    )`, inArray(institutionDirectoryTable.id, SCHOLARSHIP_INSTITUTION_IDS))!);
   }
 
   if (filters.state) {
@@ -203,6 +205,7 @@ export async function searchUniversities(
     const pattern = likePattern(search);
     const searchCondition = or(
       sql`${institutionDirectoryTable.name} ILIKE ${pattern} ESCAPE '\\'`,
+      sql`array_to_string(${institutionDirectoryTable.alternateNames}, ' | ') ILIKE ${pattern} ESCAPE '\\'`,
       sql`${institutionDirectoryTable.city} ILIKE ${pattern} ESCAPE '\\'`,
       sql`${institutionDirectoryTable.state} ILIKE ${pattern} ESCAPE '\\'`,
       sql`${institutionDirectoryTable.institutionType} ILIKE ${pattern} ESCAPE '\\'`,

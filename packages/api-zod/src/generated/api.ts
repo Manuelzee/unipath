@@ -985,6 +985,86 @@ export const GetUniversityResponse = zod.object({
 
 
 /**
+ * @summary Scholarship and sponsorship programmes for this university, then for its country
+ */
+export const ListUniversityScholarshipsParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const ListUniversityScholarshipsResponse = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "sponsor": zod.string(),
+  "sponsorType": zod.enum(['government', 'university', 'foundation', 'intergovernmental']),
+  "studyCountries": zod.array(zod.string()),
+  "studyCountryNames": zod.array(zod.string()),
+  "studyRegion": zod.string().nullable(),
+  "institutions": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string()
+})),
+  "levels": zod.array(zod.enum(['bachelor', 'master', 'doctoral', 'research', 'non_degree'])),
+  "funding": zod.enum(['full', 'partial', 'varies']).describe('As the sponsor describes it'),
+  "summary": zod.string(),
+  "eligibility": zod.string(),
+  "officialUrl": zod.string(),
+  "linkCheckedAt": zod.string().nullable().describe('When UniPath last confirmed the official page; null when the site blocks automated checks')
+}).and(zod.object({
+  "scope": zod.enum(['institution', 'country'])
+}))),
+  "notice": zod.string()
+})
+
+
+/**
+ * @summary Scholarship and sponsorship programmes for study outside Africa
+ */
+export const listScholarshipsQueryCountryMax = 5;
+
+export const listScholarshipsQuerySearchMax = 100;
+
+
+
+export const ListScholarshipsQueryParams = zod.object({
+  "country": zod.string().max(listScholarshipsQueryCountryMax).optional().describe('ISO country code of the study destination, or multi for multi-country programmes'),
+  "level": zod.enum(['bachelor', 'master', 'doctoral', 'research', 'non_degree']).optional(),
+  "sponsorType": zod.enum(['government', 'university', 'foundation', 'intergovernmental']).optional(),
+  "search": zod.string().max(listScholarshipsQuerySearchMax).optional()
+})
+
+export const ListScholarshipsResponse = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "sponsor": zod.string(),
+  "sponsorType": zod.enum(['government', 'university', 'foundation', 'intergovernmental']),
+  "studyCountries": zod.array(zod.string()),
+  "studyCountryNames": zod.array(zod.string()),
+  "studyRegion": zod.string().nullable(),
+  "institutions": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string()
+})),
+  "levels": zod.array(zod.enum(['bachelor', 'master', 'doctoral', 'research', 'non_degree'])),
+  "funding": zod.enum(['full', 'partial', 'varies']).describe('As the sponsor describes it'),
+  "summary": zod.string(),
+  "eligibility": zod.string(),
+  "officialUrl": zod.string(),
+  "linkCheckedAt": zod.string().nullable().describe('When UniPath last confirmed the official page; null when the site blocks automated checks')
+})),
+  "total": zod.number().int(),
+  "countries": zod.array(zod.object({
+  "code": zod.string(),
+  "name": zod.string(),
+  "count": zod.number().int()
+})),
+  "reviewedAt": zod.string(),
+  "notice": zod.string()
+})
+
+
+/**
  * @summary Explainable preference recommendations using the account's saved questionnaire
  */
 export const getStudentRecommendationsResponseItemsItemUniversityTuitionQuotesItemAmountMin = 0;

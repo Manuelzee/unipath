@@ -17,6 +17,8 @@ export const institutionDirectoryTable = pgTable(
     ipedsId: integer("ipeds_id"),
     scorecardId: integer("scorecard_id"),
     name: text("name").notNull(),
+    /** Other names the source lists (English names, former names, acronyms), for search only. */
+    alternateNames: text("alternate_names").array().notNull().default(sql`'{}'::text[]`),
     city: text("city").notNull().default(""),
     state: text("state").notNull().default(""),
     country: text("country").notNull().default("United States"),

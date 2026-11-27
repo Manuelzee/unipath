@@ -1,0 +1,14 @@
+{
+  "format": "unipath-world-directory-manifest-v1",
+  "file": "apps/api/data/world/ror-education.json.gz",
+  "sha256": "dc73027cb971e8e6e81a25349948fe2b6920169af44bdb4498a5edcb7ba5f32d",
+  "count": 24550,
+  "countryCount": 158,
+  "source": "Research Organization Registry (ROR)",
+  "sourceUrl": "https://ror.org/",
+  "dumpUrl": "https://doi.org/10.5281/zenodo.24378467",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "release": "v2.16",
+  "releaseDate": "2026-11-19",
+  "rules": "Active education organizations; excludes Africa, the United States and its territories (NCES IPEDS covers those), schools already in the Canada pilot, and research units."
+}

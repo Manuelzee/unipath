@@ -2,11 +2,15 @@
  * Unit tests for blueprint features that do not need a database:
  * match classification, profile completion, AI grounding and prompts,
  * application helpers, document checks, generated request validators,
- * entitlements and the burst limiter.
+ * entitlements, the worldwide directory rules and file, the scholarship
+ * list, and the burst limiter.
  *
  * Run: pnpm test
  */
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { gunzipSync } from "node:zlib";
 import path from "node:path";
 import { CLASSIFICATION_THRESHOLDS, classifyMatch } from "../../lib/matching/classify";
 import { profileCompletion, PROFILE_CHECKS } from "../../lib/profileCompletion";
@@ -25,6 +29,11 @@ import { clientIp } from "../../lib/clientIp";
 import { chatName, cleanChatMessage, cleanTitle } from "../../lib/chat";
 import { countriesIn, countryRoomName, isCountryCode } from "../../lib/countries";
 import { keepAwakeUrl } from "../../lib/keepAwake";
+import { AFRICAN_COUNTRY_CODES, comparableName, isAfrican, looksLikeResearchUnit, worldRecord, type RorRecord, type WorldRecord } from "../../lib/world/rules";
+import { SCHOLARSHIPS, SCHOLARSHIP_INSTITUTION_IDS, filterScholarships, scholarshipsFor, validatePrograms } from "../../lib/scholarships";
+import { directorySnapshot } from "../../lib/directorySnapshot";
+import { repoPath } from "../../lib/paths";
+import worldManifest from "../../data/world-directory-manifest.json";
 import { GetExchangeRateQueryParams, SearchJobListingsQueryParams, UploadStudentDocumentQueryParams } from "@workspace/api-zod";
 
 const tests: Array<[string, () => void | Promise<void>]> = [];
@@ -408,6 +417,106 @@ test("Resend API failures fail email delivery", async () => withResendConfig(asy
   globalThis.fetch = async () => new Response(JSON.stringify({ message: "Invalid API key" }), { status: 401 });
   await assert.rejects(() => sendCodeEmail("ada@example.com", "042917", "verify_email", 10), EmailSendError);
 }));
+
+// ---------- Worldwide directory (ROR) ----------
+const ror = (over: Partial<RorRecord> & { cc?: string; continent?: string; name?: string } = {}): RorRecord => ({
+  id: "https://ror.org/052gg0110", status: "active", types: ["education", "funder"],
+  names: [{ value: over.name ?? "University of Oxford", types: ["ror_display", "label"], lang: "en" }, { value: "Oxford University", types: ["alias"], lang: "en" }],
+  links: [{ type: "website", value: "https://www.ox.ac.uk" }, { type: "wikipedia", value: "http://en.wikipedia.org/wiki/University_of_Oxford" }],
+  locations: [{ geonames_details: { country_code: over.cc ?? "GB", country_name: "United Kingdom", continent_code: over.continent ?? "EU", name: "Oxford", country_subdivision_name: "England" } }],
+  ...over,
+});
+test("worldwide entries keep name, place and website and drop everything else", () => {
+  assert.deepEqual(worldRecord(ror()), { r: "052gg0110", n: "University of Oxford", a: ["Oxford University"], c: "Oxford", s: "England", cc: "GB", w: "https://www.ox.ac.uk/" });
+  assert.equal(worldRecord(ror({ status: "inactive" })), null);
+  assert.equal(worldRecord(ror({ types: ["facility"] })), null, "education organizations only");
+  assert.equal(worldRecord(ror({ id: "https://example.org/x" })), null);
+  assert.equal(worldRecord(ror({ links: [{ type: "website", value: "javascript:alert(1)" }] }))?.w, null, "only http(s) websites");
+});
+test("African countries are excluded, by continent and by country code", () => {
+  for (const cc of ["NG", "GH", "KE", "ZA", "EG", "MA", "TN", "ET", "RE", "EH"]) {
+    assert.equal(worldRecord(ror({ cc, continent: "AS" })), null, cc);
+    assert.ok(isAfrican(cc));
+  }
+  assert.equal(worldRecord(ror({ cc: "XX", continent: "AF" })), null, "continent code alone excludes");
+  assert.equal(AFRICAN_COUNTRY_CODES.size, 60);
+  for (const cc of ["GB", "TR", "SA", "AE", "IL", "IN", "CN", "BR", "AU", "CA"]) assert.ok(!isAfrican(cc), cc);
+});
+test("the U.S. and its territories are left to IPEDS; Canada pilot schools are not listed twice", () => {
+  for (const cc of ["US", "PR", "GU", "VI", "FM", "MH", "PW"]) assert.equal(worldRecord(ror({ cc, continent: "NA" })), null, cc);
+  const pilot = new Map([["CA", new Set([comparableName("Concordia University (Montréal)")])]]);
+  assert.equal(worldRecord(ror({ cc: "CA", continent: "NA", name: "Concordia University" }), pilot), null);
+  assert.ok(worldRecord(ror({ cc: "CA", continent: "NA", name: "University of Toronto" }), pilot));
+  assert.equal(comparableName("Université du Québec à Chicoutimi (UQAC)"), "universite du quebec a chicoutimi");
+});
+test("research units and academy institutes are not listed as universities", () => {
+  assert.ok(looksLikeResearchUnit("Institute of History of the Slovak Academy of Sciences", false));
+  assert.ok(!looksLikeResearchUnit("University of Chinese Academy of Sciences", false));
+  assert.ok(looksLikeResearchUnit("Mount Stromlo Observatory", true));
+  assert.ok(looksLikeResearchUnit("Faculty of Medicine", true));
+  assert.ok(!looksLikeResearchUnit("Faculty of Medicine", false), "only with a parent organization");
+  assert.ok(!looksLikeResearchUnit("University of the Philippines Los Baños", true), "campuses stay");
+});
+test("the bundled worldwide file matches its manifest and holds no African or U.S. entries", () => {
+  const bytes = readFileSync(repoPath(...worldManifest.file.split("/")));
+  assert.equal(createHash("sha256").update(bytes).digest("hex"), worldManifest.sha256);
+  const data = JSON.parse(gunzipSync(bytes).toString("utf8")) as { format: string; release: string; countries: Record<string, string>; records: WorldRecord[] };
+  assert.equal(data.format, "unipath-world-directory-v1");
+  assert.equal(data.release, worldManifest.release);
+  assert.equal(data.records.length, worldManifest.count);
+  assert.ok(data.records.length > 20_000, "worldwide coverage");
+  assert.equal(new Set(data.records.map(r => r.r)).size, data.records.length, "unique ROR ids");
+  const codes = new Set(data.records.map(r => r.cc));
+  assert.equal(codes.size, worldManifest.countryCount);
+  for (const cc of codes) {
+    assert.ok(!AFRICAN_COUNTRY_CODES.has(cc), `African country ${cc} must not be included`);
+    assert.ok(!["US", "PR", "GU"].includes(cc), cc);
+    assert.ok(data.countries[cc], `country name for ${cc}`);
+  }
+  for (const cc of ["GB", "DE", "FR", "CN", "IN", "JP", "AU", "BR", "TR", "AE"]) assert.ok(codes.has(cc), `${cc} is covered`);
+  assert.ok(data.records.every(r => /^[0-9a-z]{9}$/.test(r.r) && r.n.trim() && (r.w === null || /^https?:\/\//.test(r.w))));
+});
+
+// ---------- Scholarships ----------
+test("every scholarship is well formed, outside Africa and links to an https official page", () => {
+  assert.ok(SCHOLARSHIPS.length >= 35);
+  for (const p of SCHOLARSHIPS) {
+    assert.ok(p.officialUrl.startsWith("https://"), p.id);
+    assert.ok(p.studyCountries.every(c => !AFRICAN_COUNTRY_CODES.has(c)), p.id);
+  }
+  const good = { id: "x", name: "X", sponsor: "S", sponsorType: "government", studyCountries: ["GB"], levels: ["master"], funding: "full", summary: "s", eligibility: "e", officialUrl: "https://x.example/", linkCheckedAt: null };
+  assert.equal(validatePrograms([good]).length, 1);
+  assert.throws(() => validatePrograms([{ ...good, studyCountries: ["NG"] }]), /Africa/);
+  assert.throws(() => validatePrograms([{ ...good, officialUrl: "http://x.example/" }]), /https/);
+  assert.throws(() => validatePrograms([good, good]), /duplicate/);
+  assert.throws(() => validatePrograms([{ ...good, levels: ["kindergarten"] }]), /level/);
+  assert.throws(() => validatePrograms([{ ...good, studyCountries: [] }]), /region/);
+});
+test("university-specific scholarships point at schools that exist in the directory", () => {
+  const data = JSON.parse(gunzipSync(readFileSync(repoPath(...worldManifest.file.split("/")))).toString("utf8")) as { records: WorldRecord[] };
+  const ids = new Set([...data.records.map(r => `ror-${r.r}`), ...directorySnapshot.institutions.map(r => r.id)]);
+  assert.ok(SCHOLARSHIP_INSTITUTION_IDS.length >= 5);
+  for (const id of SCHOLARSHIP_INSTITUTION_IDS) assert.ok(ids.has(id), `${id} is not in the directory`);
+});
+test("scholarships filter by destination, level, sponsor and words", () => {
+  const uk = filterScholarships({ country: "gb" });
+  assert.ok(uk.some(p => p.id === "chevening") && uk.every(p => p.studyCountries.includes("GB")));
+  assert.ok(filterScholarships({ country: "DE" }).some(p => p.id === "erasmus-mundus"), "multi-country programmes appear for each country");
+  const multi = filterScholarships({ country: "multi" });
+  assert.ok(multi.some(p => p.id === "jj-wbgsp") && multi.some(p => p.id === "erasmus-mundus") && !multi.some(p => p.id === "chevening"));
+  assert.ok(filterScholarships({ level: "doctoral" }).every(p => p.levels.includes("doctoral")));
+  assert.ok(filterScholarships({ sponsorType: "university" }).every(p => p.sponsorType === "university"));
+  assert.deepEqual(filterScholarships({ search: "rhodes trust" }).map(p => p.id), ["rhodes"]);
+  assert.equal(filterScholarships({ country: "NG" }).length, 0);
+});
+test("a university shows its own awards first, then awards for its country", () => {
+  const oxford = scholarshipsFor("ror-052gg0110", "GB");
+  assert.deepEqual(oxford.filter(p => p.scope === "institution").map(p => p.id).sort(), ["clarendon", "rhodes"]);
+  assert.equal(oxford[0].scope, "institution");
+  assert.ok(oxford.some(p => p.id === "chevening" && p.scope === "country"));
+  assert.ok(!oxford.some(p => p.id === "gates-cambridge"), "another university's award is not shown");
+  assert.equal(scholarshipsFor("ror-000000000", "XX").length, 0);
+});
 
 let failed = 0;
 for (const [name, fn] of tests) {

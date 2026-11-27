@@ -19,7 +19,7 @@ export const PLANS: Plan[] = [
     id: 'free', name: 'Free', price: '$0', period: 'forever', audience: 'For students beginning their college search.', cta: 'Get Started Free',
     features: [
       { label: 'Basic university matching', status: 'available', note: 'Preference-based matches from your saved profile.' },
-      { label: 'Search universities worldwide', status: 'limited', note: 'Today: partial U.S. (NCES IPEDS) plus a Canada pilot. Worldwide coverage is planned, not available.' },
+      { label: 'Search universities worldwide', status: 'limited', note: 'U.S. (NCES IPEDS), a Canada pilot, and universities in more than 150 other countries outside Africa (Research Organization Registry: name, city and website only).' },
       { label: 'Explore majors and fields of study', status: 'limited', note: 'Source-reported programs where available; coverage is partial.' },
       { label: 'View available admissions information', status: 'limited', note: 'Source links where reported. Confirm with each school.' },
       { label: 'Discover scholarship opportunities', status: 'limited', note: 'Source-linked funding opportunities; no eligibility guarantee.' },

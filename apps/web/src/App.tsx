@@ -14,6 +14,7 @@ import {
 } from '@workspace/api-client-react';
 import type { StudentProfileInput } from '@workspace/api-client-react';
 import {
+  Award,
   ArrowDownRight, ArrowLeft, ArrowRight, Bookmark, Briefcase, Check, CheckCircle2,
   ClipboardList, Compass, CreditCard, FileText, Gem, Globe2, GraduationCap, LayoutDashboard,
   LoaderCircle, Megaphone, Menu, MessageCircle, MessagesSquare, Scale, Search, Settings, ShieldCheck, Sparkles,
@@ -44,6 +45,7 @@ function page<P extends object>(load: () => Promise<ComponentType<P>>) {
 const DiscoverView = page(() => import('@/components/directory/DiscoverView').then(m => m.DiscoverView));
 const UniversityDetailView = page(() => import('@/components/directory/UniversityDetailView').then(m => m.UniversityDetailView));
 const FundingFinder = page(() => import('@/components/directory/FundingFinder').then(m => m.FundingFinder));
+const ScholarshipsView = page(() => import('@/components/scholarships/ScholarshipsView').then(m => m.ScholarshipsView));
 const PlansView = page(() => import('@/components/plans/PlansView').then(m => m.PlansView));
 const JobsView = page(() => import('@/components/jobs/JobsView').then(m => m.JobsView));
 const RecommendationsView = page(() => import('@/components/recommendations/RecommendationsView').then(m => m.RecommendationsView));
@@ -75,6 +77,7 @@ const navItems = [
   { href: '/documents', label: 'Documents', icon: FileText },
   { href: '/ai-assistant', label: 'AI assistant', icon: MessageCircle },
   { href: '/chat', label: 'Community chat', icon: MessagesSquare },
+  { href: '/scholarships', label: 'Scholarships', icon: Award, testId: 'nav-scholarships' },
   { href: '/funding', label: 'Funding finder', icon: Sparkles },
   { href: '/jobs', label: 'Global Student Jobs', icon: Briefcase, testId: 'nav-student-jobs' },
   { href: '/profile', label: 'My profile', icon: UserRound },
@@ -104,7 +107,7 @@ function Header({ marketing = false }: { marketing?: boolean }) {
           <><Link href="/sign-in" className="topnav-link" data-testid="link-sign-in">Sign in</Link><Link href="/sign-up" className="button button-primary button-small" data-testid="link-sign-up">Get started <ArrowRight size={15}/></Link></>}
       </nav>
     </div>
-    {marketing && <div className="sample-strip"><ShieldCheck size={14}/> Source-listed institutions: partial U.S. coverage from NCES IPEDS and a Canada pilot from a government co-op program listing. Not independently verified.</div>}
+    {marketing && <div className="sample-strip"><ShieldCheck size={14}/> Universities in 150+ countries outside Africa: U.S. records from NCES IPEDS, worldwide records from the Research Organization Registry (ROR) and a Canada pilot. Not independently verified.</div>}
   </header>;
 }
 
@@ -164,12 +167,12 @@ function Home() {
       <article className="step-card step-03"><span className="step-no">03 / TAKE A STEP</span><div className="step-art art-check"><CheckCircle2/><span>One thing at a time</span></div><h3>Keep moving forward</h3><p>Turn a big application journey into a few clear next steps.</p><Link href="/sign-up" data-testid="link-step-plan">Build your plan <ArrowRight size={15}/></Link></article></div>
     </section>
     <section className="quote-section"><div className="quote-mark">“</div><blockquote>You don’t have to have it all figured out to get started.</blockquote><p>Start curious. Find your way as you go.</p><Link href="/discover" className="button button-light" data-testid="button-browse-footer">See where you could go <ArrowRight size={16}/></Link></section>
-     <section className="home-disclaimer"><ShieldCheck size={18}/><div><strong>A note about our institution directory</strong><p>Coverage is partial. U.S. records come from NCES IPEDS. Canadian records are a pilot drawn from a Government of Canada (PSC) co-op and internship program listing, which may include historical names and is not a full list of Canadian institutions. Records are source-reported and not independently verified. Use official school websites to confirm programs, admissions requirements, and funding opportunities.</p></div></section>
+     <section className="home-disclaimer"><ShieldCheck size={18}/><div><strong>A note about our institution directory</strong><p>U.S. records come from NCES IPEDS. Universities and colleges in more than 150 other countries come from the Research Organization Registry (ROR), which lists names, cities and websites only; African countries are not included. Canadian records also include a pilot drawn from a Government of Canada (PSC) co-op and internship program listing. Records are source-reported and not independently verified, and no source is an accreditation register. Use official school websites to confirm programs, admissions requirements, and funding opportunities.</p></div></section>
     <Footer/>
   </div>;
 }
 
-function Footer() { return <footer className="footer"><Brand/><span>Thoughtful steps toward somewhere new.</span><div><Link href="/discover">Explore</Link><Link href="/plans">Plans</Link><Link href="/sign-up">Create account</Link></div><small>© 2026 UniPath AI. Directory sources (partial coverage): NCES IPEDS (U.S.) and a Public Service Commission of Canada program listing (Canada pilot). Source-reported, not independently verified.</small></footer>; }
+function Footer() { return <footer className="footer"><Brand/><span>Thoughtful steps toward somewhere new.</span><div><Link href="/discover">Explore</Link><Link href="/plans">Plans</Link><Link href="/sign-up">Create account</Link></div><small>© 2026 UniPath AI. Directory sources (partial coverage): NCES IPEDS (U.S.), the Research Organization Registry (worldwide, outside Africa) and a Public Service Commission of Canada program listing (Canada pilot). Source-reported, not independently verified.</small></footer>; }
 function PageHeading({ kicker, title, body, action }: { kicker: string; title: string; body?: string; action?: ReactNode }) {
   return <div className="page-heading"><div><div className="eyebrow">{kicker}</div><h1>{title}</h1>{body && <p>{body}</p>}</div>{action}</div>;
 }
@@ -256,6 +259,7 @@ function AppRoutes() {
       <Route path="/discover" component={Discover}/>
       <Route path="/compare">{()=><Shell><CompareView/></Shell>}</Route>
       <Route path="/funding">{()=><Shell><FundingFinder/></Shell>}</Route>
+      <Route path="/scholarships">{()=><Shell><ScholarshipsView/></Shell>}</Route>
       <Route path="/university/:id">{params=><UniversityDetails id={params.id}/>}</Route>
       <Route path="/dashboard">{()=><Protected><Shell><DashboardView/></Shell></Protected>}</Route>
       <Route path="/saved">{()=><Protected><Shell><SavedView/></Shell></Protected>}</Route>

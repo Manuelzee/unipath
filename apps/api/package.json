@@ -14,7 +14,7 @@
     "script": "tsx --env-file-if-exists=../../.env",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test:unit": "tsx src/scripts/tests/testBlueprintLogic.ts",
-    "test:integration": "tsx --env-file-if-exists=../../.env src/scripts/tests/testWorkspaceIsolation.ts && tsx --env-file-if-exists=../../.env src/scripts/tests/testAuth.ts && tsx --env-file-if-exists=../../.env src/scripts/tests/testChat.ts"
+    "test:integration": "tsx --env-file-if-exists=../../.env src/scripts/tests/testWorkspaceIsolation.ts && tsx --env-file-if-exists=../../.env src/scripts/tests/testAuth.ts && tsx --env-file-if-exists=../../.env src/scripts/tests/testChat.ts && tsx --env-file-if-exists=../../.env src/scripts/tests/testWorldDirectory.ts"
   },
   "dependencies": {
     "@workspace/api-zod": "workspace:*",

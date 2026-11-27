@@ -2,6 +2,7 @@ import { pool } from "@workspace/db";
 import app from "./app";
 import { logger } from "./lib/logger";
 import { ensureInstitutionDirectory } from "./lib/bootstrapDirectory";
+import { ensureWorldDirectory } from "./lib/worldDirectory";
 import { publicRequestFailure } from "./lib/requestErrors";
 import { applyLogoManifest } from "./lib/logos/manifest";
 import { applyBrandingManifest } from "./lib/branding/manifest";
@@ -16,8 +17,8 @@ if (Number.isNaN(port) || port <= 0) {
 }
 
 /**
- * Idempotent data upkeep (directory snapshot, verified logos and branding,
- * matching evidence). It runs after the server is already answering: on a
+ * Idempotent data upkeep (directory snapshot, worldwide universities, verified
+ * logos and branding, matching evidence). It runs after the server is already answering: on a
  * small hosting plan it takes a while, and visitors should not wait for it.
  */
 async function maintain() {
@@ -26,6 +27,8 @@ async function maintain() {
   logger.info(await applyBrandingManifest(), "Verified branding manifest applied; existing verified fields preserved");
   logger.info(await importVerifiedMatchingEvidence(), "Official matching evidence imported without overwriting existing sources");
   logger.info(directory, directory.imported || directory.factsImported ? "Imported and verified missing source records; existing records preserved" : "Institution and program snapshot already present; no data written");
+  const world = await ensureWorldDirectory();
+  logger.info(world, world.imported ? "Added missing worldwide universities (ROR); existing records preserved" : "Worldwide universities (ROR) already present; no data written");
 }
 
 function start() {

@@ -459,6 +459,98 @@ export interface ExchangeRate {
   note: string;
 }
 
+export interface ScholarshipInstitution {
+  id: string;
+  name: string;
+}
+
+export type ScholarshipSponsorType = typeof ScholarshipSponsorType[keyof typeof ScholarshipSponsorType];
+
+
+export const ScholarshipSponsorType = {
+  government: 'government',
+  university: 'university',
+  foundation: 'foundation',
+  intergovernmental: 'intergovernmental',
+} as const;
+
+export type ScholarshipLevelsItem = typeof ScholarshipLevelsItem[keyof typeof ScholarshipLevelsItem];
+
+
+export const ScholarshipLevelsItem = {
+  bachelor: 'bachelor',
+  master: 'master',
+  doctoral: 'doctoral',
+  research: 'research',
+  non_degree: 'non_degree',
+} as const;
+
+/**
+ * As the sponsor describes it
+ */
+export type ScholarshipFunding = typeof ScholarshipFunding[keyof typeof ScholarshipFunding];
+
+
+export const ScholarshipFunding = {
+  full: 'full',
+  partial: 'partial',
+  varies: 'varies',
+} as const;
+
+export interface Scholarship {
+  id: string;
+  name: string;
+  sponsor: string;
+  sponsorType: ScholarshipSponsorType;
+  studyCountries: string[];
+  studyCountryNames: string[];
+  /** @nullable */
+  studyRegion: string | null;
+  institutions: ScholarshipInstitution[];
+  levels: ScholarshipLevelsItem[];
+  /** As the sponsor describes it */
+  funding: ScholarshipFunding;
+  summary: string;
+  eligibility: string;
+  officialUrl: string;
+  /**
+     * When UniPath last confirmed the official page; null when the site blocks automated checks
+     * @nullable
+     */
+  linkCheckedAt: string | null;
+}
+
+export interface ScholarshipCountry {
+  code: string;
+  name: string;
+  count: number;
+}
+
+export interface ScholarshipList {
+  items: Scholarship[];
+  total: number;
+  countries: ScholarshipCountry[];
+  reviewedAt: string;
+  notice: string;
+}
+
+export type UniversityScholarshipScope = typeof UniversityScholarshipScope[keyof typeof UniversityScholarshipScope];
+
+
+export const UniversityScholarshipScope = {
+  institution: 'institution',
+  country: 'country',
+} as const;
+
+export type UniversityScholarship = Scholarship & {
+  scope: UniversityScholarshipScope;
+};
+
+export interface UniversityScholarships {
+  items: UniversityScholarship[];
+  notice: string;
+}
+
 export type BillingAvailabilityBaseCurrency = typeof BillingAvailabilityBaseCurrency[keyof typeof BillingAvailabilityBaseCurrency];
 
 
@@ -2092,6 +2184,41 @@ export const ListUniversityFactsKind = {
   program: 'program',
   admissions: 'admissions',
   funding: 'funding',
+} as const;
+
+export type ListScholarshipsParams = {
+/**
+ * ISO country code of the study destination, or multi for multi-country programmes
+ * @maxLength 5
+ */
+country?: string;
+level?: ListScholarshipsLevel;
+sponsorType?: ListScholarshipsSponsorType;
+/**
+ * @maxLength 100
+ */
+search?: string;
+};
+
+export type ListScholarshipsLevel = typeof ListScholarshipsLevel[keyof typeof ListScholarshipsLevel];
+
+
+export const ListScholarshipsLevel = {
+  bachelor: 'bachelor',
+  master: 'master',
+  doctoral: 'doctoral',
+  research: 'research',
+  non_degree: 'non_degree',
+} as const;
+
+export type ListScholarshipsSponsorType = typeof ListScholarshipsSponsorType[keyof typeof ListScholarshipsSponsorType];
+
+
+export const ListScholarshipsSponsorType = {
+  government: 'government',
+  university: 'university',
+  foundation: 'foundation',
+  intergovernmental: 'intergovernmental',
 } as const;
 
 export type SearchJobListingsParams = {

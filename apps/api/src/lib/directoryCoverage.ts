@@ -7,6 +7,7 @@ import {
 } from "@workspace/db";
 import { and, eq, getTableColumns, sql } from "drizzle-orm";
 import { GetFundingFinderOptionsResponse, ListUniversityFactsResponse } from "@workspace/api-zod";
+import { WORLD_SOURCE } from "./worldDirectory";
 import type { FundingStudentProfileInput, FundingPotentialMatch } from "@workspace/api-zod";
 
 export const DIRECTORY_REFERENCES = [
@@ -62,10 +63,12 @@ export async function getDirectoryCoverage() {
       { countryCode: "US", country: "United States",
         note: "Source-limited active IPEDS directory across 50 states, D.C. and covered territories. Scorecard program enrichment remains pending; not every U.S. institution is necessarily covered by these sources." },
       { countryCode: "CA", country: "Canada",
-        note: "Pilot: source-listed institutions/campuses and programs validated by the Public Service Commission for co-op/internships. Not full Canadian coverage or a general recognition/accreditation directory. Names are kept as listed; campuses may be separate. City, type, language, official school URLs, applicant eligibility and DLI status are not supplied by this dataset." },
+        note: "Universities and colleges from the Research Organization Registry (name, city and website), plus a pilot: source-listed institutions/campuses and programs validated by the Public Service Commission for co-op/internships. Not full Canadian coverage or a general recognition/accreditation directory. Names are kept as listed; campuses may be separate. City, type, language, official school URLs, applicant eligibility and DLI status are not supplied by this dataset." },
       ...counts.filter((row) => !["US", "CA"].includes(row.code)).map((row) => ({
         countryCode: row.code, country: row.country,
-        note: "Existing NCES IPEDS source records outside the United States. Source-limited holdings only, not a national directory or complete country coverage.",
+        note: ["FM", "MH", "PW"].includes(row.code)
+          ? "Existing NCES IPEDS source records outside the United States. Source-limited holdings only, not a national directory or complete country coverage."
+          : "Universities and colleges listed in the Research Organization Registry (ROR): name, city and website. Programs, tuition, admissions and recognition are not supplied; confirm with each school and the country's education ministry.",
       })),
     ].map((country) => {
       const found = counts.find((row) => row.code === country.countryCode);
@@ -74,7 +77,7 @@ export async function getDirectoryCoverage() {
         status: found?.count ? "Source-limited / partial" : "Not imported",
         lastImportedAt: found?.lastImportedAt ? new Date(found.lastImportedAt).toISOString() : null };
     }),
-    worldwideNote: "Only the countries listed here have imported records; a few countries have limited holdings inherited from IPEDS, not a national import. Later phases require country-specific official, reusable sources or licensed WHED access. No country is claimed fully covered.",
+    worldwideNote: `Universities in ${WORLD_SOURCE.countryCount} countries outside Africa and the United States come from the Research Organization Registry (ROR, public domain, release ${WORLD_SOURCE.release} of ${WORLD_SOURCE.releaseDate}), alongside the U.S. (NCES IPEDS) and the Canada pilot. African countries are not included. ROR lists names, cities and websites only; it is not an accreditation register, and no country is claimed fully covered.`,
     references: DIRECTORY_REFERENCES,
   };
 }

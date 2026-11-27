@@ -485,6 +485,40 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/University" }
         "404": { description: University not found }
+  /universities/{id}/scholarships:
+    get:
+      operationId: listUniversityScholarships
+      tags: [universities]
+      summary: Scholarship and sponsorship programmes for this university, then for its country
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Curated programmes with official links
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UniversityScholarships" }
+        "404": { description: University not found }
+  /scholarships:
+    get:
+      operationId: listScholarships
+      tags: [universities]
+      summary: Scholarship and sponsorship programmes for study outside Africa
+      parameters:
+        - { in: query, name: country, required: false, schema: { type: string, maxLength: 5 }, description: "ISO country code of the study destination, or multi for multi-country programmes" }
+        - { in: query, name: level, required: false, schema: { type: string, enum: [bachelor, master, doctoral, research, non_degree] } }
+        - { in: query, name: sponsorType, required: false, schema: { type: string, enum: [government, university, foundation, intergovernmental] } }
+        - { in: query, name: search, required: false, schema: { type: string, maxLength: 100 } }
+      responses:
+        "200":
+          description: Matching programmes, by name
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ScholarshipList" }
+        "400": { description: Invalid filter }
   /me/recommendations:
     get:
       operationId: getStudentRecommendations
@@ -1703,6 +1737,59 @@ components:
         sourceUrl: { type: string }
         status: { type: string, enum: [identity, available, stale, unavailable] }
         note: { type: string }
+    ScholarshipInstitution:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: string }
+        name: { type: string }
+    Scholarship:
+      type: object
+      required: [id, name, sponsor, sponsorType, studyCountries, studyCountryNames, studyRegion, institutions, levels, funding, summary, eligibility, officialUrl, linkCheckedAt]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        sponsor: { type: string }
+        sponsorType: { type: string, enum: [government, university, foundation, intergovernmental] }
+        studyCountries: { type: array, items: { type: string } }
+        studyCountryNames: { type: array, items: { type: string } }
+        studyRegion: { type: ["string", "null"] }
+        institutions: { type: array, items: { $ref: "#/components/schemas/ScholarshipInstitution" } }
+        levels: { type: array, items: { type: string, enum: [bachelor, master, doctoral, research, non_degree] } }
+        funding: { type: string, enum: [full, partial, varies], description: "As the sponsor describes it" }
+        summary: { type: string }
+        eligibility: { type: string }
+        officialUrl: { type: string }
+        linkCheckedAt: { type: ["string", "null"], description: "When UniPath last confirmed the official page; null when the site blocks automated checks" }
+    ScholarshipCountry:
+      type: object
+      required: [code, name, count]
+      properties:
+        code: { type: string }
+        name: { type: string }
+        count: { type: integer }
+    ScholarshipList:
+      type: object
+      required: [items, total, countries, reviewedAt, notice]
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/Scholarship" } }
+        total: { type: integer }
+        countries: { type: array, items: { $ref: "#/components/schemas/ScholarshipCountry" } }
+        reviewedAt: { type: string }
+        notice: { type: string }
+    UniversityScholarship:
+      allOf:
+        - { $ref: "#/components/schemas/Scholarship" }
+        - type: object
+          required: [scope]
+          properties:
+            scope: { type: string, enum: [institution, country] }
+    UniversityScholarships:
+      type: object
+      required: [items, notice]
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/UniversityScholarship" } }
+        notice: { type: string }
     BillingAvailability:
       type: object
       required: [provider, providerConfigured, livePaymentsEnabled, cryptoEnabled, historyAvailable, baseCurrency, displayCurrencies, message]

@@ -24,7 +24,11 @@ const PAGE_SIZE = 24;
 export function DiscoverView() {
   const logoCoverage = useGetInstitutionLogoCoverage({ query: { queryKey: getGetInstitutionLogoCoverageQueryKey(), staleTime: 30_000, refetchInterval: 60_000 } });
   const branding = useGetInstitutionBrandingCoverage({ query: { queryKey: getGetInstitutionBrandingCoverageQueryKey(), staleTime: 30_000, refetchInterval: 60_000 } });
-  const [filters, setFilters] = useState<DiscoverFilterState>(EMPTY_FILTERS);
+  const [filters, setFilters] = useState<DiscoverFilterState>(() => {
+    const url = new URLSearchParams(window.location.search);
+    const country = url.get('country')?.toUpperCase();
+    return { ...EMPTY_FILTERS, fundingOnly: url.get('fundingOnly') === 'true', countryCode: country && /^[A-Z]{2}$/.test(country) ? country : '' };
+  });
   const [page, setPage] = useState(1);
   const [maxTuition, setMaxTuition] = useState(''); const [tuitionCurrency, setTuitionCurrency, savedBudget] = usePreferredCurrency(); const [applyMsg, setApplyMsg] = useState('');
   const [tuitionRate, setTuitionRate] = useState<'in_state' | 'out_of_state' | 'domestic' | 'international'>('out_of_state');
@@ -99,7 +103,7 @@ export function DiscoverView() {
 
   return <div className="page page-enter">
     <div className="page-heading"><div><div className="eyebrow">INSTITUTION DIRECTORY</div><h1>Find a place to study.</h1><p>Search imported official institution records by country, region, and what the sources actually report.</p></div></div>
-    <div className="data-notice"><ShieldCheck size={17}/><span><strong>Honest about the gaps.</strong> Coverage is partial: U.S. records come from NCES IPEDS, and Canadian records come from a limited government co-op and internship program listing, not a full list of Canadian institutions or an accreditation register. When a source doesn't report a detail, we show it as unknown instead of guessing.</span></div>
+    <div className="data-notice"><ShieldCheck size={17}/><span><strong>Honest about the gaps.</strong> U.S. records come from NCES IPEDS. Universities in more than 150 other countries (outside Africa) come from the Research Organization Registry, which lists names, cities and websites only. Canada also has a pilot from a government co-op and internship listing. None of these is an accreditation register. When a source doesn't report a detail, we show it as unknown instead of guessing.</span></div>
     <CoveragePanel/>
     <p className="logo-coverage-note">{logoCoverage.data
       ? `${logoCoverage.data.rows.filter(row => row.status === 'verified').reduce((sum, row) => sum + row.count, 0).toLocaleString()} verified logos · Checks attempted for ${logoCoverage.data.rows.filter(row => row.status !== 'not_checked').reduce((sum, row) => sum + row.count, 0).toLocaleString()} institutions. Other schools use name placeholders; a placeholder is not an official logo.`

@@ -1,5 +1,52 @@
 # International directory: coverage and next steps
 
+## Worldwide universities and scholarships (since 2026-11-27)
+
+**Universities.** About 24,500 universities and colleges in 158 countries come
+from the [Research Organization Registry](https://ror.org/) (ROR), a public-domain
+(CC0) register. At the owner's request, **African countries are excluded**. The
+United States and its territories stay on NCES IPEDS, and Canadian schools already
+in the PSC pilot are not added twice.
+
+- What a ROR entry has: name, other names (searchable), city, region, country,
+  website and a link to its ROR record. It has no programs, tuition, admissions,
+  language or recognition, and the app shows those as unknown. ROR is not an
+  accreditation register.
+- The data ships as `apps/api/data/world/ror-education.json.gz`, checked against
+  `apps/api/src/data/world-directory-manifest.json`. At start-up the API adds any
+  missing entries in the background (`lib/worldDirectory.ts`) and never changes or
+  removes existing rows. The first deploy writes about 25,000 rows.
+- Selection rules (Africa, U.S., Canada duplicates, research units):
+  `apps/api/src/lib/world/rules.ts`.
+- To refresh from a newer ROR release: download the dump from
+  <https://zenodo.org/communities/ror-data>, then run
+  `pnpm --filter @workspace/api-server exec tsx src/scripts/prepareWorldDirectory.ts <dump.json> <v2.17> <YYYY-MM-DD> <10.5281/zenodo.N>`
+  and commit both files. New entries are added on the next deploy.
+- Recommendations: with a study country set, only schools in that country are
+  scored (filtered in the database). Without one, ROR-only entries are left out,
+  because they have nothing to match on.
+
+**Scholarships and sponsorships.** `apps/api/src/data/scholarships.json` lists 40
+well-known government, university, foundation and intergovernmental programmes
+for study outside Africa (Chevening, Commonwealth, Fulbright, DAAD, Erasmus Mundus,
+MEXT, GKS, Türkiye Scholarships, Australia Awards and others). Each entry has the
+sponsor, study countries, levels, how the sponsor describes the funding, who can
+apply, and the official page. **Amounts and deadlines are deliberately not copied**,
+because they change every year.
+
+- `linkCheckedAt` is the date the official page was opened and named the
+  programme. It is null for sites that block automated checks (Clarendon, DAAD,
+  China Scholarship Council); the page says so.
+- University-specific awards (Rhodes, Clarendon, Gates Cambridge, Knight-Hennessy,
+  ESOP, Schwarzman, Yenching, Pearson, UBC) link to directory ids, so they show on
+  those universities' pages and count for the "listed funding or scholarships"
+  filter. National awards show on every university in that country.
+- Students find them at **/scholarships** and on each university's
+  **Scholarships & Funding** tab. The unit tests reject malformed entries, http
+  links, African study countries and links to schools that are not in the directory.
+- Review the list at least yearly: open each official page, update or remove entries,
+  and set `reviewedAt` and `linkCheckedAt`.
+
 ## For the app owner
 
 **You do not need to upload a ZIP file or provide another API key for the Canada pilot.**

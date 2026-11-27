@@ -8,7 +8,16 @@ import {
   ListUniversitiesQueryParams,
   ListUniversitiesResponse,
   ListUniversityFactsQueryParams,
+  ListScholarshipsQueryParams,
+  ListScholarshipsResponse,
+  ListUniversityScholarshipsResponse,
 } from "@workspace/api-zod";
+import { db, institutionDirectoryTable } from "@workspace/db";
+import { inArray } from "drizzle-orm";
+import {
+  SCHOLARSHIPS, SCHOLARSHIPS_REVIEWED_AT, filterScholarships, scholarshipsFor,
+  type ScholarshipProgram,
+} from "../lib/scholarships";
 import {
   findUniversity,
   getUniversityFilterOptions,
@@ -24,6 +33,23 @@ import {
 } from "../lib/directoryCoverage";
 
 const router: IRouter = Router();
+
+const regionNames = new Intl.DisplayNames(["en"], { type: "region" });
+const SCHOLARSHIP_NOTICE = "Leads to check, not offers. Amounts, deadlines and eligibility change every year; the sponsor's official page controls. UniPath is not affiliated with these sponsors.";
+
+/** Programme for the API: country names and the universities it is tied to. */
+async function presentScholarships<T extends ScholarshipProgram>(programs: T[]) {
+  const ids = [...new Set(programs.flatMap(p => p.institutionIds))];
+  const rows = ids.length ? await db.select({ id: institutionDirectoryTable.id, name: institutionDirectoryTable.name })
+    .from(institutionDirectoryTable).where(inArray(institutionDirectoryTable.id, ids)) : [];
+  const names = new Map(rows.map(row => [row.id, row.name]));
+  return programs.map(({ institutionIds, ...p }) => ({
+    ...p,
+    studyCountryNames: p.studyCountries.map(code => regionNames.of(code) ?? code),
+    // Only universities that are in the directory, so every link opens a page.
+    institutions: institutionIds.filter(id => names.has(id)).map(id => ({ id, name: names.get(id)! })),
+  }));
+}
 
 router.get("/universities/import-status", async (_req, res): Promise<void> => {
   const status = await getDirectoryImportStatus();
@@ -62,6 +88,40 @@ router.get("/university-facts", async (req, res): Promise<void> => {
     return;
   }
   res.json(await listUniversityFacts(parsed.data));
+});
+
+router.get("/scholarships", async (req, res): Promise<void> => {
+  const parsed = ListScholarshipsQueryParams.safeParse(req.query);
+  if (!parsed.success || (parsed.data.country && !/^([A-Za-z]{2}|multi)$/.test(parsed.data.country))) {
+    res.status(400).json({ error: "Use a two-letter study country code, multi, or no country." });
+    return;
+  }
+  const items = filterScholarships(parsed.data);
+  const counts = new Map<string, number>();
+  for (const p of SCHOLARSHIPS) for (const code of p.studyCountries) counts.set(code, (counts.get(code) ?? 0) + 1);
+  res.setHeader("Cache-Control", "public, max-age=300");
+  res.json(ListScholarshipsResponse.parse({
+    items: await presentScholarships(items.slice().sort((a, b) => a.name.localeCompare(b.name))),
+    total: items.length,
+    countries: [...counts].map(([code, count]) => ({ code, name: regionNames.of(code) ?? code, count }))
+      .sort((a, b) => a.name.localeCompare(b.name)),
+    reviewedAt: SCHOLARSHIPS_REVIEWED_AT,
+    notice: SCHOLARSHIP_NOTICE,
+  }));
+});
+
+router.get("/universities/:id/scholarships", async (req, res): Promise<void> => {
+  const params = GetUniversityParams.safeParse(req.params);
+  const university = params.success ? await findUniversity(params.data.id) : null;
+  if (!university) {
+    res.status(404).json({ error: "University listing not found." });
+    return;
+  }
+  res.setHeader("Cache-Control", "public, max-age=300");
+  res.json(ListUniversityScholarshipsResponse.parse({
+    items: await presentScholarships(scholarshipsFor(university.id, university.countryCode)),
+    notice: SCHOLARSHIP_NOTICE,
+  }));
 });
 
 router.get("/universities/filters", async (_req, res): Promise<void> => {

@@ -106,7 +106,7 @@ export function PlansView() {
       {FAQ.map(([q, a], i) => <details key={q} data-testid={`faq-item-${i}`}><summary>{q}</summary><p>{a}</p></details>)}
     </section>
 
-    <p className="plans-footnote">Plan and package prices are UniPath subscription or support prices, not school tuition. Directory coverage is partial (U.S. plus a Canada pilot); worldwide expansion is planned. UniPath AI does not submit applications or guarantee admission or scholarships.</p>
+    <p className="plans-footnote">Plan and package prices are UniPath subscription or support prices, not school tuition. Directory coverage is partial: the U.S., a Canada pilot, and names, cities and websites for universities in more than 150 other countries outside Africa. UniPath AI does not submit applications or guarantee admission or scholarships.</p>
 
     <SetupDialog open={!!setupPlan} onOpenChange={o => { if (!o) setSetupPlan(null); }} title={`${setupPlan?.name ?? ''} is not available yet`} testId="dialog-plan-setup">
       {setupPlan && <>

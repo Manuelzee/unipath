@@ -2,6 +2,7 @@ import type { University } from '@workspace/api-client-react';
 import { getGetDirectoryCoverageQueryKey, useGetDirectoryCoverage } from '@workspace/api-client-react';
 import { ExternalRef, CANADA_REFERENCES } from './ExternalRef';
 import { FactList } from './FactList';
+import { UniversityScholarships } from '@/components/scholarships/UniversityScholarships';
 import { formatDate, formatRate, regionName } from './format';
 import { Unknown } from './StateViews';
 
@@ -69,6 +70,7 @@ export function AdmissionsPanel({ school }: { school: University }) {
 
 export function FundingPanel({ school }: { school: University }) {
   return <>
+    <UniversityScholarships id={school.id}/>
     <section className="detail-panel"><span className="eyebrow">SOURCE-REPORTED FUNDING</span>
       <FactList institutionId={school.id} kind="funding" emptyTitle="No funding records in imported sources" emptyBody="This doesn’t mean no funding exists. It means our sources don’t report it. Check the official links below."/>
     </section>

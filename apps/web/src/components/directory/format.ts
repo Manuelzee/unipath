@@ -32,6 +32,9 @@ export function sourceShort(school: University) {
   if (s.includes('IPEDS') && s.includes('Scorecard')) return 'IPEDS + Scorecard';
   if (s.includes('IPEDS')) return 'NCES IPEDS';
   if (s.includes('Scorecard')) return 'College Scorecard';
+  if (s.includes('Research Organization Registry')) return 'ROR registry';
   return s.length > 26 ? `${s.slice(0, 24)}...` : s;
 }
+/** Worldwide record from the Research Organization Registry: name, place and website only. */
+export const isWorldRecord = (school: University) => school.dataSource.includes('Research Organization Registry');
 export const cn = (...v: Array<string | false | undefined | null>) => v.filter(Boolean).join(' ');
