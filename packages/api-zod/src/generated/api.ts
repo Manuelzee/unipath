@@ -3016,6 +3016,7 @@ export const ExportMyDataResponse = zod.object({
   "id": zod.number().int(),
   "applicationId": zod.number().int().nullable(),
   "title": zod.string(),
+  "kind": zod.union([zod.literal('transcript'),zod.literal('certificate'),zod.literal('passport'),zod.literal('english_test'),zod.literal('cv'),zod.literal('personal_statement'),zod.literal('recommendation'),zod.literal('financial'),zod.literal('photo'),zod.literal('portfolio'),zod.literal('other'),zod.literal(null)]).nullable(),
   "fileName": zod.string(),
   "contentType": zod.enum(['application/pdf', 'image/png', 'image/jpeg', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']),
   "sizeBytes": zod.number().int(),
@@ -3060,6 +3061,7 @@ export const ListStudentDocumentsResponseItem = zod.object({
   "id": zod.number().int(),
   "applicationId": zod.number().int().nullable(),
   "title": zod.string(),
+  "kind": zod.union([zod.literal('transcript'),zod.literal('certificate'),zod.literal('passport'),zod.literal('english_test'),zod.literal('cv'),zod.literal('personal_statement'),zod.literal('recommendation'),zod.literal('financial'),zod.literal('photo'),zod.literal('portfolio'),zod.literal('other'),zod.literal(null)]).nullable(),
   "fileName": zod.string(),
   "contentType": zod.enum(['application/pdf', 'image/png', 'image/jpeg', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']),
   "sizeBytes": zod.number().int(),
@@ -3081,13 +3083,15 @@ export const uploadStudentDocumentQueryTitleMax = 160;
 export const UploadStudentDocumentQueryParams = zod.object({
   "fileName": zod.string().min(1).max(uploadStudentDocumentQueryFileNameMax),
   "title": zod.string().max(uploadStudentDocumentQueryTitleMax).optional(),
-  "applicationId": zod.coerce.number().int().optional()
+  "applicationId": zod.coerce.number().int().optional(),
+  "kind": zod.enum(['transcript', 'certificate', 'passport', 'english_test', 'cv', 'personal_statement', 'recommendation', 'financial', 'photo', 'portfolio', 'other']).optional()
 })
 
 export const UploadStudentDocumentResponse = zod.object({
   "id": zod.number().int(),
   "applicationId": zod.number().int().nullable(),
   "title": zod.string(),
+  "kind": zod.union([zod.literal('transcript'),zod.literal('certificate'),zod.literal('passport'),zod.literal('english_test'),zod.literal('cv'),zod.literal('personal_statement'),zod.literal('recommendation'),zod.literal('financial'),zod.literal('photo'),zod.literal('portfolio'),zod.literal('other'),zod.literal(null)]).nullable(),
   "fileName": zod.string(),
   "contentType": zod.enum(['application/pdf', 'image/png', 'image/jpeg', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']),
   "sizeBytes": zod.number().int(),
@@ -3108,13 +3112,15 @@ export const updateStudentDocumentBodyTitleMax = 160;
 
 export const UpdateStudentDocumentBody = zod.object({
   "title": zod.string().min(1).max(updateStudentDocumentBodyTitleMax).optional(),
-  "applicationId": zod.number().int().nullish()
+  "applicationId": zod.number().int().nullish(),
+  "kind": zod.union([zod.literal('transcript'),zod.literal('certificate'),zod.literal('passport'),zod.literal('english_test'),zod.literal('cv'),zod.literal('personal_statement'),zod.literal('recommendation'),zod.literal('financial'),zod.literal('photo'),zod.literal('portfolio'),zod.literal('other'),zod.literal(null)]).nullish()
 })
 
 export const UpdateStudentDocumentResponse = zod.object({
   "id": zod.number().int(),
   "applicationId": zod.number().int().nullable(),
   "title": zod.string(),
+  "kind": zod.union([zod.literal('transcript'),zod.literal('certificate'),zod.literal('passport'),zod.literal('english_test'),zod.literal('cv'),zod.literal('personal_statement'),zod.literal('recommendation'),zod.literal('financial'),zod.literal('photo'),zod.literal('portfolio'),zod.literal('other'),zod.literal(null)]).nullable(),
   "fileName": zod.string(),
   "contentType": zod.enum(['application/pdf', 'image/png', 'image/jpeg', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']),
   "sizeBytes": zod.number().int(),
@@ -3491,6 +3497,804 @@ export const DeleteChatMessageParams = zod.object({
 })
 
 export const DeleteChatMessageResponse = zod.void()
+
+
+/**
+ * @summary Search published degree programmes
+ */
+export const listProgrammesQuerySearchMax = 100;
+
+export const listProgrammesQueryCountryCodeRegExp = new RegExp('^[A-Z]{2}$');
+export const listProgrammesQueryFieldMax = 120;
+
+export const listProgrammesQueryLanguageMax = 60;
+
+export const listProgrammesQueryPageMax = 100000;
+
+export const listProgrammesQueryPageSizeMax = 48;
+
+
+
+export const ListProgrammesQueryParams = zod.object({
+  "search": zod.string().max(listProgrammesQuerySearchMax).optional().describe('Programme, field or university name'),
+  "countryCode": zod.string().regex(listProgrammesQueryCountryCodeRegExp).optional(),
+  "level": zod.enum(['bachelor', 'master', 'doctoral', 'diploma', 'certificate', 'foundation', 'other']).optional(),
+  "field": zod.string().max(listProgrammesQueryFieldMax).optional(),
+  "language": zod.string().max(listProgrammesQueryLanguageMax).optional(),
+  "confirmedOnly": zod.coerce.boolean().optional(),
+  "sort": zod.enum(['deadline', 'name', 'updated']).optional().describe('deadline (soonest open deadline first, the default), name, or updated (recently checked first)'),
+  "page": zod.coerce.number().int().min(1).max(listProgrammesQueryPageMax).optional(),
+  "pageSize": zod.coerce.number().int().min(1).max(listProgrammesQueryPageSizeMax).optional()
+})
+
+export const ListProgrammesResponse = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "level": zod.enum(['bachelor', 'master', 'doctoral', 'diploma', 'certificate', 'foundation', 'other']),
+  "degreeName": zod.string().nullable(),
+  "field": zod.string(),
+  "language": zod.string().nullable(),
+  "durationMonths": zod.number().int().nullable(),
+  "studyMode": zod.union([zod.literal('full_time'),zod.literal('part_time'),zod.literal('online'),zod.literal('blended'),zod.literal(null)]).nullable(),
+  "intakes": zod.array(zod.string()),
+  "tuitionAmount": zod.number().nullable(),
+  "tuitionCurrency": zod.string().nullable(),
+  "tuitionPeriod": zod.union([zod.literal('year'),zod.literal('semester'),zod.literal('programme'),zod.literal('credit'),zod.literal(null)]).nullable(),
+  "applicationFeeAmount": zod.number().nullable(),
+  "applicationFeeCurrency": zod.string().nullable(),
+  "deadlineType": zod.enum(['fixed', 'rolling', 'unknown']),
+  "deadline": zod.string().nullable(),
+  "deadlineNote": zod.string().nullable(),
+  "institution": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "city": zod.string(),
+  "country": zod.string(),
+  "countryCode": zod.string(),
+  "website": zod.string().nullable()
+}),
+  "verification": zod.object({
+  "level": zod.enum(['confirmed', 'checked', 'stale']),
+  "label": zod.string(),
+  "detail": zod.string(),
+  "checkedAt": zod.string(),
+  "confirmedAt": zod.string().nullable(),
+  "confirmedUntil": zod.string().nullable()
+}),
+  "updatedAt": zod.string()
+})),
+  "total": zod.number().int(),
+  "page": zod.number().int(),
+  "pageSize": zod.number().int()
+})
+
+
+/**
+ * @summary Countries, levels, fields and languages of published programmes, with counts
+ */
+export const GetProgrammeFiltersResponse = zod.object({
+  "total": zod.number().int(),
+  "confirmed": zod.number().int(),
+  "countries": zod.array(zod.object({
+  "value": zod.string(),
+  "label": zod.string(),
+  "count": zod.number().int()
+})),
+  "levels": zod.array(zod.object({
+  "value": zod.string(),
+  "label": zod.string(),
+  "count": zod.number().int()
+})),
+  "fields": zod.array(zod.object({
+  "value": zod.string(),
+  "label": zod.string(),
+  "count": zod.number().int()
+})),
+  "languages": zod.array(zod.object({
+  "value": zod.string(),
+  "label": zod.string(),
+  "count": zod.number().int()
+}))
+})
+
+
+/**
+ * @summary One published programme, with similar programmes
+ */
+export const GetProgrammeParams = zod.object({
+  "id": zod.coerce.number().int()
+})
+
+export const getProgrammeResponseProgrammeTwoRequiredDocumentsItemNoteMax = 300;
+
+
+
+export const GetProgrammeResponse = zod.object({
+  "programme": zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "level": zod.enum(['bachelor', 'master', 'doctoral', 'diploma', 'certificate', 'foundation', 'other']),
+  "degreeName": zod.string().nullable(),
+  "field": zod.string(),
+  "language": zod.string().nullable(),
+  "durationMonths": zod.number().int().nullable(),
+  "studyMode": zod.union([zod.literal('full_time'),zod.literal('part_time'),zod.literal('online'),zod.literal('blended'),zod.literal(null)]).nullable(),
+  "intakes": zod.array(zod.string()),
+  "tuitionAmount": zod.number().nullable(),
+  "tuitionCurrency": zod.string().nullable(),
+  "tuitionPeriod": zod.union([zod.literal('year'),zod.literal('semester'),zod.literal('programme'),zod.literal('credit'),zod.literal(null)]).nullable(),
+  "applicationFeeAmount": zod.number().nullable(),
+  "applicationFeeCurrency": zod.string().nullable(),
+  "deadlineType": zod.enum(['fixed', 'rolling', 'unknown']),
+  "deadline": zod.string().nullable(),
+  "deadlineNote": zod.string().nullable(),
+  "institution": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "city": zod.string(),
+  "country": zod.string(),
+  "countryCode": zod.string(),
+  "website": zod.string().nullable()
+}),
+  "verification": zod.object({
+  "level": zod.enum(['confirmed', 'checked', 'stale']),
+  "label": zod.string(),
+  "detail": zod.string(),
+  "checkedAt": zod.string(),
+  "confirmedAt": zod.string().nullable(),
+  "confirmedUntil": zod.string().nullable()
+}),
+  "updatedAt": zod.string()
+}).and(zod.object({
+  "tuitionNote": zod.string().nullable(),
+  "academicRequirement": zod.string().nullable(),
+  "languageRequirement": zod.string().nullable(),
+  "otherRequirements": zod.string().nullable(),
+  "minimumGpa": zod.number().nullable(),
+  "requiredDocuments": zod.array(zod.object({
+  "kind": zod.enum(['transcript', 'certificate', 'passport', 'english_test', 'cv', 'personal_statement', 'recommendation', 'financial', 'photo', 'portfolio', 'other']),
+  "need": zod.enum(['required', 'if_applicable']),
+  "note": zod.string().max(getProgrammeResponseProgrammeTwoRequiredDocumentsItemNoteMax).nullable()
+})),
+  "officialUrl": zod.string(),
+  "applyUrl": zod.string().nullable(),
+  "sourceUrl": zod.string(),
+  "confirmationNote": zod.string().nullable()
+})),
+  "similar": zod.array(zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "level": zod.enum(['bachelor', 'master', 'doctoral', 'diploma', 'certificate', 'foundation', 'other']),
+  "degreeName": zod.string().nullable(),
+  "field": zod.string(),
+  "language": zod.string().nullable(),
+  "durationMonths": zod.number().int().nullable(),
+  "studyMode": zod.union([zod.literal('full_time'),zod.literal('part_time'),zod.literal('online'),zod.literal('blended'),zod.literal(null)]).nullable(),
+  "intakes": zod.array(zod.string()),
+  "tuitionAmount": zod.number().nullable(),
+  "tuitionCurrency": zod.string().nullable(),
+  "tuitionPeriod": zod.union([zod.literal('year'),zod.literal('semester'),zod.literal('programme'),zod.literal('credit'),zod.literal(null)]).nullable(),
+  "applicationFeeAmount": zod.number().nullable(),
+  "applicationFeeCurrency": zod.string().nullable(),
+  "deadlineType": zod.enum(['fixed', 'rolling', 'unknown']),
+  "deadline": zod.string().nullable(),
+  "deadlineNote": zod.string().nullable(),
+  "institution": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "city": zod.string(),
+  "country": zod.string(),
+  "countryCode": zod.string(),
+  "website": zod.string().nullable()
+}),
+  "verification": zod.object({
+  "level": zod.enum(['confirmed', 'checked', 'stale']),
+  "label": zod.string(),
+  "detail": zod.string(),
+  "checkedAt": zod.string(),
+  "confirmedAt": zod.string().nullable(),
+  "confirmedUntil": zod.string().nullable()
+}),
+  "updatedAt": zod.string()
+}))
+})
+
+
+/**
+ * @summary Published programmes at one university
+ */
+export const ListUniversityProgrammesParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const ListUniversityProgrammesResponse = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "level": zod.enum(['bachelor', 'master', 'doctoral', 'diploma', 'certificate', 'foundation', 'other']),
+  "degreeName": zod.string().nullable(),
+  "field": zod.string(),
+  "language": zod.string().nullable(),
+  "durationMonths": zod.number().int().nullable(),
+  "studyMode": zod.union([zod.literal('full_time'),zod.literal('part_time'),zod.literal('online'),zod.literal('blended'),zod.literal(null)]).nullable(),
+  "intakes": zod.array(zod.string()),
+  "tuitionAmount": zod.number().nullable(),
+  "tuitionCurrency": zod.string().nullable(),
+  "tuitionPeriod": zod.union([zod.literal('year'),zod.literal('semester'),zod.literal('programme'),zod.literal('credit'),zod.literal(null)]).nullable(),
+  "applicationFeeAmount": zod.number().nullable(),
+  "applicationFeeCurrency": zod.string().nullable(),
+  "deadlineType": zod.enum(['fixed', 'rolling', 'unknown']),
+  "deadline": zod.string().nullable(),
+  "deadlineNote": zod.string().nullable(),
+  "institution": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "city": zod.string(),
+  "country": zod.string(),
+  "countryCode": zod.string(),
+  "website": zod.string().nullable()
+}),
+  "verification": zod.object({
+  "level": zod.enum(['confirmed', 'checked', 'stale']),
+  "label": zod.string(),
+  "detail": zod.string(),
+  "checkedAt": zod.string(),
+  "confirmedAt": zod.string().nullable(),
+  "confirmedUntil": zod.string().nullable()
+}),
+  "updatedAt": zod.string()
+}))
+})
+
+
+/**
+ * @summary The signed-in student's documents and grades against this programme
+ */
+export const GetProgrammeReadinessParams = zod.object({
+  "id": zod.coerce.number().int()
+})
+
+export const GetProgrammeReadinessResponse = zod.object({
+  "documents": zod.array(zod.object({
+  "kind": zod.string(),
+  "label": zod.string(),
+  "need": zod.enum(['required', 'if_applicable']),
+  "note": zod.string().nullable(),
+  "status": zod.enum(['ready', 'missing']),
+  "documentTitles": zod.array(zod.string())
+})),
+  "requiredCount": zod.number().int(),
+  "readyCount": zod.number().int(),
+  "academic": zod.object({
+  "status": zod.enum(['meets', 'below', 'unknown', 'not_published']),
+  "message": zod.string()
+}),
+  "trackedApplicationId": zod.number().int().nullable()
+})
+
+
+export const listAdminProgrammesQuerySearchMax = 100;
+
+
+
+export const ListAdminProgrammesQueryParams = zod.object({
+  "search": zod.string().max(listAdminProgrammesQuerySearchMax).optional(),
+  "status": zod.enum(['draft', 'published', 'archived']).optional()
+})
+
+export const listAdminProgrammesResponseItemsItemOneTwoRequiredDocumentsItemNoteMax = 300;
+
+
+
+export const ListAdminProgrammesResponse = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "level": zod.enum(['bachelor', 'master', 'doctoral', 'diploma', 'certificate', 'foundation', 'other']),
+  "degreeName": zod.string().nullable(),
+  "field": zod.string(),
+  "language": zod.string().nullable(),
+  "durationMonths": zod.number().int().nullable(),
+  "studyMode": zod.union([zod.literal('full_time'),zod.literal('part_time'),zod.literal('online'),zod.literal('blended'),zod.literal(null)]).nullable(),
+  "intakes": zod.array(zod.string()),
+  "tuitionAmount": zod.number().nullable(),
+  "tuitionCurrency": zod.string().nullable(),
+  "tuitionPeriod": zod.union([zod.literal('year'),zod.literal('semester'),zod.literal('programme'),zod.literal('credit'),zod.literal(null)]).nullable(),
+  "applicationFeeAmount": zod.number().nullable(),
+  "applicationFeeCurrency": zod.string().nullable(),
+  "deadlineType": zod.enum(['fixed', 'rolling', 'unknown']),
+  "deadline": zod.string().nullable(),
+  "deadlineNote": zod.string().nullable(),
+  "institution": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "city": zod.string(),
+  "country": zod.string(),
+  "countryCode": zod.string(),
+  "website": zod.string().nullable()
+}),
+  "verification": zod.object({
+  "level": zod.enum(['confirmed', 'checked', 'stale']),
+  "label": zod.string(),
+  "detail": zod.string(),
+  "checkedAt": zod.string(),
+  "confirmedAt": zod.string().nullable(),
+  "confirmedUntil": zod.string().nullable()
+}),
+  "updatedAt": zod.string()
+}).and(zod.object({
+  "tuitionNote": zod.string().nullable(),
+  "academicRequirement": zod.string().nullable(),
+  "languageRequirement": zod.string().nullable(),
+  "otherRequirements": zod.string().nullable(),
+  "minimumGpa": zod.number().nullable(),
+  "requiredDocuments": zod.array(zod.object({
+  "kind": zod.enum(['transcript', 'certificate', 'passport', 'english_test', 'cv', 'personal_statement', 'recommendation', 'financial', 'photo', 'portfolio', 'other']),
+  "need": zod.enum(['required', 'if_applicable']),
+  "note": zod.string().max(listAdminProgrammesResponseItemsItemOneTwoRequiredDocumentsItemNoteMax).nullable()
+})),
+  "officialUrl": zod.string(),
+  "applyUrl": zod.string().nullable(),
+  "sourceUrl": zod.string(),
+  "confirmationNote": zod.string().nullable()
+})).and(zod.object({
+  "status": zod.enum(['draft', 'published', 'archived']),
+  "seedKey": zod.string().nullable(),
+  "createdAt": zod.string()
+})))
+})
+
+
+export const createProgrammeBodyInstitutionIdMax = 80;
+
+export const createProgrammeBodyNameMin = 2;
+export const createProgrammeBodyNameMax = 200;
+
+export const createProgrammeBodyDegreeNameMax = 200;
+
+export const createProgrammeBodyFieldMin = 2;
+export const createProgrammeBodyFieldMax = 120;
+
+export const createProgrammeBodyLanguageMax = 60;
+
+export const createProgrammeBodyDurationMonthsMax = 120;
+
+export const createProgrammeBodyIntakesItemMax = 60;
+
+export const createProgrammeBodyIntakesMax = 6;
+
+export const createProgrammeBodyTuitionAmountMin = 0;
+export const createProgrammeBodyTuitionAmountMax = 10000000;
+
+export const createProgrammeBodyTuitionCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const createProgrammeBodyTuitionNoteMax = 300;
+
+export const createProgrammeBodyApplicationFeeAmountMin = 0;
+export const createProgrammeBodyApplicationFeeAmountMax = 100000;
+
+export const createProgrammeBodyApplicationFeeCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const createProgrammeBodyDeadlineRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+export const createProgrammeBodyDeadlineNoteMax = 200;
+
+export const createProgrammeBodyAcademicRequirementMax = 2000;
+
+export const createProgrammeBodyLanguageRequirementMax = 2000;
+
+export const createProgrammeBodyOtherRequirementsMax = 2000;
+
+export const createProgrammeBodyMinimumGpaMin = 0;
+export const createProgrammeBodyMinimumGpaMax = 4;
+
+export const createProgrammeBodyRequiredDocumentsItemNoteMax = 300;
+
+export const createProgrammeBodyRequiredDocumentsMax = 12;
+
+export const createProgrammeBodyOfficialUrlMin = 8;
+export const createProgrammeBodyOfficialUrlMax = 500;
+
+export const createProgrammeBodyApplyUrlMax = 500;
+
+export const createProgrammeBodySourceUrlMin = 8;
+export const createProgrammeBodySourceUrlMax = 500;
+
+export const createProgrammeBodyCheckedAtRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+
+
+export const CreateProgrammeBody = zod.object({
+  "institutionId": zod.string().min(1).max(createProgrammeBodyInstitutionIdMax),
+  "name": zod.string().min(createProgrammeBodyNameMin).max(createProgrammeBodyNameMax),
+  "level": zod.enum(['bachelor', 'master', 'doctoral', 'diploma', 'certificate', 'foundation', 'other']),
+  "degreeName": zod.string().max(createProgrammeBodyDegreeNameMax).nullish(),
+  "field": zod.string().min(createProgrammeBodyFieldMin).max(createProgrammeBodyFieldMax),
+  "language": zod.string().max(createProgrammeBodyLanguageMax).nullish(),
+  "durationMonths": zod.number().int().min(1).max(createProgrammeBodyDurationMonthsMax).nullish(),
+  "studyMode": zod.union([zod.literal('full_time'),zod.literal('part_time'),zod.literal('online'),zod.literal('blended'),zod.literal(null)]).nullish(),
+  "intakes": zod.array(zod.string().min(1).max(createProgrammeBodyIntakesItemMax)).max(createProgrammeBodyIntakesMax),
+  "tuitionAmount": zod.number().min(createProgrammeBodyTuitionAmountMin).max(createProgrammeBodyTuitionAmountMax).nullish(),
+  "tuitionCurrency": zod.string().regex(createProgrammeBodyTuitionCurrencyRegExp).nullish(),
+  "tuitionPeriod": zod.union([zod.literal('year'),zod.literal('semester'),zod.literal('programme'),zod.literal('credit'),zod.literal(null)]).nullish(),
+  "tuitionNote": zod.string().max(createProgrammeBodyTuitionNoteMax).nullish(),
+  "applicationFeeAmount": zod.number().min(createProgrammeBodyApplicationFeeAmountMin).max(createProgrammeBodyApplicationFeeAmountMax).nullish(),
+  "applicationFeeCurrency": zod.string().regex(createProgrammeBodyApplicationFeeCurrencyRegExp).nullish(),
+  "deadlineType": zod.enum(['fixed', 'rolling', 'unknown']),
+  "deadline": zod.string().regex(createProgrammeBodyDeadlineRegExp).nullish(),
+  "deadlineNote": zod.string().max(createProgrammeBodyDeadlineNoteMax).nullish(),
+  "academicRequirement": zod.string().max(createProgrammeBodyAcademicRequirementMax).nullish(),
+  "languageRequirement": zod.string().max(createProgrammeBodyLanguageRequirementMax).nullish(),
+  "otherRequirements": zod.string().max(createProgrammeBodyOtherRequirementsMax).nullish(),
+  "minimumGpa": zod.number().min(createProgrammeBodyMinimumGpaMin).max(createProgrammeBodyMinimumGpaMax).nullish(),
+  "requiredDocuments": zod.array(zod.object({
+  "kind": zod.enum(['transcript', 'certificate', 'passport', 'english_test', 'cv', 'personal_statement', 'recommendation', 'financial', 'photo', 'portfolio', 'other']),
+  "need": zod.enum(['required', 'if_applicable']),
+  "note": zod.string().max(createProgrammeBodyRequiredDocumentsItemNoteMax).nullable()
+})).max(createProgrammeBodyRequiredDocumentsMax),
+  "officialUrl": zod.string().min(createProgrammeBodyOfficialUrlMin).max(createProgrammeBodyOfficialUrlMax),
+  "applyUrl": zod.string().max(createProgrammeBodyApplyUrlMax).nullish(),
+  "sourceUrl": zod.string().min(createProgrammeBodySourceUrlMin).max(createProgrammeBodySourceUrlMax),
+  "checkedAt": zod.string().regex(createProgrammeBodyCheckedAtRegExp),
+  "status": zod.enum(['draft', 'published', 'archived'])
+})
+
+export const createProgrammeResponseOneTwoRequiredDocumentsItemNoteMax = 300;
+
+
+
+export const CreateProgrammeResponse = zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "level": zod.enum(['bachelor', 'master', 'doctoral', 'diploma', 'certificate', 'foundation', 'other']),
+  "degreeName": zod.string().nullable(),
+  "field": zod.string(),
+  "language": zod.string().nullable(),
+  "durationMonths": zod.number().int().nullable(),
+  "studyMode": zod.union([zod.literal('full_time'),zod.literal('part_time'),zod.literal('online'),zod.literal('blended'),zod.literal(null)]).nullable(),
+  "intakes": zod.array(zod.string()),
+  "tuitionAmount": zod.number().nullable(),
+  "tuitionCurrency": zod.string().nullable(),
+  "tuitionPeriod": zod.union([zod.literal('year'),zod.literal('semester'),zod.literal('programme'),zod.literal('credit'),zod.literal(null)]).nullable(),
+  "applicationFeeAmount": zod.number().nullable(),
+  "applicationFeeCurrency": zod.string().nullable(),
+  "deadlineType": zod.enum(['fixed', 'rolling', 'unknown']),
+  "deadline": zod.string().nullable(),
+  "deadlineNote": zod.string().nullable(),
+  "institution": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "city": zod.string(),
+  "country": zod.string(),
+  "countryCode": zod.string(),
+  "website": zod.string().nullable()
+}),
+  "verification": zod.object({
+  "level": zod.enum(['confirmed', 'checked', 'stale']),
+  "label": zod.string(),
+  "detail": zod.string(),
+  "checkedAt": zod.string(),
+  "confirmedAt": zod.string().nullable(),
+  "confirmedUntil": zod.string().nullable()
+}),
+  "updatedAt": zod.string()
+}).and(zod.object({
+  "tuitionNote": zod.string().nullable(),
+  "academicRequirement": zod.string().nullable(),
+  "languageRequirement": zod.string().nullable(),
+  "otherRequirements": zod.string().nullable(),
+  "minimumGpa": zod.number().nullable(),
+  "requiredDocuments": zod.array(zod.object({
+  "kind": zod.enum(['transcript', 'certificate', 'passport', 'english_test', 'cv', 'personal_statement', 'recommendation', 'financial', 'photo', 'portfolio', 'other']),
+  "need": zod.enum(['required', 'if_applicable']),
+  "note": zod.string().max(createProgrammeResponseOneTwoRequiredDocumentsItemNoteMax).nullable()
+})),
+  "officialUrl": zod.string(),
+  "applyUrl": zod.string().nullable(),
+  "sourceUrl": zod.string(),
+  "confirmationNote": zod.string().nullable()
+})).and(zod.object({
+  "status": zod.enum(['draft', 'published', 'archived']),
+  "seedKey": zod.string().nullable(),
+  "createdAt": zod.string()
+}))
+
+
+export const GetAdminProgrammeParams = zod.object({
+  "id": zod.coerce.number().int()
+})
+
+export const getAdminProgrammeResponseOneTwoRequiredDocumentsItemNoteMax = 300;
+
+
+
+export const GetAdminProgrammeResponse = zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "level": zod.enum(['bachelor', 'master', 'doctoral', 'diploma', 'certificate', 'foundation', 'other']),
+  "degreeName": zod.string().nullable(),
+  "field": zod.string(),
+  "language": zod.string().nullable(),
+  "durationMonths": zod.number().int().nullable(),
+  "studyMode": zod.union([zod.literal('full_time'),zod.literal('part_time'),zod.literal('online'),zod.literal('blended'),zod.literal(null)]).nullable(),
+  "intakes": zod.array(zod.string()),
+  "tuitionAmount": zod.number().nullable(),
+  "tuitionCurrency": zod.string().nullable(),
+  "tuitionPeriod": zod.union([zod.literal('year'),zod.literal('semester'),zod.literal('programme'),zod.literal('credit'),zod.literal(null)]).nullable(),
+  "applicationFeeAmount": zod.number().nullable(),
+  "applicationFeeCurrency": zod.string().nullable(),
+  "deadlineType": zod.enum(['fixed', 'rolling', 'unknown']),
+  "deadline": zod.string().nullable(),
+  "deadlineNote": zod.string().nullable(),
+  "institution": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "city": zod.string(),
+  "country": zod.string(),
+  "countryCode": zod.string(),
+  "website": zod.string().nullable()
+}),
+  "verification": zod.object({
+  "level": zod.enum(['confirmed', 'checked', 'stale']),
+  "label": zod.string(),
+  "detail": zod.string(),
+  "checkedAt": zod.string(),
+  "confirmedAt": zod.string().nullable(),
+  "confirmedUntil": zod.string().nullable()
+}),
+  "updatedAt": zod.string()
+}).and(zod.object({
+  "tuitionNote": zod.string().nullable(),
+  "academicRequirement": zod.string().nullable(),
+  "languageRequirement": zod.string().nullable(),
+  "otherRequirements": zod.string().nullable(),
+  "minimumGpa": zod.number().nullable(),
+  "requiredDocuments": zod.array(zod.object({
+  "kind": zod.enum(['transcript', 'certificate', 'passport', 'english_test', 'cv', 'personal_statement', 'recommendation', 'financial', 'photo', 'portfolio', 'other']),
+  "need": zod.enum(['required', 'if_applicable']),
+  "note": zod.string().max(getAdminProgrammeResponseOneTwoRequiredDocumentsItemNoteMax).nullable()
+})),
+  "officialUrl": zod.string(),
+  "applyUrl": zod.string().nullable(),
+  "sourceUrl": zod.string(),
+  "confirmationNote": zod.string().nullable()
+})).and(zod.object({
+  "status": zod.enum(['draft', 'published', 'archived']),
+  "seedKey": zod.string().nullable(),
+  "createdAt": zod.string()
+}))
+
+
+/**
+ * @summary Replace a programme's details. Changing any detail clears the university's confirmation.
+ */
+export const UpdateProgrammeParams = zod.object({
+  "id": zod.coerce.number().int()
+})
+
+export const updateProgrammeBodyInstitutionIdMax = 80;
+
+export const updateProgrammeBodyNameMin = 2;
+export const updateProgrammeBodyNameMax = 200;
+
+export const updateProgrammeBodyDegreeNameMax = 200;
+
+export const updateProgrammeBodyFieldMin = 2;
+export const updateProgrammeBodyFieldMax = 120;
+
+export const updateProgrammeBodyLanguageMax = 60;
+
+export const updateProgrammeBodyDurationMonthsMax = 120;
+
+export const updateProgrammeBodyIntakesItemMax = 60;
+
+export const updateProgrammeBodyIntakesMax = 6;
+
+export const updateProgrammeBodyTuitionAmountMin = 0;
+export const updateProgrammeBodyTuitionAmountMax = 10000000;
+
+export const updateProgrammeBodyTuitionCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const updateProgrammeBodyTuitionNoteMax = 300;
+
+export const updateProgrammeBodyApplicationFeeAmountMin = 0;
+export const updateProgrammeBodyApplicationFeeAmountMax = 100000;
+
+export const updateProgrammeBodyApplicationFeeCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const updateProgrammeBodyDeadlineRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+export const updateProgrammeBodyDeadlineNoteMax = 200;
+
+export const updateProgrammeBodyAcademicRequirementMax = 2000;
+
+export const updateProgrammeBodyLanguageRequirementMax = 2000;
+
+export const updateProgrammeBodyOtherRequirementsMax = 2000;
+
+export const updateProgrammeBodyMinimumGpaMin = 0;
+export const updateProgrammeBodyMinimumGpaMax = 4;
+
+export const updateProgrammeBodyRequiredDocumentsItemNoteMax = 300;
+
+export const updateProgrammeBodyRequiredDocumentsMax = 12;
+
+export const updateProgrammeBodyOfficialUrlMin = 8;
+export const updateProgrammeBodyOfficialUrlMax = 500;
+
+export const updateProgrammeBodyApplyUrlMax = 500;
+
+export const updateProgrammeBodySourceUrlMin = 8;
+export const updateProgrammeBodySourceUrlMax = 500;
+
+export const updateProgrammeBodyCheckedAtRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+
+
+export const UpdateProgrammeBody = zod.object({
+  "institutionId": zod.string().min(1).max(updateProgrammeBodyInstitutionIdMax),
+  "name": zod.string().min(updateProgrammeBodyNameMin).max(updateProgrammeBodyNameMax),
+  "level": zod.enum(['bachelor', 'master', 'doctoral', 'diploma', 'certificate', 'foundation', 'other']),
+  "degreeName": zod.string().max(updateProgrammeBodyDegreeNameMax).nullish(),
+  "field": zod.string().min(updateProgrammeBodyFieldMin).max(updateProgrammeBodyFieldMax),
+  "language": zod.string().max(updateProgrammeBodyLanguageMax).nullish(),
+  "durationMonths": zod.number().int().min(1).max(updateProgrammeBodyDurationMonthsMax).nullish(),
+  "studyMode": zod.union([zod.literal('full_time'),zod.literal('part_time'),zod.literal('online'),zod.literal('blended'),zod.literal(null)]).nullish(),
+  "intakes": zod.array(zod.string().min(1).max(updateProgrammeBodyIntakesItemMax)).max(updateProgrammeBodyIntakesMax),
+  "tuitionAmount": zod.number().min(updateProgrammeBodyTuitionAmountMin).max(updateProgrammeBodyTuitionAmountMax).nullish(),
+  "tuitionCurrency": zod.string().regex(updateProgrammeBodyTuitionCurrencyRegExp).nullish(),
+  "tuitionPeriod": zod.union([zod.literal('year'),zod.literal('semester'),zod.literal('programme'),zod.literal('credit'),zod.literal(null)]).nullish(),
+  "tuitionNote": zod.string().max(updateProgrammeBodyTuitionNoteMax).nullish(),
+  "applicationFeeAmount": zod.number().min(updateProgrammeBodyApplicationFeeAmountMin).max(updateProgrammeBodyApplicationFeeAmountMax).nullish(),
+  "applicationFeeCurrency": zod.string().regex(updateProgrammeBodyApplicationFeeCurrencyRegExp).nullish(),
+  "deadlineType": zod.enum(['fixed', 'rolling', 'unknown']),
+  "deadline": zod.string().regex(updateProgrammeBodyDeadlineRegExp).nullish(),
+  "deadlineNote": zod.string().max(updateProgrammeBodyDeadlineNoteMax).nullish(),
+  "academicRequirement": zod.string().max(updateProgrammeBodyAcademicRequirementMax).nullish(),
+  "languageRequirement": zod.string().max(updateProgrammeBodyLanguageRequirementMax).nullish(),
+  "otherRequirements": zod.string().max(updateProgrammeBodyOtherRequirementsMax).nullish(),
+  "minimumGpa": zod.number().min(updateProgrammeBodyMinimumGpaMin).max(updateProgrammeBodyMinimumGpaMax).nullish(),
+  "requiredDocuments": zod.array(zod.object({
+  "kind": zod.enum(['transcript', 'certificate', 'passport', 'english_test', 'cv', 'personal_statement', 'recommendation', 'financial', 'photo', 'portfolio', 'other']),
+  "need": zod.enum(['required', 'if_applicable']),
+  "note": zod.string().max(updateProgrammeBodyRequiredDocumentsItemNoteMax).nullable()
+})).max(updateProgrammeBodyRequiredDocumentsMax),
+  "officialUrl": zod.string().min(updateProgrammeBodyOfficialUrlMin).max(updateProgrammeBodyOfficialUrlMax),
+  "applyUrl": zod.string().max(updateProgrammeBodyApplyUrlMax).nullish(),
+  "sourceUrl": zod.string().min(updateProgrammeBodySourceUrlMin).max(updateProgrammeBodySourceUrlMax),
+  "checkedAt": zod.string().regex(updateProgrammeBodyCheckedAtRegExp),
+  "status": zod.enum(['draft', 'published', 'archived'])
+})
+
+export const updateProgrammeResponseOneTwoRequiredDocumentsItemNoteMax = 300;
+
+
+
+export const UpdateProgrammeResponse = zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "level": zod.enum(['bachelor', 'master', 'doctoral', 'diploma', 'certificate', 'foundation', 'other']),
+  "degreeName": zod.string().nullable(),
+  "field": zod.string(),
+  "language": zod.string().nullable(),
+  "durationMonths": zod.number().int().nullable(),
+  "studyMode": zod.union([zod.literal('full_time'),zod.literal('part_time'),zod.literal('online'),zod.literal('blended'),zod.literal(null)]).nullable(),
+  "intakes": zod.array(zod.string()),
+  "tuitionAmount": zod.number().nullable(),
+  "tuitionCurrency": zod.string().nullable(),
+  "tuitionPeriod": zod.union([zod.literal('year'),zod.literal('semester'),zod.literal('programme'),zod.literal('credit'),zod.literal(null)]).nullable(),
+  "applicationFeeAmount": zod.number().nullable(),
+  "applicationFeeCurrency": zod.string().nullable(),
+  "deadlineType": zod.enum(['fixed', 'rolling', 'unknown']),
+  "deadline": zod.string().nullable(),
+  "deadlineNote": zod.string().nullable(),
+  "institution": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "city": zod.string(),
+  "country": zod.string(),
+  "countryCode": zod.string(),
+  "website": zod.string().nullable()
+}),
+  "verification": zod.object({
+  "level": zod.enum(['confirmed', 'checked', 'stale']),
+  "label": zod.string(),
+  "detail": zod.string(),
+  "checkedAt": zod.string(),
+  "confirmedAt": zod.string().nullable(),
+  "confirmedUntil": zod.string().nullable()
+}),
+  "updatedAt": zod.string()
+}).and(zod.object({
+  "tuitionNote": zod.string().nullable(),
+  "academicRequirement": zod.string().nullable(),
+  "languageRequirement": zod.string().nullable(),
+  "otherRequirements": zod.string().nullable(),
+  "minimumGpa": zod.number().nullable(),
+  "requiredDocuments": zod.array(zod.object({
+  "kind": zod.enum(['transcript', 'certificate', 'passport', 'english_test', 'cv', 'personal_statement', 'recommendation', 'financial', 'photo', 'portfolio', 'other']),
+  "need": zod.enum(['required', 'if_applicable']),
+  "note": zod.string().max(updateProgrammeResponseOneTwoRequiredDocumentsItemNoteMax).nullable()
+})),
+  "officialUrl": zod.string(),
+  "applyUrl": zod.string().nullable(),
+  "sourceUrl": zod.string(),
+  "confirmationNote": zod.string().nullable()
+})).and(zod.object({
+  "status": zod.enum(['draft', 'published', 'archived']),
+  "seedKey": zod.string().nullable(),
+  "createdAt": zod.string()
+}))
+
+
+/**
+ * @summary Record that the university confirmed the current details in writing
+ */
+export const ConfirmProgrammeParams = zod.object({
+  "id": zod.coerce.number().int()
+})
+
+export const confirmProgrammeBodyNoteMin = 5;
+export const confirmProgrammeBodyNoteMax = 500;
+
+
+
+export const ConfirmProgrammeBody = zod.object({
+  "note": zod.string().min(confirmProgrammeBodyNoteMin).max(confirmProgrammeBodyNoteMax).describe('How the university confirmed, e.g. \'Email from the admissions office, 27 Nov 2026\'')
+})
+
+export const confirmProgrammeResponseOneTwoRequiredDocumentsItemNoteMax = 300;
+
+
+
+export const ConfirmProgrammeResponse = zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "level": zod.enum(['bachelor', 'master', 'doctoral', 'diploma', 'certificate', 'foundation', 'other']),
+  "degreeName": zod.string().nullable(),
+  "field": zod.string(),
+  "language": zod.string().nullable(),
+  "durationMonths": zod.number().int().nullable(),
+  "studyMode": zod.union([zod.literal('full_time'),zod.literal('part_time'),zod.literal('online'),zod.literal('blended'),zod.literal(null)]).nullable(),
+  "intakes": zod.array(zod.string()),
+  "tuitionAmount": zod.number().nullable(),
+  "tuitionCurrency": zod.string().nullable(),
+  "tuitionPeriod": zod.union([zod.literal('year'),zod.literal('semester'),zod.literal('programme'),zod.literal('credit'),zod.literal(null)]).nullable(),
+  "applicationFeeAmount": zod.number().nullable(),
+  "applicationFeeCurrency": zod.string().nullable(),
+  "deadlineType": zod.enum(['fixed', 'rolling', 'unknown']),
+  "deadline": zod.string().nullable(),
+  "deadlineNote": zod.string().nullable(),
+  "institution": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "city": zod.string(),
+  "country": zod.string(),
+  "countryCode": zod.string(),
+  "website": zod.string().nullable()
+}),
+  "verification": zod.object({
+  "level": zod.enum(['confirmed', 'checked', 'stale']),
+  "label": zod.string(),
+  "detail": zod.string(),
+  "checkedAt": zod.string(),
+  "confirmedAt": zod.string().nullable(),
+  "confirmedUntil": zod.string().nullable()
+}),
+  "updatedAt": zod.string()
+}).and(zod.object({
+  "tuitionNote": zod.string().nullable(),
+  "academicRequirement": zod.string().nullable(),
+  "languageRequirement": zod.string().nullable(),
+  "otherRequirements": zod.string().nullable(),
+  "minimumGpa": zod.number().nullable(),
+  "requiredDocuments": zod.array(zod.object({
+  "kind": zod.enum(['transcript', 'certificate', 'passport', 'english_test', 'cv', 'personal_statement', 'recommendation', 'financial', 'photo', 'portfolio', 'other']),
+  "need": zod.enum(['required', 'if_applicable']),
+  "note": zod.string().max(confirmProgrammeResponseOneTwoRequiredDocumentsItemNoteMax).nullable()
+})),
+  "officialUrl": zod.string(),
+  "applyUrl": zod.string().nullable(),
+  "sourceUrl": zod.string(),
+  "confirmationNote": zod.string().nullable()
+})).and(zod.object({
+  "status": zod.enum(['draft', 'published', 'archived']),
+  "seedKey": zod.string().nullable(),
+  "createdAt": zod.string()
+}))
 
 
 /**

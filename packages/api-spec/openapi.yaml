@@ -1091,6 +1091,7 @@ paths:
         - { in: query, name: fileName, required: true, schema: { type: string, minLength: 1, maxLength: 200 } }
         - { in: query, name: title, schema: { type: string, maxLength: 160 } }
         - { in: query, name: applicationId, schema: { type: integer } }
+        - { in: query, name: kind, schema: { type: string, enum: [transcript, certificate, passport, english_test, cv, personal_statement, recommendation, financial, photo, portfolio, other] } }
       requestBody:
         required: true
         content:
@@ -1389,6 +1390,166 @@ paths:
         "204": { description: Deleted }
         "401": { description: Sign in required }
         "403": { description: Not your message }
+        "404": { description: Not found }
+  /programmes:
+    get:
+      operationId: listProgrammes
+      tags: [programmes]
+      summary: Search published degree programmes
+      parameters:
+        - { in: query, name: search, schema: { type: string, maxLength: 100 }, description: "Programme, field or university name" }
+        - { in: query, name: countryCode, schema: { type: string, pattern: "^[A-Z]{2}$" } }
+        - { in: query, name: level, schema: { type: string, enum: [bachelor, master, doctoral, diploma, certificate, foundation, other] } }
+        - { in: query, name: field, schema: { type: string, maxLength: 120 } }
+        - { in: query, name: language, schema: { type: string, maxLength: 60 } }
+        - { in: query, name: confirmedOnly, schema: { type: boolean } }
+        - { in: query, name: sort, schema: { type: string, enum: [deadline, name, updated] }, description: "deadline (soonest open deadline first, the default), name, or updated (recently checked first)" }
+        - { in: query, name: page, schema: { type: integer, minimum: 1, maximum: 100000 } }
+        - { in: query, name: pageSize, schema: { type: integer, minimum: 1, maximum: 48 } }
+      responses:
+        "200":
+          description: Matching programmes
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProgrammeList" }
+        "400": { description: Invalid filter }
+  /programmes/filters:
+    get:
+      operationId: getProgrammeFilters
+      tags: [programmes]
+      summary: Countries, levels, fields and languages of published programmes, with counts
+      responses:
+        "200":
+          description: Filter values
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProgrammeFilters" }
+  /programmes/{id}:
+    get:
+      operationId: getProgramme
+      tags: [programmes]
+      summary: One published programme, with similar programmes
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: integer } }
+      responses:
+        "200":
+          description: The programme
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProgrammeDetail" }
+        "404": { description: Not found or not published }
+  /universities/{id}/programmes:
+    get:
+      operationId: listUniversityProgrammes
+      tags: [programmes]
+      summary: Published programmes at one university
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Programmes, by name
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProgrammeSummaryList" }
+        "404": { description: University not found }
+  /me/programmes/{id}/readiness:
+    get:
+      operationId: getProgrammeReadiness
+      tags: [programmes]
+      summary: The signed-in student's documents and grades against this programme
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: integer } }
+      responses:
+        "200":
+          description: Document readiness, academic fit and whether it is tracked
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProgrammeReadiness" }
+        "401": { description: Sign in required }
+        "404": { description: Not found }
+  /admin/programmes:
+    get:
+      operationId: listAdminProgrammes
+      tags: [admin]
+      parameters:
+        - { in: query, name: search, schema: { type: string, maxLength: 100 } }
+        - { in: query, name: status, schema: { type: string, enum: [draft, published, archived] } }
+      responses:
+        "200":
+          description: Every programme, recently updated first
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminProgrammeList" }
+        "401": { description: Sign in required }
+        "403": { description: Administrator access required }
+    post:
+      operationId: createProgramme
+      tags: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProgrammeInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminProgramme" }
+        "400": { description: Invalid programme }
+        "401": { description: Sign in required }
+        "403": { description: Administrator access required }
+  /admin/programmes/{id}:
+    get:
+      operationId: getAdminProgramme
+      tags: [admin]
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: integer } }
+      responses:
+        "200":
+          description: The programme, in any status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminProgramme" }
+        "404": { description: Not found }
+    put:
+      operationId: updateProgramme
+      tags: [admin]
+      summary: Replace a programme's details. Changing any detail clears the university's confirmation.
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProgrammeInput" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminProgramme" }
+        "400": { description: Invalid programme }
+        "404": { description: Not found }
+  /admin/programmes/{id}/confirmation:
+    post:
+      operationId: confirmProgramme
+      tags: [admin]
+      summary: Record that the university confirmed the current details in writing
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProgrammeConfirmationInput" }
+      responses:
+        "200":
+          description: Confirmed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminProgramme" }
+        "400": { description: Add a note saying how the university confirmed }
         "404": { description: Not found }
   /me/notifications:
     get:
@@ -1806,6 +1967,186 @@ components:
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/UniversityScholarship" } }
         notice: { type: string }
+    ProgrammeDocument:
+      type: object
+      required: [kind, need, note]
+      properties:
+        kind: { type: string, enum: [transcript, certificate, passport, english_test, cv, personal_statement, recommendation, financial, photo, portfolio, other] }
+        need: { type: string, enum: [required, if_applicable] }
+        note: { type: ["string", "null"], maxLength: 300 }
+    ProgrammeVerification:
+      type: object
+      required: [level, label, detail, checkedAt, confirmedAt, confirmedUntil]
+      properties:
+        level: { type: string, enum: [confirmed, checked, stale] }
+        label: { type: string }
+        detail: { type: string }
+        checkedAt: { type: string }
+        confirmedAt: { type: ["string", "null"] }
+        confirmedUntil: { type: ["string", "null"] }
+    ProgrammeInstitution:
+      type: object
+      required: [id, name, city, country, countryCode, website]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        city: { type: string }
+        country: { type: string }
+        countryCode: { type: string }
+        website: { type: ["string", "null"] }
+    ProgrammeSummary:
+      type: object
+      required: [id, name, level, degreeName, field, language, durationMonths, studyMode, intakes, tuitionAmount, tuitionCurrency, tuitionPeriod, applicationFeeAmount, applicationFeeCurrency, deadlineType, deadline, deadlineNote, institution, verification, updatedAt]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        level: { type: string, enum: [bachelor, master, doctoral, diploma, certificate, foundation, other] }
+        degreeName: { type: ["string", "null"] }
+        field: { type: string }
+        language: { type: ["string", "null"] }
+        durationMonths: { type: ["integer", "null"] }
+        studyMode: { type: ["string", "null"], enum: [full_time, part_time, online, blended, null] }
+        intakes: { type: array, items: { type: string } }
+        tuitionAmount: { type: ["number", "null"] }
+        tuitionCurrency: { type: ["string", "null"] }
+        tuitionPeriod: { type: ["string", "null"], enum: [year, semester, programme, credit, null] }
+        applicationFeeAmount: { type: ["number", "null"] }
+        applicationFeeCurrency: { type: ["string", "null"] }
+        deadlineType: { type: string, enum: [fixed, rolling, unknown] }
+        deadline: { type: ["string", "null"] }
+        deadlineNote: { type: ["string", "null"] }
+        institution: { $ref: "#/components/schemas/ProgrammeInstitution" }
+        verification: { $ref: "#/components/schemas/ProgrammeVerification" }
+        updatedAt: { type: string }
+    ProgrammeSummaryList:
+      type: object
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/ProgrammeSummary" } }
+    ProgrammeList:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/ProgrammeSummary" } }
+        total: { type: integer }
+        page: { type: integer }
+        pageSize: { type: integer }
+    Programme:
+      allOf:
+        - { $ref: "#/components/schemas/ProgrammeSummary" }
+        - type: object
+          required: [tuitionNote, academicRequirement, languageRequirement, otherRequirements, minimumGpa, requiredDocuments, officialUrl, applyUrl, sourceUrl, confirmationNote]
+          properties:
+            tuitionNote: { type: ["string", "null"] }
+            academicRequirement: { type: ["string", "null"] }
+            languageRequirement: { type: ["string", "null"] }
+            otherRequirements: { type: ["string", "null"] }
+            minimumGpa: { type: ["number", "null"] }
+            requiredDocuments: { type: array, items: { $ref: "#/components/schemas/ProgrammeDocument" } }
+            officialUrl: { type: string }
+            applyUrl: { type: ["string", "null"] }
+            sourceUrl: { type: string }
+            confirmationNote: { type: ["string", "null"] }
+    ProgrammeDetail:
+      type: object
+      required: [programme, similar]
+      properties:
+        programme: { $ref: "#/components/schemas/Programme" }
+        similar: { type: array, items: { $ref: "#/components/schemas/ProgrammeSummary" } }
+    ProgrammeFilterCount:
+      type: object
+      required: [value, label, count]
+      properties:
+        value: { type: string }
+        label: { type: string }
+        count: { type: integer }
+    ProgrammeFilters:
+      type: object
+      required: [total, confirmed, countries, levels, fields, languages]
+      properties:
+        total: { type: integer }
+        confirmed: { type: integer }
+        countries: { type: array, items: { $ref: "#/components/schemas/ProgrammeFilterCount" } }
+        levels: { type: array, items: { $ref: "#/components/schemas/ProgrammeFilterCount" } }
+        fields: { type: array, items: { $ref: "#/components/schemas/ProgrammeFilterCount" } }
+        languages: { type: array, items: { $ref: "#/components/schemas/ProgrammeFilterCount" } }
+    ProgrammeReadinessDocument:
+      type: object
+      required: [kind, label, need, note, status, documentTitles]
+      properties:
+        kind: { type: string }
+        label: { type: string }
+        need: { type: string, enum: [required, if_applicable] }
+        note: { type: ["string", "null"] }
+        status: { type: string, enum: [ready, missing] }
+        documentTitles: { type: array, items: { type: string } }
+    ProgrammeReadiness:
+      type: object
+      required: [documents, requiredCount, readyCount, academic, trackedApplicationId]
+      properties:
+        documents: { type: array, items: { $ref: "#/components/schemas/ProgrammeReadinessDocument" } }
+        requiredCount: { type: integer }
+        readyCount: { type: integer }
+        academic:
+          type: object
+          required: [status, message]
+          properties:
+            status: { type: string, enum: [meets, below, unknown, not_published] }
+            message: { type: string }
+        trackedApplicationId: { type: ["integer", "null"] }
+    ProgrammeInput:
+      type: object
+      required: [institutionId, name, level, field, intakes, deadlineType, requiredDocuments, officialUrl, sourceUrl, checkedAt, status]
+      additionalProperties: false
+      properties:
+        institutionId: { type: string, minLength: 1, maxLength: 80 }
+        name: { type: string, minLength: 2, maxLength: 200 }
+        level: { type: string, enum: [bachelor, master, doctoral, diploma, certificate, foundation, other] }
+        degreeName: { type: ["string", "null"], maxLength: 200 }
+        field: { type: string, minLength: 2, maxLength: 120 }
+        language: { type: ["string", "null"], maxLength: 60 }
+        durationMonths: { type: ["integer", "null"], minimum: 1, maximum: 120 }
+        studyMode: { type: ["string", "null"], enum: [full_time, part_time, online, blended, null] }
+        intakes: { type: array, maxItems: 6, items: { type: string, minLength: 1, maxLength: 60 } }
+        tuitionAmount: { type: ["number", "null"], minimum: 0, maximum: 10000000 }
+        tuitionCurrency: { type: ["string", "null"], pattern: "^[A-Z]{3}$" }
+        tuitionPeriod: { type: ["string", "null"], enum: [year, semester, programme, credit, null] }
+        tuitionNote: { type: ["string", "null"], maxLength: 300 }
+        applicationFeeAmount: { type: ["number", "null"], minimum: 0, maximum: 100000 }
+        applicationFeeCurrency: { type: ["string", "null"], pattern: "^[A-Z]{3}$" }
+        deadlineType: { type: string, enum: [fixed, rolling, unknown] }
+        deadline: { type: ["string", "null"], pattern: "^\\d{4}-\\d{2}-\\d{2}$" }
+        deadlineNote: { type: ["string", "null"], maxLength: 200 }
+        academicRequirement: { type: ["string", "null"], maxLength: 2000 }
+        languageRequirement: { type: ["string", "null"], maxLength: 2000 }
+        otherRequirements: { type: ["string", "null"], maxLength: 2000 }
+        minimumGpa: { type: ["number", "null"], minimum: 0, maximum: 4 }
+        requiredDocuments: { type: array, maxItems: 12, items: { $ref: "#/components/schemas/ProgrammeDocument" } }
+        officialUrl: { type: string, minLength: 8, maxLength: 500 }
+        applyUrl: { type: ["string", "null"], maxLength: 500 }
+        sourceUrl: { type: string, minLength: 8, maxLength: 500 }
+        checkedAt: { type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$" }
+        status: { type: string, enum: [draft, published, archived] }
+    ProgrammeConfirmationInput:
+      type: object
+      required: [note]
+      additionalProperties: false
+      properties:
+        note: { type: string, minLength: 5, maxLength: 500, description: "How the university confirmed, e.g. 'Email from the admissions office, 27 Nov 2026'" }
+    AdminProgramme:
+      allOf:
+        - { $ref: "#/components/schemas/Programme" }
+        - type: object
+          required: [status, seedKey, createdAt]
+          properties:
+            status: { type: string, enum: [draft, published, archived] }
+            seedKey: { type: ["string", "null"] }
+            createdAt: { type: string }
+    AdminProgrammeList:
+      type: object
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/AdminProgramme" } }
     Notification:
       type: object
       required: [id, kind, title, detail, date, daysAway, href]
@@ -2560,11 +2901,12 @@ components:
         chatMessages: { type: array, items: { $ref: "#/components/schemas/OwnChatMessage" } }
     StudentDocument:
       type: object
-      required: [id, applicationId, title, fileName, contentType, sizeBytes, createdAt]
+      required: [id, applicationId, title, kind, fileName, contentType, sizeBytes, createdAt]
       properties:
         id: { type: integer }
         applicationId: { type: [integer, "null"] }
         title: { type: string }
+        kind: { type: ["string", "null"], enum: [transcript, certificate, passport, english_test, cv, personal_statement, recommendation, financial, photo, portfolio, other, null] }
         fileName: { type: string }
         contentType: { type: string, enum: [application/pdf, image/png, image/jpeg, application/vnd.openxmlformats-officedocument.wordprocessingml.document] }
         sizeBytes: { type: integer }
@@ -2574,6 +2916,7 @@ components:
       properties:
         title: { type: string, minLength: 1, maxLength: 160 }
         applicationId: { type: [integer, "null"] }
+        kind: { type: ["string", "null"], enum: [transcript, certificate, passport, english_test, cv, personal_statement, recommendation, financial, photo, portfolio, other, null] }
     DataDeletionRequest:
       type: object
       required: [confirm]

@@ -3,7 +3,7 @@
  * match classification, profile completion, AI grounding and prompts,
  * application helpers, document checks, generated request validators,
  * entitlements, the worldwide directory rules and file, the scholarship
- * list, deadline reminders, and the burst limiter.
+ * list, deadline reminders, programme rules, and the burst limiter.
  *
  * Run: pnpm test
  */
@@ -35,6 +35,8 @@ import { directorySnapshot } from "../../lib/directorySnapshot";
 import { repoPath } from "../../lib/paths";
 import worldManifest from "../../data/world-directory-manifest.json";
 import { buildNotifications, daysBetween, when } from "../../lib/notifications";
+import { academicFit, documentReadiness, profileGpa, programmeProblem, verificationOf } from "../../lib/programmes";
+import { PROGRAMME_SEEDS, validateSeeds } from "../../lib/programmeSeeds";
 import { GetExchangeRateQueryParams, SearchJobListingsQueryParams, UploadStudentDocumentQueryParams } from "@workspace/api-zod";
 
 const tests: Array<[string, () => void | Promise<void>]> = [];
@@ -542,6 +544,77 @@ test("reminders cover deadlines and tasks in their windows, missed ones first", 
   assert.ok(!items.some(i => i.id.startsWith("deadline-6")), "more than a week overdue");
   assert.ok(!items.some(i => i.id.startsWith("task-8")), "completed tasks");
   assert.ok(!items.some(i => i.id.startsWith("task-9")), "tasks more than 14 days away");
+});
+
+// ---------- Programmes ----------
+test("a university's confirmation shows for 180 days, then the page-checked label takes over", () => {
+  const now = new Date("2026-11-27T12:00:00Z");
+  const confirmed = verificationOf({ checkedAt: "2026-11-01", confirmedAt: new Date("2026-10-01T09:00:00Z") }, now);
+  assert.equal(confirmed.level, "confirmed");
+  assert.equal(confirmed.confirmedUntil, "2027-03-30T09:00:00.000Z");
+  const expired = verificationOf({ checkedAt: "2026-11-01", confirmedAt: new Date("2026-03-01T09:00:00Z") }, now);
+  assert.equal(expired.level, "checked");
+  assert.match(expired.detail, /confirmation of 1 March 2026 has expired/);
+  assert.equal(verificationOf({ checkedAt: "2026-11-20", confirmedAt: null }, now).level, "checked");
+  const stale = verificationOf({ checkedAt: "2025-10-01", confirmedAt: null }, now);
+  assert.equal(stale.level, "stale");
+  assert.equal(stale.label, "Not checked recently");
+});
+test("documents count as ready only when one of the student's files has that type", () => {
+  const r = documentReadiness(
+    [{ kind: "passport", need: "required", note: null }, { kind: "transcript", need: "required", note: "PDF" }, { kind: "english_test", need: "if_applicable", note: null }],
+    [{ kind: "passport", title: "My passport" }, { kind: null, title: "transcript.pdf" }, { kind: "english_test", title: "IELTS" }]);
+  assert.deepEqual(r.items.map(i => `${i.kind}:${i.status}`), ["passport:ready", "transcript:missing", "english_test:ready"]);
+  assert.equal(r.requiredCount, 2, "documents that apply only sometimes are not counted");
+  assert.equal(r.readyCount, 1);
+  assert.deepEqual(r.items[0].documentTitles, ["My passport"]);
+  assert.equal(r.items[1].label, "Transcripts or mark sheets");
+});
+test("academic fit uses only a clear GPA on a 4.0 scale", () => {
+  assert.equal(profileGpa("3.4", "4.0 GPA"), 3.4);
+  assert.equal(profileGpa("GPA 3,2", "4"), 3.2);
+  assert.equal(profileGpa("3.4", "5.0 scale"), null, "other scales are never converted");
+  assert.equal(profileGpa("85%", "percentage"), null);
+  assert.equal(profileGpa("First class", "4.0"), null);
+  assert.equal(profileGpa("4.5", "4.0"), null, "above the scale");
+  assert.equal(academicFit(3.0, 3.4).status, "meets");
+  assert.equal(academicFit(3.5, 3.4).status, "below");
+  assert.equal(academicFit(3.0, null).status, "unknown");
+  assert.equal(academicFit(null, 3.4).status, "not_published");
+  assert.match(academicFit(3.0, 3.4).message, /does not guarantee admission/);
+});
+test("programme details are checked for consistency before saving", () => {
+  const ok = { deadlineType: "fixed", deadline: "2027-01-15", officialUrl: "https://uni.example/p", sourceUrl: "https://uni.example/p", checkedAt: "2026-11-27",
+    tuitionAmount: 5000, tuitionCurrency: "USD", tuitionPeriod: "year", requiredDocuments: [{ kind: "passport", need: "required" as const, note: null }] };
+  const today = "2026-11-27";
+  assert.equal(programmeProblem(ok, today), null);
+  assert.match(programmeProblem({ ...ok, officialUrl: "http://uni.example/p" }, today)!, /https/);
+  assert.match(programmeProblem({ ...ok, tuitionCurrency: null }, today)!, /tuition/);
+  assert.match(programmeProblem({ ...ok, deadline: null }, today)!, /needs a date/);
+  assert.match(programmeProblem({ ...ok, deadlineType: "rolling" }, today)!, /Only a fixed deadline/);
+  assert.match(programmeProblem({ ...ok, checkedAt: "2026-12-01" }, today)!, /future/);
+  assert.match(programmeProblem({ ...ok, minimumGpa: 5 }, today)!, /4\.0 scale/);
+  assert.match(programmeProblem({ ...ok, requiredDocuments: [...ok.requiredDocuments, { kind: "passport", need: "required", note: null }] }, today)!, /once/);
+  assert.match(programmeProblem({ ...ok, requiredDocuments: [{ kind: "selfie", need: "required", note: null }] }, today)!, /Unknown document/);
+  assert.match(programmeProblem({ ...ok, applicationFeeAmount: 50 }, today)!, /fee with its currency/);
+});
+test("starter programmes are well formed and never claim university confirmation", () => {
+  assert.ok(Array.isArray(PROGRAMME_SEEDS));
+  for (const s of PROGRAMME_SEEDS) {
+    assert.equal(s.programme.status, "published", s.seedKey);
+    assert.ok(s.programme.officialUrl.startsWith("https://") && s.programme.sourceUrl.startsWith("https://"), s.seedKey);
+    assert.ok(!("confirmedAt" in (s.programme as object)), "seeds cannot be confirmed");
+  }
+  assert.ok(PROGRAMME_SEEDS.length >= 5);
+  const world = JSON.parse(gunzipSync(readFileSync(repoPath(...worldManifest.file.split("/")))).toString("utf8")) as { records: WorldRecord[] };
+  const ids = new Set([...world.records.map(r => `ror-${r.r}`), ...directorySnapshot.institutions.map(r => r.id)]);
+  for (const s of PROGRAMME_SEEDS) assert.ok(ids.has(s.programme.institutionId), `${s.seedKey}: ${s.programme.institutionId} is not in the directory`);
+  const good = { seedKey: "x-msc", institutionId: "ror-052gg0110", name: "MSc Example", level: "master", field: "Data Science", intakes: [], deadlineType: "unknown",
+    requiredDocuments: [], officialUrl: "https://x.example/", sourceUrl: "https://x.example/", checkedAt: "2026-11-27" };
+  assert.equal(validateSeeds([good]).length, 1);
+  assert.throws(() => validateSeeds([good, good]), /duplicate/);
+  assert.throws(() => validateSeeds([{ ...good, seedKey: "yy-test", officialUrl: "http://x.example/" }]), /https/);
+  assert.throws(() => validateSeeds([{ ...good, seedKey: "zz-test", level: "nursery" }]), /level/);
 });
 
 let failed = 0;

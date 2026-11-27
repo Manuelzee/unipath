@@ -6,12 +6,15 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { StudentDocumentContentType } from './studentDocumentContentType';
+import type { StudentDocumentKind } from './studentDocumentKind';
 
 export interface StudentDocument {
   id: number;
   /** @nullable */
   applicationId: number | null;
   title: string;
+  /** @nullable */
+  kind: StudentDocumentKind;
   fileName: string;
   contentType: StudentDocumentContentType;
   sizeBytes: number;

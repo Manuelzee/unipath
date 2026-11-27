@@ -15,6 +15,7 @@ import { AdmissionsPanel, FieldsPanel, FundingPanel, LinksPanel, OverviewPanel }
 import { ReviewedEvidencePanel } from './ReviewedEvidencePanel';
 import { TuitionPanel } from './TuitionPanel';
 import { usePageMeta } from '@/lib/pageMeta';
+import { UniversityProgrammes } from '@/components/programmes/UniversityProgrammes';
 
 export function UniversityDetailView({ id }: { id: string }) {
   const q = useGetUniversity(id, { query: { queryKey: getGetUniversityQueryKey(id), staleTime: 30_000, refetchInterval: 60_000 } });
@@ -45,6 +46,7 @@ export function UniversityDetailView({ id }: { id: string }) {
     <div className="detail-columns">
       <div className="detail-main" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`} key={tab}>
         {tab === 'overview' && <><OverviewPanel school={school}/><TuitionPanel school={school}/><ReviewedEvidencePanel id={school.id}/></>}
+        {tab === 'programmes' && <UniversityProgrammes id={school.id} name={school.name}/>}
         {tab === 'fields' && <FieldsPanel school={school}/>}
         {tab === 'admissions' && <AdmissionsPanel school={school}/>}
         {tab === 'funding' && <FundingPanel school={school}/>}

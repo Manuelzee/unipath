@@ -11,6 +11,8 @@ export const studentDocumentsTable = pgTable("student_documents", {
   /** Optional link to one of the student's application trackers. */
   applicationId: integer("application_id"),
   title: text("title").notNull(),
+  /** What the document is (passport, transcript...), chosen by the student; matches programme requirements. */
+  kind: text("kind"),
   fileName: text("file_name").notNull(),
   /** Detected from the file's contents, never trusted from the upload. */
   contentType: text("content_type").notNull(),

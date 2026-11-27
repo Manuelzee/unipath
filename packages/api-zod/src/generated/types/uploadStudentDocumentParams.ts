@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { UploadStudentDocumentKind } from './uploadStudentDocumentKind';
 
 export type UploadStudentDocumentParams = {
 /**
@@ -17,4 +18,5 @@ fileName: string;
  */
 title?: string;
 applicationId?: number;
+kind?: UploadStudentDocumentKind;
 };

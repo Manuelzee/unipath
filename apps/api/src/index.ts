@@ -3,6 +3,7 @@ import app from "./app";
 import { logger } from "./lib/logger";
 import { ensureInstitutionDirectory } from "./lib/bootstrapDirectory";
 import { ensureWorldDirectory } from "./lib/worldDirectory";
+import { ensureProgrammeSeeds } from "./lib/programmeSeeds";
 import { publicRequestFailure } from "./lib/requestErrors";
 import { applyLogoManifest } from "./lib/logos/manifest";
 import { applyBrandingManifest } from "./lib/branding/manifest";
@@ -29,6 +30,8 @@ async function maintain() {
   logger.info(directory, directory.imported || directory.factsImported ? "Imported and verified missing source records; existing records preserved" : "Institution and program snapshot already present; no data written");
   const world = await ensureWorldDirectory();
   logger.info(world, world.imported ? "Added missing worldwide universities (ROR); existing records preserved" : "Worldwide universities (ROR) already present; no data written");
+  const seeds = await ensureProgrammeSeeds();
+  logger.info(seeds, seeds.imported ? "Added starter programmes; existing programmes preserved" : "Starter programmes already present; no data written");
 }
 
 function start() {

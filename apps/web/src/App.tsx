@@ -20,7 +20,7 @@ import type { StudentProfileInput } from '@workspace/api-client-react';
 import {
   Award,
   ArrowDownRight, ArrowLeft, ArrowRight, Bookmark, Briefcase, Check, CheckCircle2,
-  Bell, ClipboardList, Compass, FileText, Gem, Globe2, GraduationCap, LayoutDashboard,
+  Bell, BookOpen, ClipboardList, Compass, FileText, Gem, Globe2, GraduationCap, LayoutDashboard,
   LoaderCircle, Megaphone, Menu, MessageCircle, MessagesSquare, Scale, Search, Settings, ShieldCheck, Sparkles,
   UserRound, X,
 } from 'lucide-react';
@@ -51,6 +51,10 @@ const UniversityDetailView = page(() => import('@/components/directory/Universit
 const FundingFinder = page(() => import('@/components/directory/FundingFinder').then(m => m.FundingFinder));
 const ScholarshipsView = page(() => import('@/components/scholarships/ScholarshipsView').then(m => m.ScholarshipsView));
 const NotificationsView = page(() => import('@/components/notifications/NotificationsView').then(m => m.NotificationsView));
+const ProgrammesView = page(() => import('@/components/programmes/ProgrammesView').then(m => m.ProgrammesView));
+const ProgrammeDetailView = page(() => import('@/components/programmes/ProgrammeDetailView').then(m => m.ProgrammeDetailView));
+const AdminProgrammesView = page(() => import('@/components/programmes/AdminProgrammes').then(m => m.AdminProgrammesView));
+const AdminProgrammeEditorView = page(() => import('@/components/programmes/AdminProgrammes').then(m => m.AdminProgrammeEditorView));
 const AboutView = page(() => import('@/components/legal/LegalPages').then(m => m.AboutView));
 const PrivacyView = page(() => import('@/components/legal/LegalPages').then(m => m.PrivacyView));
 const TermsView = page(() => import('@/components/legal/LegalPages').then(m => m.TermsView));
@@ -79,6 +83,7 @@ const navItems = [
   { href: '/notifications', label: 'Notifications', icon: Bell, testId: 'nav-notifications' },
   { href: '/announcements', label: 'Announcements', icon: Megaphone },
   { href: '/discover', label: 'Discover', icon: Compass },
+  { href: '/programmes', label: 'Programmes', icon: BookOpen, testId: 'nav-programmes' },
   { href: '/recommendations', label: 'Matches', icon: GraduationCap },
   { href: '/saved', label: 'Shortlist', icon: Bookmark },
   { href: '/compare', label: 'Compare', icon: Scale },
@@ -110,6 +115,7 @@ function Header({ marketing = false }: { marketing?: boolean }) {
       <button className="mobile-menu icon-button" aria-label="Toggle navigation" onClick={() => setOpen(!open)} data-testid="button-mobile-menu">{open ? <X size={20}/> : <Menu size={20}/>}</button>
       <nav className={cn('topnav', open && 'topnav-open')} aria-label="Main navigation">
         <Link href="/discover" className="topnav-link" data-testid="link-discover">Find universities</Link>
+        <Link href="/programmes" className="topnav-link" data-testid="link-programmes">Programmes</Link>
         <Link href="/scholarships" className="topnav-link" data-testid="link-scholarships">Scholarships</Link>
         <Link href="/about" className="topnav-link" data-testid="link-about">About</Link>
         {isSignedIn ? <Link href="/dashboard" className="topnav-login" data-testid="link-dashboard">My plan <ArrowRight size={16}/></Link> :
@@ -184,7 +190,7 @@ function Home() {
   </div>;
 }
 
-function Footer() { return <footer className="footer"><Brand/><span>Thoughtful steps toward somewhere new.</span><div><Link href="/discover">Universities</Link><Link href="/scholarships">Scholarships</Link><Link href="/plans">Plans</Link><Link href="/about">About</Link><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link></div><small>© 2026 UniPath AI. Directory sources (partial coverage): NCES IPEDS (U.S.), the Research Organization Registry (worldwide, outside Africa) and a Public Service Commission of Canada program listing (Canada pilot). Source-reported, not independently verified.</small></footer>; }
+function Footer() { return <footer className="footer"><Brand/><span>Thoughtful steps toward somewhere new.</span><div><Link href="/discover">Universities</Link><Link href="/programmes">Programmes</Link><Link href="/scholarships">Scholarships</Link><Link href="/plans">Plans</Link><Link href="/about">About</Link><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link></div><small>© 2026 UniPath AI. Directory sources (partial coverage): NCES IPEDS (U.S.), the Research Organization Registry (worldwide, outside Africa) and a Public Service Commission of Canada program listing (Canada pilot). Source-reported, not independently verified.</small></footer>; }
 
 /** Public information pages share the marketing header and footer. */
 function MarketingPage({ children }: { children: ReactNode }) {
@@ -331,6 +337,11 @@ function AppRoutes() {
       <Route path="/compare">{()=><Shell><CompareView/></Shell>}</Route>
       <Route path="/funding">{()=><Shell><FundingFinder/></Shell>}</Route>
       <Route path="/scholarships">{()=><Shell><ScholarshipsView/></Shell>}</Route>
+      <Route path="/programmes">{()=><Shell><ProgrammesView/></Shell>}</Route>
+      <Route path="/programmes/:id">{params=><Shell><ProgrammeDetailView id={Number(params.id)}/></Shell>}</Route>
+      <Route path="/admin/programmes">{()=><Protected><Shell><AdminProgrammesView/></Shell></Protected>}</Route>
+      <Route path="/admin/programmes/new">{()=><Protected><Shell><AdminProgrammeEditorView id={null}/></Shell></Protected>}</Route>
+      <Route path="/admin/programmes/:id">{params=><Protected><Shell><AdminProgrammeEditorView id={Number(params.id)}/></Shell></Protected>}</Route>
       <Route path="/notifications">{()=><Protected><Shell><NotificationsView/></Shell></Protected>}</Route>
       <Route path="/about">{()=><MarketingPage><AboutView/></MarketingPage>}</Route>
       <Route path="/privacy">{()=><MarketingPage><PrivacyView/></MarketingPage>}</Route>

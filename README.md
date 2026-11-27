@@ -106,7 +106,7 @@ Theme: `apps/web/src/index.css` (the app's palette) and `apps/web/src/components
 
 ## Product
 
-Discover and filter institutions (the U.S., a Canada pilot and about 24,500 universities in 158 other countries outside Africa; see `docs/global-college-directory.md`), a scholarships and sponsorships list with official links, explainable matches with four classifications, shortlist and side-by-side comparison, a 5-step onboarding wizard, an application tracker with statuses, tasks and a document checklist, private document uploads, a dashboard, an AI assistant and essay feedback, a funding finder, student jobs, plans, and settings with data export and deletion.
+Discover and filter institutions (the U.S., a Canada pilot and about 24,500 universities in 158 other countries outside Africa; see `docs/global-college-directory.md`), programme pages with tuition, deadlines, requirements and document readiness (see `docs/programmes.md`), a scholarships and sponsorships list with official links, explainable matches with four classifications, shortlist and side-by-side comparison, a 5-step onboarding wizard, an application tracker with statuses, tasks and a document checklist, private document uploads, a dashboard, an AI assistant and essay feedback, a funding finder, student jobs, plans, and settings with data export and deletion.
 
 ## Project rules
 

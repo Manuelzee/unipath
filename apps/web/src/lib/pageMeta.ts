@@ -7,6 +7,7 @@ export const DEFAULT_DESCRIPTION = 'Search 30,000+ universities in 160+ countrie
 const ROUTES: Array<[RegExp, string, string?]> = [
   [/^\/$/, `${SITE} — Universities and scholarships abroad`],
   [/^\/discover/, `Find universities | ${SITE}`, 'Search 30,000+ universities and colleges in 160+ countries by country, region and city, with the source of every detail.'],
+  [/^\/programmes$/, `Programmes | ${SITE}`, 'Compare degree programmes abroad: tuition, deadlines, entry requirements and required documents, with the date each was checked.'],
   [/^\/scholarships/, `Scholarships & sponsorships | ${SITE}`, 'Government, university and foundation scholarships for studying abroad, each linked to its official page.'],
   [/^\/funding/, `Funding finder | ${SITE}`],
   [/^\/plans/, `Plans | ${SITE}`, 'UniPath AI is free during beta: search, scholarships, matches, application tracking and documents.'],
@@ -38,10 +39,10 @@ function setDescription(text: string) {
   meta.content = text;
 }
 
-/** Sets the title and description for the current path (university pages set their own). */
+/** Sets the title and description for the current path (university and programme pages set their own). */
 export function useRouteMeta(path: string) {
   useEffect(() => {
-    if (path.startsWith('/university/')) return;
+    if (path.startsWith('/university/') || /^\/programmes\/\d+/.test(path)) return;
     const match = ROUTES.find(([pattern]) => pattern.test(path));
     document.title = match?.[1] ?? SITE;
     setDescription(match?.[2] ?? DEFAULT_DESCRIPTION);

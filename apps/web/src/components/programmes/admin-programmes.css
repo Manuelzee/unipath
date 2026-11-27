@@ -1,0 +1,26 @@
+.adp-filters { display:grid;grid-template-columns:minmax(0,1fr) 200px;gap:10px;margin-bottom:14px; }
+.adp-filters select { height:48px;padding:0 10px;border:1px solid #dbe4e9;border-radius:11px;background:#fff;font:500 13px 'DM Sans',sans-serif; }
+.adp-status { padding:3px 8px;border-radius:999px;font-size:11px;font-weight:800;text-transform:capitalize; }
+.adp-status-published { background:#e2f5ef;color:#24715f; }
+.adp-status-draft { background:#eef1f4;color:#5f6f7c; }
+.adp-status-archived { background:#f5ece8;color:#9a5a49; }
+.adp-form { display:grid;gap:14px;max-width:980px; }
+.adp-form fieldset { margin:0;padding:16px 18px;border:1px solid #e1ebe7;border-radius:14px;background:#fff; }
+.adp-form legend { padding:0 6px;color:#173e62;font:700 15px 'Manrope',sans-serif; }
+.adp-grid { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px; }
+.adp-field { display:flex;flex-direction:column;gap:5px;color:#36536a;font-size:12px;font-weight:700; }
+.adp-wide { grid-column:1/-1; }
+.adp-field input,.adp-field select,.adp-field textarea,.adp-doc input,.adp-doc select,.adp-confirm input { width:100%;min-width:0;padding:9px 10px;border:1px solid #dbe4e9;border-radius:9px;background:#fbfdfc;color:#20354a;font:500 13px 'DM Sans',sans-serif; }
+.adp-field textarea { resize:vertical; }
+.adp-field small { color:#7a8b96;font-weight:500; }
+.adp-doc { display:grid;grid-template-columns:220px 140px minmax(0,1fr) auto;gap:8px;align-items:center;margin-bottom:8px; }
+.adp-picker { display:grid;gap:8px; }
+.adp-picked { margin:0;color:#36536a;font-size:13px; }
+.adp-picked code { margin-left:6px;color:#7a8b96;font-size:11px; }
+.adp-results { list-style:none;margin:0;padding:6px;border:1px solid #e1ebe7;border-radius:11px;background:#fff;display:grid;gap:4px;max-height:300px;overflow:auto;font-size:13px;color:#5d7081; }
+.adp-results button { width:100%;display:flex;justify-content:space-between;gap:10px;padding:8px 10px;border:0;border-radius:8px;background:none;text-align:left;cursor:pointer;font:inherit; }
+.adp-results button:hover { background:#f1f8f6; }
+.adp-results strong { color:#173e62; }
+.adp-confirm { display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin:8px 0; }
+.adp-warn { margin:0;padding:10px 12px;border-radius:10px;background:#fbf3e4;color:#7a5a1f;font-size:13px; }
+@media (max-width: 760px) { .adp-grid { grid-template-columns:1fr; } .adp-doc { grid-template-columns:1fr 1fr; } .adp-doc input { grid-column:1/-1; } .adp-filters,.adp-confirm { grid-template-columns:1fr; } }

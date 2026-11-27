@@ -9,6 +9,10 @@ import type { Application, StudentDocument } from '@workspace/api-client-react';
 import { Download, FileImage, FileText, LoaderCircle, Lock, Pencil, ShieldCheck, Trash2, Upload, X } from 'lucide-react';
 import { EmptyBlock, ErrorBlock, LoadingBlock } from '@/components/directory/StateViews';
 import { PageHeading, errorMessage } from '@/components/workspace/shared';
+import { DOCUMENT_KIND_LABEL } from '@/components/programmes/format';
+
+type Kind = NonNullable<StudentDocument['kind']>;
+const KIND_OPTIONS = Object.entries(DOCUMENT_KIND_LABEL) as Array<[Kind, string]>;
 
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 const ACCEPT = '.pdf,.png,.jpg,.jpeg,.docx,application/pdf,image/png,image/jpeg,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
@@ -53,6 +57,7 @@ function UploadPanel({ applications, initialApplicationId, count }: { applicatio
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState('');
   const [applicationId, setApplicationId] = useState<number | null>(initialApplicationId);
+  const [kind, setKind] = useState<Kind | ''>('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const tooBig = !!file && file.size > MAX_UPLOAD_BYTES;
@@ -63,9 +68,9 @@ function UploadPanel({ applications, initialApplicationId, count }: { applicatio
     if (!file || tooBig || badType || busy) return;
     setBusy(true); setMessage(null);
     try {
-      const doc = await uploadStudentDocument(file, { fileName: file.name, title: title.trim() || undefined, applicationId: applicationId ?? undefined });
+      const doc = await uploadStudentDocument(file, { fileName: file.name, title: title.trim() || undefined, applicationId: applicationId ?? undefined, kind: kind || undefined });
       setMessage({ ok: true, text: `Uploaded “${doc.title}”.` });
-      setFile(null); setTitle('');
+      setFile(null); setTitle(''); setKind('');
       if (input.current) input.current.value = '';
       await qc.invalidateQueries({ queryKey: getListStudentDocumentsQueryKey() });
     } catch (error) {
@@ -82,6 +87,9 @@ function UploadPanel({ applications, initialApplicationId, count }: { applicatio
         {tooBig && <small className="form-error" role="alert">This file is larger than 10 MB.</small>}
         {badType && <small className="form-error" role="alert">Only PDF, PNG, JPEG and .docx files are accepted.</small>}
       </label>
+      <label className="ws-label"><span>What is it?</span>
+        <select className="ws-select" value={kind} onChange={e => setKind(e.target.value as Kind | '')} data-testid="select-document-kind">
+          <option value="">Choose a type (helps with programme checklists)</option>{KIND_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
       <label className="ws-label"><span>Title (optional)</span><input className="ws-input" maxLength={160} value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Final transcript" data-testid="input-document-title"/></label>
       <label className="ws-label"><span>Link to an application (optional)</span>
         <select className="ws-select" value={applicationId ?? ''} onChange={e => setApplicationId(e.target.value ? Number(e.target.value) : null)} data-testid="select-document-application">
@@ -112,6 +120,10 @@ function DocumentRow({ doc, applications }: { doc: StudentDocument; applications
         <button type="button" className="ws-link ws-link-muted" onClick={() => { setEditing(false); setTitle(doc.title); }}><X size={13}/> Cancel</button></form>
         : <strong>{doc.title}</strong>}
       <span>{doc.fileName} · {TYPE_LABEL[doc.contentType] ?? doc.contentType} · {formatBytes(doc.sizeBytes)} · added {new Date(doc.createdAt).toLocaleDateString()}</span>
+      <label className="doc-link"><span className="sr-only">Type of {doc.title}</span>
+        <select className="ws-select" value={doc.kind ?? ''} disabled={update.isPending} data-testid={`select-kind-${doc.id}`}
+          onChange={e => update.mutate({ id: doc.id, data: { kind: (e.target.value || null) as Kind | null } }, { onSuccess: refresh })}>
+          <option value="">Type not set</option>{KIND_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
       <label className="doc-link"><span className="sr-only">Linked application for {doc.title}</span>
         <select className="ws-select" value={doc.applicationId ?? ''} disabled={update.isPending}
           onChange={e => update.mutate({ id: doc.id, data: { applicationId: e.target.value ? Number(e.target.value) : null } }, { onSuccess: () => { refresh(); void qc.invalidateQueries({ queryKey: getListApplicationsQueryKey() }); } })}>

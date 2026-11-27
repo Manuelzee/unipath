@@ -1,9 +1,9 @@
 import { useRef, type KeyboardEvent } from 'react';
 import { cn } from './format';
 
-export type TabId = 'overview' | 'fields' | 'admissions' | 'funding' | 'links';
+export type TabId = 'overview' | 'programmes' | 'fields' | 'admissions' | 'funding' | 'links';
 export const TABS: Array<{ id: TabId; label: string }> = [
-  { id: 'overview', label: 'Overview' }, { id: 'fields', label: 'Fields of Study' }, { id: 'admissions', label: 'Admissions' },
+  { id: 'overview', label: 'Overview' }, { id: 'programmes', label: 'Programmes' }, { id: 'fields', label: 'Fields of Study' }, { id: 'admissions', label: 'Admissions' },
   { id: 'funding', label: 'Scholarships & Funding' }, { id: 'links', label: 'Official Links' },
 ];
 

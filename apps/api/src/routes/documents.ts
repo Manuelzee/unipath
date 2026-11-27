@@ -25,7 +25,7 @@ function studentId(req: Request): string {
 }
 
 export const toDocument = (row: StudentDocumentRecord) => ({
-  id: row.id, applicationId: row.applicationId, title: row.title, fileName: row.fileName,
+  id: row.id, applicationId: row.applicationId, title: row.title, kind: row.kind, fileName: row.fileName,
   contentType: row.contentType, sizeBytes: row.sizeBytes, createdAt: row.createdAt.toISOString(),
 });
 
@@ -78,7 +78,7 @@ router.post("/me/documents", requireAuth,
     await writeObject(storageKey, bytes);
     try {
       const [row] = await db.insert(studentDocumentsTable).values({
-        userId, applicationId, fileName, contentType: type, sizeBytes: bytes.length, storageKey,
+        userId, applicationId, fileName, contentType: type, sizeBytes: bytes.length, storageKey, kind: query.data.kind ?? null,
         title: query.data.title?.trim() || fileName,
         sha256: createHash("sha256").update(bytes).digest("hex"),
       }).returning();
@@ -100,6 +100,7 @@ router.patch("/me/documents/:id", requireAuth, requireJson, async (req, res): Pr
   const changes: Partial<typeof studentDocumentsTable.$inferInsert> = {};
   if (body.data.title !== undefined) changes.title = body.data.title.trim();
   if (body.data.applicationId !== undefined) changes.applicationId = body.data.applicationId;
+  if (body.data.kind !== undefined) changes.kind = body.data.kind;
   if (!Object.keys(changes).length) { res.status(400).json({ error: "Nothing to update." }); return; }
   const [row] = await db.update(studentDocumentsTable).set(changes)
     .where(and(eq(studentDocumentsTable.id, params.data.id), eq(studentDocumentsTable.userId, userId))).returning();

@@ -34,3 +34,4 @@ export * from "./studentDocuments";
 
 export * from "./auth";
 export * from "./chat";
+export * from "./programmes";

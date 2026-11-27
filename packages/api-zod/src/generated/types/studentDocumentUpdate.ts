@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { StudentDocumentUpdateKind } from './studentDocumentUpdateKind';
 
 export interface StudentDocumentUpdate {
   /**
@@ -14,4 +15,6 @@ export interface StudentDocumentUpdate {
   title?: string;
   /** @nullable */
   applicationId?: number | null;
+  /** @nullable */
+  kind?: StudentDocumentUpdateKind;
 }

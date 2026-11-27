@@ -551,6 +551,464 @@ export interface UniversityScholarships {
   notice: string;
 }
 
+export type ProgrammeDocumentKind = typeof ProgrammeDocumentKind[keyof typeof ProgrammeDocumentKind];
+
+
+export const ProgrammeDocumentKind = {
+  transcript: 'transcript',
+  certificate: 'certificate',
+  passport: 'passport',
+  english_test: 'english_test',
+  cv: 'cv',
+  personal_statement: 'personal_statement',
+  recommendation: 'recommendation',
+  financial: 'financial',
+  photo: 'photo',
+  portfolio: 'portfolio',
+  other: 'other',
+} as const;
+
+export type ProgrammeDocumentNeed = typeof ProgrammeDocumentNeed[keyof typeof ProgrammeDocumentNeed];
+
+
+export const ProgrammeDocumentNeed = {
+  required: 'required',
+  if_applicable: 'if_applicable',
+} as const;
+
+export interface ProgrammeDocument {
+  kind: ProgrammeDocumentKind;
+  need: ProgrammeDocumentNeed;
+  /**
+     * @maxLength 300
+     * @nullable
+     */
+  note: string | null;
+}
+
+export type ProgrammeVerificationLevel = typeof ProgrammeVerificationLevel[keyof typeof ProgrammeVerificationLevel];
+
+
+export const ProgrammeVerificationLevel = {
+  confirmed: 'confirmed',
+  checked: 'checked',
+  stale: 'stale',
+} as const;
+
+export interface ProgrammeVerification {
+  level: ProgrammeVerificationLevel;
+  label: string;
+  detail: string;
+  checkedAt: string;
+  /** @nullable */
+  confirmedAt: string | null;
+  /** @nullable */
+  confirmedUntil: string | null;
+}
+
+export interface ProgrammeInstitution {
+  id: string;
+  name: string;
+  city: string;
+  country: string;
+  countryCode: string;
+  /** @nullable */
+  website: string | null;
+}
+
+export type ProgrammeSummaryLevel = typeof ProgrammeSummaryLevel[keyof typeof ProgrammeSummaryLevel];
+
+
+export const ProgrammeSummaryLevel = {
+  bachelor: 'bachelor',
+  master: 'master',
+  doctoral: 'doctoral',
+  diploma: 'diploma',
+  certificate: 'certificate',
+  foundation: 'foundation',
+  other: 'other',
+} as const;
+
+/**
+ * @nullable
+ */
+export type ProgrammeSummaryStudyMode = typeof ProgrammeSummaryStudyMode[keyof typeof ProgrammeSummaryStudyMode] | null;
+
+
+export const ProgrammeSummaryStudyMode = {
+  full_time: 'full_time',
+  part_time: 'part_time',
+  online: 'online',
+  blended: 'blended',
+} as const;
+
+/**
+ * @nullable
+ */
+export type ProgrammeSummaryTuitionPeriod = typeof ProgrammeSummaryTuitionPeriod[keyof typeof ProgrammeSummaryTuitionPeriod] | null;
+
+
+export const ProgrammeSummaryTuitionPeriod = {
+  year: 'year',
+  semester: 'semester',
+  programme: 'programme',
+  credit: 'credit',
+} as const;
+
+export type ProgrammeSummaryDeadlineType = typeof ProgrammeSummaryDeadlineType[keyof typeof ProgrammeSummaryDeadlineType];
+
+
+export const ProgrammeSummaryDeadlineType = {
+  fixed: 'fixed',
+  rolling: 'rolling',
+  unknown: 'unknown',
+} as const;
+
+export interface ProgrammeSummary {
+  id: number;
+  name: string;
+  level: ProgrammeSummaryLevel;
+  /** @nullable */
+  degreeName: string | null;
+  field: string;
+  /** @nullable */
+  language: string | null;
+  /** @nullable */
+  durationMonths: number | null;
+  /** @nullable */
+  studyMode: ProgrammeSummaryStudyMode;
+  intakes: string[];
+  /** @nullable */
+  tuitionAmount: number | null;
+  /** @nullable */
+  tuitionCurrency: string | null;
+  /** @nullable */
+  tuitionPeriod: ProgrammeSummaryTuitionPeriod;
+  /** @nullable */
+  applicationFeeAmount: number | null;
+  /** @nullable */
+  applicationFeeCurrency: string | null;
+  deadlineType: ProgrammeSummaryDeadlineType;
+  /** @nullable */
+  deadline: string | null;
+  /** @nullable */
+  deadlineNote: string | null;
+  institution: ProgrammeInstitution;
+  verification: ProgrammeVerification;
+  updatedAt: string;
+}
+
+export interface ProgrammeSummaryList {
+  items: ProgrammeSummary[];
+}
+
+export interface ProgrammeList {
+  items: ProgrammeSummary[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export type Programme = ProgrammeSummary & ({
+  /** @nullable */
+  tuitionNote: string | null;
+  /** @nullable */
+  academicRequirement: string | null;
+  /** @nullable */
+  languageRequirement: string | null;
+  /** @nullable */
+  otherRequirements: string | null;
+  /** @nullable */
+  minimumGpa: number | null;
+  requiredDocuments: ProgrammeDocument[];
+  officialUrl: string;
+  /** @nullable */
+  applyUrl: string | null;
+  sourceUrl: string;
+  /** @nullable */
+  confirmationNote: string | null;
+});
+
+export interface ProgrammeDetail {
+  programme: Programme;
+  similar: ProgrammeSummary[];
+}
+
+export interface ProgrammeFilterCount {
+  value: string;
+  label: string;
+  count: number;
+}
+
+export interface ProgrammeFilters {
+  total: number;
+  confirmed: number;
+  countries: ProgrammeFilterCount[];
+  levels: ProgrammeFilterCount[];
+  fields: ProgrammeFilterCount[];
+  languages: ProgrammeFilterCount[];
+}
+
+export type ProgrammeReadinessDocumentNeed = typeof ProgrammeReadinessDocumentNeed[keyof typeof ProgrammeReadinessDocumentNeed];
+
+
+export const ProgrammeReadinessDocumentNeed = {
+  required: 'required',
+  if_applicable: 'if_applicable',
+} as const;
+
+export type ProgrammeReadinessDocumentStatus = typeof ProgrammeReadinessDocumentStatus[keyof typeof ProgrammeReadinessDocumentStatus];
+
+
+export const ProgrammeReadinessDocumentStatus = {
+  ready: 'ready',
+  missing: 'missing',
+} as const;
+
+export interface ProgrammeReadinessDocument {
+  kind: string;
+  label: string;
+  need: ProgrammeReadinessDocumentNeed;
+  /** @nullable */
+  note: string | null;
+  status: ProgrammeReadinessDocumentStatus;
+  documentTitles: string[];
+}
+
+export type ProgrammeReadinessAcademicStatus = typeof ProgrammeReadinessAcademicStatus[keyof typeof ProgrammeReadinessAcademicStatus];
+
+
+export const ProgrammeReadinessAcademicStatus = {
+  meets: 'meets',
+  below: 'below',
+  unknown: 'unknown',
+  not_published: 'not_published',
+} as const;
+
+export type ProgrammeReadinessAcademic = {
+  status: ProgrammeReadinessAcademicStatus;
+  message: string;
+};
+
+export interface ProgrammeReadiness {
+  documents: ProgrammeReadinessDocument[];
+  requiredCount: number;
+  readyCount: number;
+  academic: ProgrammeReadinessAcademic;
+  /** @nullable */
+  trackedApplicationId: number | null;
+}
+
+export type ProgrammeInputLevel = typeof ProgrammeInputLevel[keyof typeof ProgrammeInputLevel];
+
+
+export const ProgrammeInputLevel = {
+  bachelor: 'bachelor',
+  master: 'master',
+  doctoral: 'doctoral',
+  diploma: 'diploma',
+  certificate: 'certificate',
+  foundation: 'foundation',
+  other: 'other',
+} as const;
+
+/**
+ * @nullable
+ */
+export type ProgrammeInputStudyMode = typeof ProgrammeInputStudyMode[keyof typeof ProgrammeInputStudyMode] | null;
+
+
+export const ProgrammeInputStudyMode = {
+  full_time: 'full_time',
+  part_time: 'part_time',
+  online: 'online',
+  blended: 'blended',
+} as const;
+
+/**
+ * @nullable
+ */
+export type ProgrammeInputTuitionPeriod = typeof ProgrammeInputTuitionPeriod[keyof typeof ProgrammeInputTuitionPeriod] | null;
+
+
+export const ProgrammeInputTuitionPeriod = {
+  year: 'year',
+  semester: 'semester',
+  programme: 'programme',
+  credit: 'credit',
+} as const;
+
+export type ProgrammeInputDeadlineType = typeof ProgrammeInputDeadlineType[keyof typeof ProgrammeInputDeadlineType];
+
+
+export const ProgrammeInputDeadlineType = {
+  fixed: 'fixed',
+  rolling: 'rolling',
+  unknown: 'unknown',
+} as const;
+
+export type ProgrammeInputStatus = typeof ProgrammeInputStatus[keyof typeof ProgrammeInputStatus];
+
+
+export const ProgrammeInputStatus = {
+  draft: 'draft',
+  published: 'published',
+  archived: 'archived',
+} as const;
+
+export interface ProgrammeInput {
+  /**
+     * @minLength 1
+     * @maxLength 80
+     */
+  institutionId: string;
+  /**
+     * @minLength 2
+     * @maxLength 200
+     */
+  name: string;
+  level: ProgrammeInputLevel;
+  /**
+     * @maxLength 200
+     * @nullable
+     */
+  degreeName?: string | null;
+  /**
+     * @minLength 2
+     * @maxLength 120
+     */
+  field: string;
+  /**
+     * @maxLength 60
+     * @nullable
+     */
+  language?: string | null;
+  /**
+     * @minimum 1
+     * @maximum 120
+     * @nullable
+     */
+  durationMonths?: number | null;
+  /** @nullable */
+  studyMode?: ProgrammeInputStudyMode;
+  /**
+     * @maxItems 6
+     * @items.minLength 1
+     * @items.maxLength 60
+     */
+  intakes: string[];
+  /**
+     * @minimum 0
+     * @maximum 10000000
+     * @nullable
+     */
+  tuitionAmount?: number | null;
+  /**
+     * @nullable
+     * @pattern ^[A-Z]{3}$
+     */
+  tuitionCurrency?: string | null;
+  /** @nullable */
+  tuitionPeriod?: ProgrammeInputTuitionPeriod;
+  /**
+     * @maxLength 300
+     * @nullable
+     */
+  tuitionNote?: string | null;
+  /**
+     * @minimum 0
+     * @maximum 100000
+     * @nullable
+     */
+  applicationFeeAmount?: number | null;
+  /**
+     * @nullable
+     * @pattern ^[A-Z]{3}$
+     */
+  applicationFeeCurrency?: string | null;
+  deadlineType: ProgrammeInputDeadlineType;
+  /**
+     * @nullable
+     * @pattern ^\d{4}-\d{2}-\d{2}$
+     */
+  deadline?: string | null;
+  /**
+     * @maxLength 200
+     * @nullable
+     */
+  deadlineNote?: string | null;
+  /**
+     * @maxLength 2000
+     * @nullable
+     */
+  academicRequirement?: string | null;
+  /**
+     * @maxLength 2000
+     * @nullable
+     */
+  languageRequirement?: string | null;
+  /**
+     * @maxLength 2000
+     * @nullable
+     */
+  otherRequirements?: string | null;
+  /**
+     * @minimum 0
+     * @maximum 4
+     * @nullable
+     */
+  minimumGpa?: number | null;
+  /** @maxItems 12 */
+  requiredDocuments: ProgrammeDocument[];
+  /**
+     * @minLength 8
+     * @maxLength 500
+     */
+  officialUrl: string;
+  /**
+     * @maxLength 500
+     * @nullable
+     */
+  applyUrl?: string | null;
+  /**
+     * @minLength 8
+     * @maxLength 500
+     */
+  sourceUrl: string;
+  /** @pattern ^\d{4}-\d{2}-\d{2}$ */
+  checkedAt: string;
+  status: ProgrammeInputStatus;
+}
+
+export interface ProgrammeConfirmationInput {
+  /**
+     * How the university confirmed, e.g. 'Email from the admissions office, 27 Nov 2026'
+     * @minLength 5
+     * @maxLength 500
+     */
+  note: string;
+}
+
+export type AdminProgrammeStatus = typeof AdminProgrammeStatus[keyof typeof AdminProgrammeStatus];
+
+
+export const AdminProgrammeStatus = {
+  draft: 'draft',
+  published: 'published',
+  archived: 'archived',
+} as const;
+
+export type AdminProgramme = Programme & ({
+  status: AdminProgrammeStatus;
+  /** @nullable */
+  seedKey: string | null;
+  createdAt: string;
+});
+
+export interface AdminProgrammeList {
+  items: AdminProgramme[];
+}
+
 export type NotificationKind = typeof NotificationKind[keyof typeof NotificationKind];
 
 
@@ -1753,6 +2211,26 @@ export interface AuthUser {
   createdAt: string;
 }
 
+/**
+ * @nullable
+ */
+export type StudentDocumentKind = typeof StudentDocumentKind[keyof typeof StudentDocumentKind] | null;
+
+
+export const StudentDocumentKind = {
+  transcript: 'transcript',
+  certificate: 'certificate',
+  passport: 'passport',
+  english_test: 'english_test',
+  cv: 'cv',
+  personal_statement: 'personal_statement',
+  recommendation: 'recommendation',
+  financial: 'financial',
+  photo: 'photo',
+  portfolio: 'portfolio',
+  other: 'other',
+} as const;
+
 export type StudentDocumentContentType = typeof StudentDocumentContentType[keyof typeof StudentDocumentContentType];
 
 
@@ -1768,6 +2246,8 @@ export interface StudentDocument {
   /** @nullable */
   applicationId: number | null;
   title: string;
+  /** @nullable */
+  kind: StudentDocumentKind;
   fileName: string;
   contentType: StudentDocumentContentType;
   sizeBytes: number;
@@ -1795,6 +2275,26 @@ export interface StudentDataExport {
   chatMessages: OwnChatMessage[];
 }
 
+/**
+ * @nullable
+ */
+export type StudentDocumentUpdateKind = typeof StudentDocumentUpdateKind[keyof typeof StudentDocumentUpdateKind] | null;
+
+
+export const StudentDocumentUpdateKind = {
+  transcript: 'transcript',
+  certificate: 'certificate',
+  passport: 'passport',
+  english_test: 'english_test',
+  cv: 'cv',
+  personal_statement: 'personal_statement',
+  recommendation: 'recommendation',
+  financial: 'financial',
+  photo: 'photo',
+  portfolio: 'portfolio',
+  other: 'other',
+} as const;
+
 export interface StudentDocumentUpdate {
   /**
      * @minLength 1
@@ -1803,6 +2303,8 @@ export interface StudentDocumentUpdate {
   title?: string;
   /** @nullable */
   applicationId?: number | null;
+  /** @nullable */
+  kind?: StudentDocumentUpdateKind;
 }
 
 export type DataDeletionRequestConfirm = typeof DataDeletionRequestConfirm[keyof typeof DataDeletionRequestConfirm];
@@ -2317,7 +2819,25 @@ fileName: string;
  */
 title?: string;
 applicationId?: number;
+kind?: UploadStudentDocumentKind;
 };
+
+export type UploadStudentDocumentKind = typeof UploadStudentDocumentKind[keyof typeof UploadStudentDocumentKind];
+
+
+export const UploadStudentDocumentKind = {
+  transcript: 'transcript',
+  certificate: 'certificate',
+  passport: 'passport',
+  english_test: 'english_test',
+  cv: 'cv',
+  personal_statement: 'personal_statement',
+  recommendation: 'recommendation',
+  financial: 'financial',
+  photo: 'photo',
+  portfolio: 'portfolio',
+  other: 'other',
+} as const;
 
 export type ListChatMessagesParams = {
 /**
@@ -2335,6 +2855,81 @@ before?: number;
  */
 limit?: number;
 };
+
+export type ListProgrammesParams = {
+/**
+ * Programme, field or university name
+ * @maxLength 100
+ */
+search?: string;
+/**
+ * @pattern ^[A-Z]{2}$
+ */
+countryCode?: string;
+level?: ListProgrammesLevel;
+/**
+ * @maxLength 120
+ */
+field?: string;
+/**
+ * @maxLength 60
+ */
+language?: string;
+confirmedOnly?: boolean;
+/**
+ * deadline (soonest open deadline first, the default), name, or updated (recently checked first)
+ */
+sort?: ListProgrammesSort;
+/**
+ * @minimum 1
+ * @maximum 100000
+ */
+page?: number;
+/**
+ * @minimum 1
+ * @maximum 48
+ */
+pageSize?: number;
+};
+
+export type ListProgrammesLevel = typeof ListProgrammesLevel[keyof typeof ListProgrammesLevel];
+
+
+export const ListProgrammesLevel = {
+  bachelor: 'bachelor',
+  master: 'master',
+  doctoral: 'doctoral',
+  diploma: 'diploma',
+  certificate: 'certificate',
+  foundation: 'foundation',
+  other: 'other',
+} as const;
+
+export type ListProgrammesSort = typeof ListProgrammesSort[keyof typeof ListProgrammesSort];
+
+
+export const ListProgrammesSort = {
+  deadline: 'deadline',
+  name: 'name',
+  updated: 'updated',
+} as const;
+
+export type ListAdminProgrammesParams = {
+/**
+ * @maxLength 100
+ */
+search?: string;
+status?: ListAdminProgrammesStatus;
+};
+
+export type ListAdminProgrammesStatus = typeof ListAdminProgrammesStatus[keyof typeof ListAdminProgrammesStatus];
+
+
+export const ListAdminProgrammesStatus = {
+  draft: 'draft',
+  published: 'published',
+  archived: 'archived',
+} as const;
 
 export type ListAnnouncementsParams = {
 /**

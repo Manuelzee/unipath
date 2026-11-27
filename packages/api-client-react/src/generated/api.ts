@@ -26,6 +26,8 @@ import type {
   AdminDatabaseStatus,
   AdminInstitutionDetail,
   AdminInstitutionList,
+  AdminProgramme,
+  AdminProgrammeList,
   AdminProposalDecision,
   AdminSetupConfirmation,
   AdminVerificationJob,
@@ -80,8 +82,10 @@ import type {
   JobSearchResponse,
   ListAdminCustomersParams,
   ListAdminInstitutionsParams,
+  ListAdminProgrammesParams,
   ListAnnouncementsParams,
   ListChatMessagesParams,
+  ListProgrammesParams,
   ListScholarshipsParams,
   ListUniversitiesParams,
   ListUniversitiesResult,
@@ -92,6 +96,13 @@ import type {
   PasswordSignInInput,
   PasswordSignUpInput,
   PaymentsUnavailable,
+  ProgrammeConfirmationInput,
+  ProgrammeDetail,
+  ProgrammeFilters,
+  ProgrammeInput,
+  ProgrammeList,
+  ProgrammeReadiness,
+  ProgrammeSummaryList,
   PublicInstitutionVerification,
   ReadinessStatus,
   RecommendationResult,
@@ -6899,6 +6910,807 @@ export const useDeleteChatMessage = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getDeleteChatMessageMutationOptions(options));
+    }
+
+export const getListProgrammesUrl = (params?: ListProgrammesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/programmes?${stringifiedParams}` : `/api/programmes`
+}
+
+/**
+ * @summary Search published degree programmes
+ */
+export const listProgrammes = async (params?: ListProgrammesParams, options?: Parameters<typeof customFetch>[1]): Promise<ProgrammeList> => {
+
+  return customFetch<ProgrammeList>(getListProgrammesUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListProgrammesQueryKey = (params?: ListProgrammesParams,) => {
+    return [
+    `/api/programmes`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListProgrammesQueryOptions = <TData = Awaited<ReturnType<typeof listProgrammes>>, TError = ErrorType<void>>(params?: ListProgrammesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listProgrammes>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListProgrammesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listProgrammes>>> = ({ signal }) => listProgrammes(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listProgrammes>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListProgrammesQueryResult = NonNullable<Awaited<ReturnType<typeof listProgrammes>>>
+export type ListProgrammesQueryError = ErrorType<void>
+
+
+/**
+ * @summary Search published degree programmes
+ */
+
+export function useListProgrammes<TData = Awaited<ReturnType<typeof listProgrammes>>, TError = ErrorType<void>>(
+ params?: ListProgrammesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listProgrammes>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListProgrammesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetProgrammeFiltersUrl = () => {
+
+
+
+
+  return `/api/programmes/filters`
+}
+
+/**
+ * @summary Countries, levels, fields and languages of published programmes, with counts
+ */
+export const getProgrammeFilters = async ( options?: Parameters<typeof customFetch>[1]): Promise<ProgrammeFilters> => {
+
+  return customFetch<ProgrammeFilters>(getGetProgrammeFiltersUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetProgrammeFiltersQueryKey = () => {
+    return [
+    `/api/programmes/filters`
+    ] as const;
+    }
+
+
+export const getGetProgrammeFiltersQueryOptions = <TData = Awaited<ReturnType<typeof getProgrammeFilters>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getProgrammeFilters>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetProgrammeFiltersQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProgrammeFilters>>> = ({ signal }) => getProgrammeFilters({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProgrammeFilters>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetProgrammeFiltersQueryResult = NonNullable<Awaited<ReturnType<typeof getProgrammeFilters>>>
+export type GetProgrammeFiltersQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Countries, levels, fields and languages of published programmes, with counts
+ */
+
+export function useGetProgrammeFilters<TData = Awaited<ReturnType<typeof getProgrammeFilters>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getProgrammeFilters>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetProgrammeFiltersQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetProgrammeUrl = (id: number,) => {
+
+
+
+
+  return `/api/programmes/${id}`
+}
+
+/**
+ * @summary One published programme, with similar programmes
+ */
+export const getProgramme = async (id: number, options?: Parameters<typeof customFetch>[1]): Promise<ProgrammeDetail> => {
+
+  return customFetch<ProgrammeDetail>(getGetProgrammeUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetProgrammeQueryKey = (id: number,) => {
+    return [
+    `/api/programmes/${id}`
+    ] as const;
+    }
+
+
+export const getGetProgrammeQueryOptions = <TData = Awaited<ReturnType<typeof getProgramme>>, TError = ErrorType<void>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getProgramme>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetProgrammeQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProgramme>>> = ({ signal }) => getProgramme(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProgramme>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetProgrammeQueryResult = NonNullable<Awaited<ReturnType<typeof getProgramme>>>
+export type GetProgrammeQueryError = ErrorType<void>
+
+
+/**
+ * @summary One published programme, with similar programmes
+ */
+
+export function useGetProgramme<TData = Awaited<ReturnType<typeof getProgramme>>, TError = ErrorType<void>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getProgramme>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetProgrammeQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListUniversityProgrammesUrl = (id: string,) => {
+
+
+
+
+  return `/api/universities/${id}/programmes`
+}
+
+/**
+ * @summary Published programmes at one university
+ */
+export const listUniversityProgrammes = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<ProgrammeSummaryList> => {
+
+  return customFetch<ProgrammeSummaryList>(getListUniversityProgrammesUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListUniversityProgrammesQueryKey = (id: string,) => {
+    return [
+    `/api/universities/${id}/programmes`
+    ] as const;
+    }
+
+
+export const getListUniversityProgrammesQueryOptions = <TData = Awaited<ReturnType<typeof listUniversityProgrammes>>, TError = ErrorType<void>>(id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listUniversityProgrammes>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListUniversityProgrammesQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listUniversityProgrammes>>> = ({ signal }) => listUniversityProgrammes(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listUniversityProgrammes>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListUniversityProgrammesQueryResult = NonNullable<Awaited<ReturnType<typeof listUniversityProgrammes>>>
+export type ListUniversityProgrammesQueryError = ErrorType<void>
+
+
+/**
+ * @summary Published programmes at one university
+ */
+
+export function useListUniversityProgrammes<TData = Awaited<ReturnType<typeof listUniversityProgrammes>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listUniversityProgrammes>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListUniversityProgrammesQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetProgrammeReadinessUrl = (id: number,) => {
+
+
+
+
+  return `/api/me/programmes/${id}/readiness`
+}
+
+/**
+ * @summary The signed-in student's documents and grades against this programme
+ */
+export const getProgrammeReadiness = async (id: number, options?: Parameters<typeof customFetch>[1]): Promise<ProgrammeReadiness> => {
+
+  return customFetch<ProgrammeReadiness>(getGetProgrammeReadinessUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetProgrammeReadinessQueryKey = (id: number,) => {
+    return [
+    `/api/me/programmes/${id}/readiness`
+    ] as const;
+    }
+
+
+export const getGetProgrammeReadinessQueryOptions = <TData = Awaited<ReturnType<typeof getProgrammeReadiness>>, TError = ErrorType<void>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getProgrammeReadiness>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetProgrammeReadinessQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProgrammeReadiness>>> = ({ signal }) => getProgrammeReadiness(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProgrammeReadiness>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetProgrammeReadinessQueryResult = NonNullable<Awaited<ReturnType<typeof getProgrammeReadiness>>>
+export type GetProgrammeReadinessQueryError = ErrorType<void>
+
+
+/**
+ * @summary The signed-in student's documents and grades against this programme
+ */
+
+export function useGetProgrammeReadiness<TData = Awaited<ReturnType<typeof getProgrammeReadiness>>, TError = ErrorType<void>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getProgrammeReadiness>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetProgrammeReadinessQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListAdminProgrammesUrl = (params?: ListAdminProgrammesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/programmes?${stringifiedParams}` : `/api/admin/programmes`
+}
+
+export const listAdminProgrammes = async (params?: ListAdminProgrammesParams, options?: Parameters<typeof customFetch>[1]): Promise<AdminProgrammeList> => {
+
+  return customFetch<AdminProgrammeList>(getListAdminProgrammesUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAdminProgrammesQueryKey = (params?: ListAdminProgrammesParams,) => {
+    return [
+    `/api/admin/programmes`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListAdminProgrammesQueryOptions = <TData = Awaited<ReturnType<typeof listAdminProgrammes>>, TError = ErrorType<void>>(params?: ListAdminProgrammesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminProgrammes>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAdminProgrammesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAdminProgrammes>>> = ({ signal }) => listAdminProgrammes(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAdminProgrammes>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAdminProgrammesQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminProgrammes>>>
+export type ListAdminProgrammesQueryError = ErrorType<void>
+
+
+
+export function useListAdminProgrammes<TData = Awaited<ReturnType<typeof listAdminProgrammes>>, TError = ErrorType<void>>(
+ params?: ListAdminProgrammesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminProgrammes>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAdminProgrammesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateProgrammeUrl = () => {
+
+
+
+
+  return `/api/admin/programmes`
+}
+
+export const createProgramme = async (programmeInput: ProgrammeInput, options?: Parameters<typeof customFetch>[1]): Promise<AdminProgramme> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<AdminProgramme>(getCreateProgrammeUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(programmeInput)
+  }
+);}
+
+
+
+
+
+export const getCreateProgrammeMutationKey = () => ['createProgramme'] as const;
+
+export const getCreateProgrammeMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createProgramme>>, TError,CreateProgrammeMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createProgramme>>, TError,CreateProgrammeMutationVariables, TContext> => {
+
+const mutationKey = getCreateProgrammeMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createProgramme>>, CreateProgrammeMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  createProgramme(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateProgrammeMutationResult = NonNullable<Awaited<ReturnType<typeof createProgramme>>>
+    export type CreateProgrammeMutationBody = BodyType<ProgrammeInput>
+    export type CreateProgrammeMutationError = ErrorType<void>
+    export type CreateProgrammeMutationVariables = {data: BodyType<ProgrammeInput>}
+
+    export const useCreateProgramme = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createProgramme>>, TError,CreateProgrammeMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createProgramme>>,
+        TError,
+        CreateProgrammeMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreateProgrammeMutationOptions(options));
+    }
+
+export const getGetAdminProgrammeUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/programmes/${id}`
+}
+
+export const getAdminProgramme = async (id: number, options?: Parameters<typeof customFetch>[1]): Promise<AdminProgramme> => {
+
+  return customFetch<AdminProgramme>(getGetAdminProgrammeUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminProgrammeQueryKey = (id: number,) => {
+    return [
+    `/api/admin/programmes/${id}`
+    ] as const;
+    }
+
+
+export const getGetAdminProgrammeQueryOptions = <TData = Awaited<ReturnType<typeof getAdminProgramme>>, TError = ErrorType<void>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminProgramme>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminProgrammeQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminProgramme>>> = ({ signal }) => getAdminProgramme(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminProgramme>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAdminProgrammeQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminProgramme>>>
+export type GetAdminProgrammeQueryError = ErrorType<void>
+
+
+
+export function useGetAdminProgramme<TData = Awaited<ReturnType<typeof getAdminProgramme>>, TError = ErrorType<void>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminProgramme>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAdminProgrammeQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateProgrammeUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/programmes/${id}`
+}
+
+/**
+ * @summary Replace a programme's details. Changing any detail clears the university's confirmation.
+ */
+export const updateProgramme = async (id: number,
+    programmeInput: ProgrammeInput, options?: Parameters<typeof customFetch>[1]): Promise<AdminProgramme> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<AdminProgramme>(getUpdateProgrammeUrl(id),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(programmeInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateProgrammeMutationKey = () => ['updateProgramme'] as const;
+
+export const getUpdateProgrammeMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProgramme>>, TError,UpdateProgrammeMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateProgramme>>, TError,UpdateProgrammeMutationVariables, TContext> => {
+
+const mutationKey = getUpdateProgrammeMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateProgramme>>, UpdateProgrammeMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateProgramme(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateProgrammeMutationResult = NonNullable<Awaited<ReturnType<typeof updateProgramme>>>
+    export type UpdateProgrammeMutationBody = BodyType<ProgrammeInput>
+    export type UpdateProgrammeMutationError = ErrorType<void>
+    export type UpdateProgrammeMutationVariables = {id: number;data: BodyType<ProgrammeInput>}
+
+    /**
+ * @summary Replace a programme's details. Changing any detail clears the university's confirmation.
+ */
+export const useUpdateProgramme = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProgramme>>, TError,UpdateProgrammeMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateProgramme>>,
+        TError,
+        UpdateProgrammeMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateProgrammeMutationOptions(options));
+    }
+
+export const getConfirmProgrammeUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/programmes/${id}/confirmation`
+}
+
+/**
+ * @summary Record that the university confirmed the current details in writing
+ */
+export const confirmProgramme = async (id: number,
+    programmeConfirmationInput: ProgrammeConfirmationInput, options?: Parameters<typeof customFetch>[1]): Promise<AdminProgramme> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<AdminProgramme>(getConfirmProgrammeUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(programmeConfirmationInput)
+  }
+);}
+
+
+
+
+
+export const getConfirmProgrammeMutationKey = () => ['confirmProgramme'] as const;
+
+export const getConfirmProgrammeMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmProgramme>>, TError,ConfirmProgrammeMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof confirmProgramme>>, TError,ConfirmProgrammeMutationVariables, TContext> => {
+
+const mutationKey = getConfirmProgrammeMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof confirmProgramme>>, ConfirmProgrammeMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  confirmProgramme(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ConfirmProgrammeMutationResult = NonNullable<Awaited<ReturnType<typeof confirmProgramme>>>
+    export type ConfirmProgrammeMutationBody = BodyType<ProgrammeConfirmationInput>
+    export type ConfirmProgrammeMutationError = ErrorType<void>
+    export type ConfirmProgrammeMutationVariables = {id: number;data: BodyType<ProgrammeConfirmationInput>}
+
+    /**
+ * @summary Record that the university confirmed the current details in writing
+ */
+export const useConfirmProgramme = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmProgramme>>, TError,ConfirmProgrammeMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof confirmProgramme>>,
+        TError,
+        ConfirmProgrammeMutationVariables,
+        TContext
+      > => {
+      return useMutation(getConfirmProgrammeMutationOptions(options));
     }
 
 export const getListMyNotificationsUrl = () => {
