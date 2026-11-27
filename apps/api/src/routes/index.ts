@@ -16,6 +16,7 @@ import documentsRouter from "./documents";
 import authRouter from "./auth";
 import chatRouter from "./chat";
 import announcementsRouter from "./announcements";
+import notificationsRouter from "./notifications";
 
 const router: IRouter = Router();
 
@@ -36,5 +37,6 @@ router.use(accountRouter);
 router.use(documentsRouter);
 router.use(chatRouter);
 router.use(announcementsRouter);
+router.use(notificationsRouter);
 
 export default router;

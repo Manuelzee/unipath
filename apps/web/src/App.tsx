@@ -5,18 +5,22 @@ import { AuthFlow } from '@/components/auth/AuthFlow';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { PreferenceFields, invalidLivingExpenses, thisYear } from '@/components/profile/PreferenceFields';
 import { AnnouncementsView, useUnreadAnnouncements } from '@/components/announcements/AnnouncementsView';
+import { useUnseenNotifications } from '@/components/notifications/NotificationsView';
+import { useRouteMeta } from '@/lib/pageMeta';
+import '@/components/marketing/home.css';
 import '@/components/workspace/workspace.css';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import {
   getGetBudgetSettingsQueryKey, getGetStudentDashboardQueryKey, getGetStudentProfileQueryKey, getGetStudentRecommendationsQueryKey,
   getGetAdminAccessQueryKey, useGetAdminAccess, useGetStudentProfile, useSaveStudentProfile,
+  getGetUniversityFilterOptionsQueryKey, getListScholarshipsQueryKey, useGetUniversityFilterOptions, useListScholarships,
 } from '@workspace/api-client-react';
 import type { StudentProfileInput } from '@workspace/api-client-react';
 import {
   Award,
   ArrowDownRight, ArrowLeft, ArrowRight, Bookmark, Briefcase, Check, CheckCircle2,
-  ClipboardList, Compass, CreditCard, FileText, Gem, Globe2, GraduationCap, LayoutDashboard,
+  Bell, ClipboardList, Compass, FileText, Gem, Globe2, GraduationCap, LayoutDashboard,
   LoaderCircle, Megaphone, Menu, MessageCircle, MessagesSquare, Scale, Search, Settings, ShieldCheck, Sparkles,
   UserRound, X,
 } from 'lucide-react';
@@ -46,6 +50,10 @@ const DiscoverView = page(() => import('@/components/directory/DiscoverView').th
 const UniversityDetailView = page(() => import('@/components/directory/UniversityDetailView').then(m => m.UniversityDetailView));
 const FundingFinder = page(() => import('@/components/directory/FundingFinder').then(m => m.FundingFinder));
 const ScholarshipsView = page(() => import('@/components/scholarships/ScholarshipsView').then(m => m.ScholarshipsView));
+const NotificationsView = page(() => import('@/components/notifications/NotificationsView').then(m => m.NotificationsView));
+const AboutView = page(() => import('@/components/legal/LegalPages').then(m => m.AboutView));
+const PrivacyView = page(() => import('@/components/legal/LegalPages').then(m => m.PrivacyView));
+const TermsView = page(() => import('@/components/legal/LegalPages').then(m => m.TermsView));
 const PlansView = page(() => import('@/components/plans/PlansView').then(m => m.PlansView));
 const JobsView = page(() => import('@/components/jobs/JobsView').then(m => m.JobsView));
 const RecommendationsView = page(() => import('@/components/recommendations/RecommendationsView').then(m => m.RecommendationsView));
@@ -68,6 +76,7 @@ const cn = (...values: Array<string | false | undefined>) => values.filter(Boole
 // Ordered along the student journey: discover → match → compare → prepare → apply → track.
 const navItems = [
   { href: '/dashboard', label: 'My plan', icon: LayoutDashboard },
+  { href: '/notifications', label: 'Notifications', icon: Bell, testId: 'nav-notifications' },
   { href: '/announcements', label: 'Announcements', icon: Megaphone },
   { href: '/discover', label: 'Discover', icon: Compass },
   { href: '/recommendations', label: 'Matches', icon: GraduationCap },
@@ -82,7 +91,6 @@ const navItems = [
   { href: '/jobs', label: 'Global Student Jobs', icon: Briefcase, testId: 'nav-student-jobs' },
   { href: '/profile', label: 'My profile', icon: UserRound },
   { href: '/plans', label: 'Plans', icon: Gem },
-  { href: '/billing', label: 'Billing & Payments', icon: CreditCard, testId: 'nav-billing' },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
 
@@ -101,13 +109,14 @@ function Header({ marketing = false }: { marketing?: boolean }) {
       <Brand />
       <button className="mobile-menu icon-button" aria-label="Toggle navigation" onClick={() => setOpen(!open)} data-testid="button-mobile-menu">{open ? <X size={20}/> : <Menu size={20}/>}</button>
       <nav className={cn('topnav', open && 'topnav-open')} aria-label="Main navigation">
-        <Link href="/discover" className="topnav-link" data-testid="link-discover">Explore schools</Link>
-        <Link href="/plans" className="topnav-link" data-testid="link-plans">Plans</Link>
+        <Link href="/discover" className="topnav-link" data-testid="link-discover">Find universities</Link>
+        <Link href="/scholarships" className="topnav-link" data-testid="link-scholarships">Scholarships</Link>
+        <Link href="/about" className="topnav-link" data-testid="link-about">About</Link>
         {isSignedIn ? <Link href="/dashboard" className="topnav-login" data-testid="link-dashboard">My plan <ArrowRight size={16}/></Link> :
           <><Link href="/sign-in" className="topnav-link" data-testid="link-sign-in">Sign in</Link><Link href="/sign-up" className="button button-primary button-small" data-testid="link-sign-up">Get started <ArrowRight size={15}/></Link></>}
       </nav>
     </div>
-    {marketing && <div className="sample-strip"><ShieldCheck size={14}/> Universities in 150+ countries outside Africa: U.S. records from NCES IPEDS, worldwide records from the Research Organization Registry (ROR) and a Canada pilot. Not independently verified.</div>}
+    {marketing && <div className="sample-strip"><ShieldCheck size={14}/> Free during beta · 30,000+ universities in 160+ countries outside Africa · 40 scholarships. Details come from public sources and are not independently verified.</div>}
   </header>;
 }
 
@@ -117,6 +126,7 @@ function Shell({ children }: { children: ReactNode }) {
   const { signOut } = useAuth();
   const [, setLocation] = useLocation();
   const unread = useUnreadAnnouncements();
+  const reminders = useUnseenNotifications();
   const adminAccess = useGetAdminAccess({ query: { queryKey: getGetAdminAccessQueryKey(), enabled: !!isSignedIn, retry: false } });
   const initials = user?.firstName?.slice(0, 1) || user?.email?.slice(0, 1) || 'S';
   return <div className="app-shell">
@@ -124,10 +134,11 @@ function Shell({ children }: { children: ReactNode }) {
       <Brand inverse />
       <p className="side-label">YOUR SPACE</p>
       <nav className="side-nav">
-        {navItems.map(item => { const Icon = item.icon; const active = location === item.href; return <Link key={item.href} href={item.href} aria-current={active ? 'page' : undefined} data-testid={'testId' in item ? item.testId : `nav-${item.label.toLowerCase().replaceAll(' ', '-')}`} className={cn('side-link', active && 'side-link-active')}><Icon size={18}/><span>{item.label}</span>{item.href === '/announcements' && unread > 0 && <span className="side-badge" aria-label={`${unread} new`} data-testid="badge-announcements">{unread > 9 ? '9+' : unread}</span>}</Link>; })}
+        {navItems.map(item => { const Icon = item.icon; const active = location === item.href; return <Link key={item.href} href={item.href} aria-current={active ? 'page' : undefined} data-testid={'testId' in item ? item.testId : `nav-${item.label.toLowerCase().replaceAll(' ', '-')}`} className={cn('side-link', active && 'side-link-active')}><Icon size={18}/><span>{item.label}</span>{item.href === '/announcements' && unread > 0 && <span className="side-badge" aria-label={`${unread} new`} data-testid="badge-announcements">{unread > 9 ? '9+' : unread}</span>}{item.href === '/notifications' && reminders > 0 && <span className="side-badge" aria-label={`${reminders} new`} data-testid="badge-notifications">{reminders > 9 ? '9+' : reminders}</span>}</Link>; })}
       </nav>
       {adminAccess.data?.isAdmin && <Link href="/admin" data-testid="nav-admin" className={cn('side-link', location.startsWith('/admin') && 'side-link-active')} style={{marginTop:5}}><ShieldCheck size={18}/><span>Admin</span></Link>}
       <div className="sidebar-note"><div className="note-icon"><Globe2 size={17}/></div><strong>Your world is wide open.</strong><span>One step at a time, we’ll help you find your way.</span><Link href="/discover">Explore universities <ArrowRight size={14}/></Link></div>
+      <div className="side-legal"><Link href="/about">About</Link><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link></div>
       {isSignedIn?<div className="side-user"><div className="user-avatar">{initials.toUpperCase()}</div><div className="user-info"><strong>{user?.firstName || 'Student'}</strong><span>{adminAccess.data?.isAdmin ? 'Admin account' : 'Student account'}</span></div><button className="logout-button" onClick={() => void signOut(() => setLocation('/'))} data-testid="button-sign-out">Sign out</button></div>:<div className="side-user"><Link href="/sign-in" className="side-auth-link" data-testid="link-shell-sign-in">Sign in</Link><Link href="/sign-up" className="side-auth-link" data-testid="link-shell-sign-up">Create account <ArrowRight size={13}/></Link></div>}
     </aside>
     <main className="workspace"><Suspense fallback={<div className="page"><LoadingState/></div>}>{children}</Suspense></main>
@@ -148,8 +159,8 @@ function Home() {
         <div className="eyebrow"><span className="eyebrow-dot"/> YOUR NEXT CHAPTER, ANYWHERE</div>
         <h1>Big world.<br/><em>Clear next steps.</em></h1>
         <p className="hero-lede">Finding your place at a university abroad shouldn’t feel like learning a new system alone. Let’s make the journey feel possible.</p>
-        <div className="hero-actions"><Link href="/discover" className="button button-primary" data-testid="button-explore-hero">Find My University <ArrowRight size={17}/></Link><Link href="/sign-up" className="button button-quiet" data-testid="button-start-hero">Build my plan <ArrowDownRight size={17}/></Link></div>
-        <div className="hero-trust"><div className="trust-avatars"><span>J</span><span>M</span><span>A</span></div><p><strong>A plan that starts with you.</strong><br/>Clear, personal, and at your pace.</p></div>
+        <HomeSearch/>
+        <div className="home-search-links"><Link href="/scholarships" data-testid="button-explore-scholarships"><Sparkles size={15}/> Find scholarships</Link><Link href="/sign-up" data-testid="button-start-hero">Build my plan <ArrowDownRight size={15}/></Link></div>
       </div>
       <div className="hero-art" aria-label="Illustration of a student exploring universities">
         <div className="art-orbit orbit-one"/><div className="art-orbit orbit-two"/>
@@ -160,19 +171,74 @@ function Home() {
         <div className="art-caption">A world of possibility,<br/>with a path that feels like yours.</div>
       </div>
     </section>
-    <section className="trust-row"><span>START WITH WHAT MATTERS TO YOU</span><div><i/>Your goals <i/>Your budget <i/>Your next step</div></section>
+    <Destinations/>
+    <FeaturedScholarships/>
     <section className="how-section"><div className="section-heading"><span className="eyebrow">A LITTLE LESS OVERWHELM</span><h2>Make a big decision<br/>feel <em>manageable.</em></h2><p>You don’t need every answer today. Just a good place to begin.</p></div>
       <div className="steps-grid"><article className="step-card step-01"><span className="step-no">01 / EXPLORE</span><div className="step-art art-search"><Search/><span/><span/><span/></div><h3>See what’s out there</h3><p>Explore schools around the world by what matters most to you.</p><Link href="/discover" data-testid="link-step-discover">Browse universities <ArrowRight size={15}/></Link></article>
       <article className="step-card step-02"><span className="step-no">02 / MAKE IT YOURS</span><div className="step-art art-profile"><UserRound/><i/><i/><i/></div><h3>Start with your story</h3><p>Your interests, budget, and goals help shape a more personal path.</p><Link href="/sign-up" data-testid="link-step-profile">Create your profile <ArrowRight size={15}/></Link></article>
       <article className="step-card step-03"><span className="step-no">03 / TAKE A STEP</span><div className="step-art art-check"><CheckCircle2/><span>One thing at a time</span></div><h3>Keep moving forward</h3><p>Turn a big application journey into a few clear next steps.</p><Link href="/sign-up" data-testid="link-step-plan">Build your plan <ArrowRight size={15}/></Link></article></div>
     </section>
     <section className="quote-section"><div className="quote-mark">“</div><blockquote>You don’t have to have it all figured out to get started.</blockquote><p>Start curious. Find your way as you go.</p><Link href="/discover" className="button button-light" data-testid="button-browse-footer">See where you could go <ArrowRight size={16}/></Link></section>
-     <section className="home-disclaimer"><ShieldCheck size={18}/><div><strong>A note about our institution directory</strong><p>U.S. records come from NCES IPEDS. Universities and colleges in more than 150 other countries come from the Research Organization Registry (ROR), which lists names, cities and websites only; African countries are not included. Canadian records also include a pilot drawn from a Government of Canada (PSC) co-op and internship program listing. Records are source-reported and not independently verified, and no source is an accreditation register. Use official school websites to confirm programs, admissions requirements, and funding opportunities.</p></div></section>
+     <section className="home-disclaimer"><ShieldCheck size={18}/><div><strong>Where our information comes from</strong><p>U.S. schools come from NCES IPEDS, schools in 160+ other countries from the Research Organization Registry (name, city and website only), and Canada also has a government pilot list. African countries are not included. Nothing is independently verified yet, so confirm programmes, requirements and fees with each university. <Link href="/about">How UniPath works</Link></p></div></section>
     <Footer/>
   </div>;
 }
 
-function Footer() { return <footer className="footer"><Brand/><span>Thoughtful steps toward somewhere new.</span><div><Link href="/discover">Explore</Link><Link href="/plans">Plans</Link><Link href="/sign-up">Create account</Link></div><small>© 2026 UniPath AI. Directory sources (partial coverage): NCES IPEDS (U.S.), the Research Organization Registry (worldwide, outside Africa) and a Public Service Commission of Canada program listing (Canada pilot). Source-reported, not independently verified.</small></footer>; }
+function Footer() { return <footer className="footer"><Brand/><span>Thoughtful steps toward somewhere new.</span><div><Link href="/discover">Universities</Link><Link href="/scholarships">Scholarships</Link><Link href="/plans">Plans</Link><Link href="/about">About</Link><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link></div><small>© 2026 UniPath AI. Directory sources (partial coverage): NCES IPEDS (U.S.), the Research Organization Registry (worldwide, outside Africa) and a Public Service Commission of Canada program listing (Canada pilot). Source-reported, not independently verified.</small></footer>; }
+
+/** Public information pages share the marketing header and footer. */
+function MarketingPage({ children }: { children: ReactNode }) {
+  return <div className="marketing-page"><Header/><Suspense fallback={<div className="page"><LoadingState/></div>}>{children}</Suspense><Footer/></div>;
+}
+
+/** The home page's main action: search straight away. */
+function HomeSearch() {
+  const [, setLocation] = useLocation();
+  const options = useGetUniversityFilterOptions({ query: { queryKey: getGetUniversityFilterOptionsQueryKey(), staleTime: 300_000 } });
+  const [text, setText] = useState(''); const [country, setCountry] = useState('');
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    const query = new URLSearchParams();
+    if (text.trim()) query.set('search', text.trim());
+    if (country) query.set('country', country);
+    const qs = query.toString();
+    setLocation(qs ? `/discover?${qs}` : '/discover');
+  };
+  return <form className="home-search" onSubmit={submit} role="search" aria-label="Search universities">
+    <label className="home-search-text"><Search size={18}/><input value={text} onChange={e => setText(e.target.value)} maxLength={100} placeholder="University name or city" aria-label="University name or city" data-testid="input-home-search"/></label>
+    <label className="home-search-country"><Globe2 size={16}/><select value={country} onChange={e => setCountry(e.target.value)} aria-label="Study country" data-testid="select-home-country"><option value="">Any country</option>{options.data?.countries.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}</select></label>
+    <button className="button button-primary" type="submit" data-testid="button-explore-hero">Search <ArrowRight size={16}/></button>
+  </form>;
+}
+
+const DESTINATIONS = ['GB', 'CA', 'US', 'DE', 'FR', 'NL', 'IE', 'TR', 'HU', 'PL', 'MY', 'AU', 'JP', 'KR', 'CN', 'AE'];
+function Destinations() {
+  const options = useGetUniversityFilterOptions({ query: { queryKey: getGetUniversityFilterOptionsQueryKey(), staleTime: 300_000 } });
+  const scholarships = useListScholarships(undefined, { query: { queryKey: getListScholarshipsQueryKey(), staleTime: 300_000 } });
+  const countries = DESTINATIONS.map(code => options.data?.countries.find(c => c.code === code)).filter((c): c is NonNullable<typeof c> => !!c);
+  const total = options.data?.countries.reduce((n, c) => n + c.count, 0);
+  if (!countries.length) return null;
+  return <section className="home-section" data-testid="section-destinations"><div className="home-section-head"><div><span className="eyebrow">POPULAR DESTINATIONS</span><h2>Where do you want to study?</h2></div>
+    <Link href="/discover" className="home-more">All {options.data?.countries.length} countries{total ? ` · ${total.toLocaleString()} schools` : ''} <ArrowRight size={14}/></Link></div>
+    <div className="home-destinations">{countries.map(c => { const awards = scholarships.data?.countries.find(x => x.code === c.code)?.count ?? 0; return <Link key={c.code} href={`/discover?country=${c.code}`} className="home-destination" data-testid={`link-destination-${c.code}`}>
+      <strong>{c.name}</strong><span>{c.count.toLocaleString()} schools{awards ? ` · ${awards} ${awards === 1 ? 'scholarship' : 'scholarships'}` : ''}</span></Link>; })}</div>
+  </section>;
+}
+
+const FEATURED = ['chevening', 'erasmus-mundus', 'daad', 'turkiye-burslari', 'mext', 'australia-awards'];
+const FUNDING_TEXT: Record<string, string> = { full: 'Fully funded', partial: 'Partial funding', varies: 'Funding varies' };
+function FeaturedScholarships() {
+  const q = useListScholarships(undefined, { query: { queryKey: getListScholarshipsQueryKey(), staleTime: 300_000 } });
+  const items = FEATURED.map(id => q.data?.items.find(p => p.id === id)).filter((p): p is NonNullable<typeof p> => !!p);
+  if (!items.length) return null;
+  return <section className="home-section home-section-tint" data-testid="section-featured-scholarships"><div className="home-section-head"><div><span className="eyebrow">SCHOLARSHIPS &amp; SPONSORSHIPS</span><h2>Funding you can apply for</h2></div>
+    <Link href="/scholarships" className="home-more">All {q.data?.total} programmes <ArrowRight size={14}/></Link></div>
+    <div className="home-awards">{items.map(p => <Link key={p.id} href="/scholarships" className="home-award" data-testid={`link-featured-${p.id}`}>
+      <span className="home-award-where">{p.studyCountryNames.length > 3 ? p.studyRegion ?? 'Several countries' : p.studyCountryNames.join(', ')}</span>
+      <strong>{p.name}</strong><small>{p.sponsor}</small><em>{FUNDING_TEXT[p.funding]}</em></Link>)}</div>
+    <p className="home-awards-note">Each links to the sponsor's official page. Amounts and deadlines change every year, so always confirm there.</p>
+  </section>;
+}
 function PageHeading({ kicker, title, body, action }: { kicker: string; title: string; body?: string; action?: ReactNode }) {
   return <div className="page-heading"><div><div className="eyebrow">{kicker}</div><h1>{title}</h1>{body && <p>{body}</p>}</div>{action}</div>;
 }
@@ -243,8 +309,13 @@ function UserScopedQueries({ children }: { children: ReactNode }) {
   const client = useMemo(() => new QueryClient(), [identity]);
   return <QueryClientProvider client={client}><Fragment key={identity}>{children}</Fragment></QueryClientProvider>;
 }
+function RouteMeta() {
+  const [location] = useLocation();
+  useRouteMeta(location);
+  return null;
+}
 function AppRoutes() {
-  return <AuthProvider>
+  return <AuthProvider><RouteMeta/>
     <UserScopedQueries><Suspense fallback={<div className="page"><LoadingState/></div>}><Switch>
       <Route path="/" component={Home}/>
       <Route path="/sign-in/*?" component={()=> <AuthPage kind="sign-in"/>}/>
@@ -260,6 +331,10 @@ function AppRoutes() {
       <Route path="/compare">{()=><Shell><CompareView/></Shell>}</Route>
       <Route path="/funding">{()=><Shell><FundingFinder/></Shell>}</Route>
       <Route path="/scholarships">{()=><Shell><ScholarshipsView/></Shell>}</Route>
+      <Route path="/notifications">{()=><Protected><Shell><NotificationsView/></Shell></Protected>}</Route>
+      <Route path="/about">{()=><MarketingPage><AboutView/></MarketingPage>}</Route>
+      <Route path="/privacy">{()=><MarketingPage><PrivacyView/></MarketingPage>}</Route>
+      <Route path="/terms">{()=><MarketingPage><TermsView/></MarketingPage>}</Route>
       <Route path="/university/:id">{params=><UniversityDetails id={params.id}/>}</Route>
       <Route path="/dashboard">{()=><Protected><Shell><DashboardView/></Shell></Protected>}</Route>
       <Route path="/saved">{()=><Protected><Shell><SavedView/></Shell></Protected>}</Route>

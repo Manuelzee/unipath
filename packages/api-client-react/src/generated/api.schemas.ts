@@ -551,6 +551,32 @@ export interface UniversityScholarships {
   notice: string;
 }
 
+export type NotificationKind = typeof NotificationKind[keyof typeof NotificationKind];
+
+
+export const NotificationKind = {
+  deadline: 'deadline',
+  task: 'task',
+} as const;
+
+export interface Notification {
+  /** Stable while the reminder is unchanged, for read state kept in the browser */
+  id: string;
+  kind: NotificationKind;
+  title: string;
+  detail: string;
+  /** YYYY-MM-DD */
+  date: string;
+  /** Negative when the date has passed */
+  daysAway: number;
+  href: string;
+}
+
+export interface NotificationList {
+  items: Notification[];
+  generatedAt: string;
+}
+
 export type BillingAvailabilityBaseCurrency = typeof BillingAvailabilityBaseCurrency[keyof typeof BillingAvailabilityBaseCurrency];
 
 
@@ -2109,6 +2135,10 @@ city?: string;
 language?: string;
 applicantStatus?: ListUniversitiesApplicantStatus;
 fundingOnly?: boolean;
+/**
+ * name (A-Z, the default), details (schools with the most source-reported details first) or funding (schools with funding records or their own scholarships first)
+ */
+sort?: ListUniversitiesSort;
 search?: string;
 state?: string;
 institutionType?: string;
@@ -2142,6 +2172,15 @@ export type ListUniversitiesApplicantStatus = typeof ListUniversitiesApplicantSt
 export const ListUniversitiesApplicantStatus = {
   Domestic: 'Domestic',
   International: 'International',
+} as const;
+
+export type ListUniversitiesSort = typeof ListUniversitiesSort[keyof typeof ListUniversitiesSort];
+
+
+export const ListUniversitiesSort = {
+  name: 'name',
+  details: 'details',
+  funding: 'funding',
 } as const;
 
 export type GetExchangeRateParams = {

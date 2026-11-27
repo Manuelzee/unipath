@@ -10,7 +10,10 @@ import '@/components/directory/funding-finder.css';
 import './scholarships.css';
 
 export function ScholarshipsView() {
-  const [country, setCountry] = useState('');
+  const [country, setCountry] = useState(() => {
+    const value = new URLSearchParams(window.location.search).get('country') ?? '';
+    return /^([A-Za-z]{2}|multi)$/.test(value) ? value.toUpperCase().replace('MULTI', 'multi') : '';
+  });
   const [level, setLevel] = useState('');
   const [sponsorType, setSponsorType] = useState('');
   const [search, setSearch] = useState('');

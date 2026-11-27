@@ -374,3 +374,25 @@ html { scroll-behavior: smooth; }
 .waking-toast strong { color:#173e62; }
 .waking-spinner { flex:none; width:16px; height:16px; margin-top:1px; border:2px solid #cfe5df; border-top-color:#378b82; border-radius:50%; animation:spin .9s linear infinite; }
 @media (prefers-reduced-motion:reduce) { .waking-spinner { animation:none; border-top-color:#cfe5df; } }
+/* Discover: collapsible sources box, budget, more filters and sort. */
+.about-data { margin:0 0 14px;border:1px solid #dfe9e6;border-radius:14px;background:#fff; }
+.about-data>summary { display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;list-style:none;color:#368a83; }
+.about-data>summary::-webkit-details-marker,.tu-filter>summary::-webkit-details-marker,.more-filters>summary::-webkit-details-marker { display:none; }
+.about-data>summary span { display:flex;flex-direction:column;gap:2px; }
+.about-data>summary strong { color:#24445b;font-size:13px; }
+.about-data>summary small { color:#7a8b96;font-size:11px; }
+.about-data>summary::after,.tu-filter>summary::after,.more-filters>summary::after { content:'+';margin-left:auto;color:#6a808c;font-size:18px;line-height:1; }
+.about-data[open]>summary::after,.tu-filter[open]>summary::after,.more-filters[open]>summary::after { content:'–'; }
+.about-data[open] { padding-bottom:12px; }
+.about-data[open]>:not(summary) { margin-left:14px;margin-right:14px; }
+.tu-filter>summary { display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px;cursor:pointer;list-style:none; }
+.tu-filter>summary strong { color:#20354a;font-size:13px; }
+.tu-filter>summary span { color:#7a8b96;font-size:11px; }
+.tu-filter[open]>summary { margin-bottom:10px; }
+.tu-filter[open] .tu-filter-head>strong { display:none; }
+.more-filters { margin-top:10px;border-top:1px solid #e8eef0;padding-top:10px; }
+.more-filters>summary { display:flex;align-items:center;cursor:pointer;list-style:none;color:#2c7a73;font-size:13px;font-weight:700; }
+.more-filters[open]>summary { margin-bottom:12px; }
+.sort-control { display:flex;align-items:center;gap:8px;margin-left:auto;margin-right:12px;color:#6a808c;font-size:12px;font-weight:700; }
+.sort-control select { height:36px;padding:0 10px;border:1px solid #dbe4e9;border-radius:10px;background:#fff;color:#20354a;font:500 13px 'DM Sans',sans-serif; }
+@media (max-width: 860px) { .side-legal { display:none; } .results-header { flex-wrap:wrap;gap:10px; } .sort-control { margin-left:0; } }

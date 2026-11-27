@@ -113,6 +113,31 @@ function likePattern(value: string) {
   return `%${value.replace(/[\\%_]/g, "\\$&")}%`;
 }
 
+const t = institutionDirectoryTable;
+/** Has a source-reported funding record, or a scholarship programme of its own. */
+const hasFunding = () => sql`(exists (select 1 from ${institutionFactsTable}
+  where ${institutionFactsTable.institutionId} = ${t.id} and ${institutionFactsTable.kind} = 'funding')
+  or ${inArray(t.id, SCHOLARSHIP_INSTITUTION_IDS)})`;
+/**
+ * How much a record tells a student, so useful records come first: tuition
+ * figures weigh most, then programs and fields, degree levels, an official
+ * website and a verified logo. Unknown details simply score nothing.
+ */
+const detailScore = () => sql`(
+  (case when ${t.tuitionInStateUsd} is not null or ${t.tuitionOutOfStateUsd} is not null
+    or exists (select 1 from ${institutionTuitionTable} where ${institutionTuitionTable.institutionId} = ${t.id}) then 4 else 0 end)
+  + (case when exists (select 1 from ${institutionFactsTable} where ${institutionFactsTable.institutionId} = ${t.id}
+    and ${institutionFactsTable.kind} = 'program') or cardinality(${t.majors}) > 0 then 2 else 0 end)
+  + (case when cardinality(${t.degreeLevels}) > 0 then 1 else 0 end)
+  + (case when ${t.website} is not null then 1 else 0 end)
+  + (case when ${t.logoVerificationStatus} = 'verified' then 1 else 0 end))`;
+
+function sortOrder(sort: ListUniversitiesParams["sort"]): SQL[] {
+  if (sort === "details") return [sql`${detailScore()} desc`];
+  if (sort === "funding") return [sql`${hasFunding()} desc`, sql`${detailScore()} desc`];
+  return [];
+}
+
 export async function searchUniversities(
   filters: ListUniversitiesParams,
   database: Pick<typeof db, "select" | "selectDistinct"> = db,
@@ -168,14 +193,7 @@ export async function searchUniversities(
   }
   if (filters.language) conditions.push(arrayContains(institutionDirectoryTable.languages, [filters.language]));
   if (filters.applicantStatus) conditions.push(arrayContains(institutionDirectoryTable.applicantStatuses, [filters.applicantStatus]));
-  if (filters.fundingOnly) {
-    // Source-reported funding records, or a scholarship programme of the university's own.
-    conditions.push(or(sql`exists (
-      select 1 from ${institutionFactsTable}
-      where ${institutionFactsTable.institutionId} = ${institutionDirectoryTable.id}
-      and ${institutionFactsTable.kind} = 'funding'
-    )`, inArray(institutionDirectoryTable.id, SCHOLARSHIP_INSTITUTION_IDS))!);
-  }
+  if (filters.fundingOnly) conditions.push(hasFunding());
 
   if (filters.state) {
     conditions.push(eq(institutionDirectoryTable.state, filters.state));
@@ -227,7 +245,7 @@ export async function searchUniversities(
       .select()
       .from(institutionDirectoryTable)
       .where(where)
-      .orderBy(institutionDirectoryTable.name, institutionDirectoryTable.id)
+      .orderBy(...sortOrder(filters.sort), institutionDirectoryTable.name, institutionDirectoryTable.id)
       .limit(pageSize)
       .offset((page - 1) * pageSize),
   ]);

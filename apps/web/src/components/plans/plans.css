@@ -49,3 +49,28 @@
 .pp-pkg-detail h3 { margin:0; color:#24475a; font-size:14px; }
 @media (max-width:1100px) { .pp-grid { grid-template-columns:repeat(2,1fr); } }
 @media (max-width:767px) { .pp-grid,.pp-explain { grid-template-columns:1fr; } .pp-card { padding-top:24px; } }
+/* Free during beta */
+.pp-free { display:grid;grid-template-columns:260px minmax(0,1fr);gap:22px;padding:22px;border:1.5px solid #83bcb1;border-radius:16px;background:#fff;box-shadow:0 9px 25px #3c847414; }
+.pp-free-price { display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:18px;border-radius:13px;background:#f0f7f4; }
+.pp-free-tag { display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:99px;background:#173e62;color:#fff;font-size:11px;font-weight:700; }
+.pp-free-price strong { color:#173e62;font:800 46px/1 'Manrope',sans-serif;letter-spacing:-1.5px;margin-top:6px; }
+.pp-free-price small { color:#5f7480;font-size:13px;margin-bottom:10px; }
+.pp-free-price .button { width:100%;justify-content:center; }
+.pp-free-link { color:#2c7a73;font-size:12px;font-weight:700; }
+.pp-free-list { list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 18px; }
+.pp-free-list li { display:flex;gap:9px; }
+.pp-free-list svg { flex:none;margin-top:2px;color:#368a83; }
+.pp-free-list strong { display:block;color:#24475a;font-size:13px; }
+.pp-free-list small { display:block;margin-top:2px;color:#71828c;font-size:12px;line-height:1.5; }
+.pp-later { margin-top:22px;padding:18px;border:1px dashed #cfdbe1;border-radius:14px;background:#f8fafb; }
+.pp-later h2 { display:flex;align-items:center;gap:7px;margin:0 0 4px;color:#4a6273;font:700 15px 'Manrope',sans-serif; }
+.pp-later>p { margin:0 0 12px;color:#71828c;font-size:12px; }
+.pp-later-grid { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px; }
+.pp-later-grid>div { display:flex;flex-direction:column;gap:3px;padding:12px;border-radius:10px;background:#fff;border:1px solid #e6edf0; }
+.pp-later-grid strong { color:#4a6273;font-size:13px; }
+.pp-later-grid span { color:#6f8290;font-size:12px;font-weight:700; }
+.pp-later-grid small { color:#8b98a0;font-size:11px;line-height:1.45; }
+@media (max-width: 860px) {
+  .pp-free { grid-template-columns:1fr; }
+  .pp-free-list,.pp-later-grid { grid-template-columns:1fr; }
+}

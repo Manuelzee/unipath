@@ -20,6 +20,7 @@ import './InstitutionBranding.css';
 import { EmptyBlock, ErrorBlock, LoadingBlock } from './StateViews';
 
 const PAGE_SIZE = 24;
+type SortChoice = NonNullable<ListUniversitiesParams['sort']>;
 
 export function DiscoverView() {
   const logoCoverage = useGetInstitutionLogoCoverage({ query: { queryKey: getGetInstitutionLogoCoverageQueryKey(), staleTime: 30_000, refetchInterval: 60_000 } });
@@ -27,8 +28,10 @@ export function DiscoverView() {
   const [filters, setFilters] = useState<DiscoverFilterState>(() => {
     const url = new URLSearchParams(window.location.search);
     const country = url.get('country')?.toUpperCase();
-    return { ...EMPTY_FILTERS, fundingOnly: url.get('fundingOnly') === 'true', countryCode: country && /^[A-Z]{2}$/.test(country) ? country : '' };
+    return { ...EMPTY_FILTERS, search: (url.get('search') ?? '').slice(0, 100), fundingOnly: url.get('fundingOnly') === 'true', countryCode: country && /^[A-Z]{2}$/.test(country) ? country : '' };
   });
+  // Schools with the most source-reported details come first unless the student chooses otherwise.
+  const [sort, setSort] = useState<SortChoice>('details');
   const [page, setPage] = useState(1);
   const [maxTuition, setMaxTuition] = useState(''); const [tuitionCurrency, setTuitionCurrency, savedBudget] = usePreferredCurrency(); const [applyMsg, setApplyMsg] = useState('');
   const [tuitionRate, setTuitionRate] = useState<'in_state' | 'out_of_state' | 'domestic' | 'international'>('out_of_state');
@@ -68,7 +71,7 @@ export function DiscoverView() {
   }, [options.data]);
 
   const params = useMemo<ListUniversitiesParams>(() => {
-    const p: ListUniversitiesParams = { page, pageSize: PAGE_SIZE };
+    const p: ListUniversitiesParams = { page, pageSize: PAGE_SIZE, sort };
     const s = filters.search.trim(); if (s) p.search = s;
     if (filters.countryCode) p.countryCode = filters.countryCode;
     if (filters.countryCode && filters.countryCode !== 'CA' && filters.state) p.state = filters.state;
@@ -82,7 +85,7 @@ export function DiscoverView() {
     if (filters.fundingOnly) p.fundingOnly = true;
     if (budgetActive) { p.maxAnnualTuition = maxNum as number; p.tuitionCurrency = tuitionCurrency; p.tuitionRate = tuitionRate; }
     return p;
-  }, [filters, page, budgetActive, maxNum, tuitionCurrency, tuitionRate]);
+  }, [filters, page, sort, budgetActive, maxNum, tuitionCurrency, tuitionRate]);
 
   const results = useListUniversities(params, { query: { queryKey: getListUniversitiesQueryKey(params), enabled: !searchBlocked, staleTime: 30_000, refetchInterval: 60_000 } });
   const saved = useListSavedUniversities({ query: { enabled: !!isSignedIn, queryKey: getListSavedUniversitiesQueryKey() } });
@@ -102,7 +105,8 @@ export function DiscoverView() {
   const countryName = options.data?.countries.find(c => c.code === filters.countryCode)?.name;
 
   return <div className="page page-enter">
-    <div className="page-heading"><div><div className="eyebrow">INSTITUTION DIRECTORY</div><h1>Find a place to study.</h1><p>Search imported official institution records by country, region, and what the sources actually report.</p></div></div>
+    <div className="page-heading"><div><div className="eyebrow">INSTITUTION DIRECTORY</div><h1>Find a place to study.</h1><p>{options.data ? `${options.data.countries.reduce((n, c) => n + c.count, 0).toLocaleString()} universities and colleges in ${options.data.countries.length} countries.` : 'Universities and colleges in 160+ countries.'} Every detail shows where it came from.</p></div></div>
+    <details className="about-data" data-testid="panel-about-data"><summary><ShieldCheck size={16}/><span><strong>About this data</strong><small>Where records come from, coverage by country, and what has been verified</small></span></summary>
     <div className="data-notice"><ShieldCheck size={17}/><span><strong>Honest about the gaps.</strong> U.S. records come from NCES IPEDS. Universities in more than 150 other countries (outside Africa) come from the Research Organization Registry, which lists names, cities and websites only. Canada also has a pilot from a government co-op and internship listing. None of these is an accreditation register. When a source doesn't report a detail, we show it as unknown instead of guessing.</span></div>
     <CoveragePanel/>
     <p className="logo-coverage-note">{logoCoverage.data
@@ -116,9 +120,11 @@ export function DiscoverView() {
       <span><b>{branding.data.campusImages.toLocaleString()}</b> campus photos</span><span>({branding.data.attempted.toLocaleString()} checked)</span>
       <span>Coverage is incomplete; missing branding means not yet verified, not absent. {branding.data.note}</span>
     </> : branding.isError ? <span>Branding coverage counts could not be loaded. This is not a zero count.</span> : <span>Loading branding coverage counts...</span>}</div>
+    </details>
     {options.isError && <div className="inline-warning" role="alert">Filter options could not be loaded. Institution data may be temporarily unavailable. <button onClick={() => void options.refetch()} data-testid="button-retry-filters">Retry</button></div>}
     <DiscoverFilters filters={filters} options={options.data} onChange={update}/>
-    <div className="tu-filter" data-testid="panel-tuition-filter">
+    <details className="tu-filter" data-testid="panel-tuition-filter" open={budgetActive || maxTrim !== '' || undefined}>
+      <summary className="tu-filter-summary"><strong>Annual tuition budget</strong><span>Optional · only schools with a reported tuition figure can match</span></summary>
       <div className="tu-filter-head"><strong>Annual tuition budget (optional)</strong><span style={{fontSize:11,color:'#687b8c'}}>Leave blank to include every school</span>{savedBudget && savedBudget.budgetChoice !== 'none' && <button type="button" className="pref-skip" onClick={applySaved} data-testid="button-apply-saved-budget">Apply my saved budget</button>}</div>
       {applyMsg && <p className="fx-note" role="status" data-testid="text-apply-budget">{applyMsg}</p>}
       <div className="tu-filter-grid">
@@ -129,8 +135,9 @@ export function DiscoverView() {
       {maxInvalid && <p className="tu-error" role="alert">Enter a number from 0 to 1,000,000,000,000. Search is paused until this is corrected.</p>}
       <RateNote currency={tuitionCurrency}/>
       <p className="filter-footnote" style={{marginTop:8}}>{budgetActive ? 'Only schools with a source-reported, year-labelled figure for this category are shown. Historical figures can match: this is not a current-price affordability guarantee. Schools with unknown tuition are left out, not judged unaffordable.' : 'Tuition coverage is partial. Many schools have no imported figure.'} U.S. out-of-state is not international tuition. Non-U.S. coverage is limited to matched B.C. institutions and annual arts-program figures; other programs and countries remain unknown. Read the scope, included fees and academic year before comparing.</p>
-    </div>
-    <div className="results-header"><div><h2>{countryName ? `Institutions in ${countryName}` : 'Institutions'}</h2><p data-testid="text-result-count">{searchBlocked ? 'Search paused — no budget-filtered result is available.' : results.isLoading ? 'Searching...' : results.isError ? 'Institution search is unavailable—not a zero-record result.' : `${total.toLocaleString()} matching imported records`}</p></div>{active && <button className="clear-filters" onClick={clear} data-testid="button-clear-filters"><X size={13}/> Clear filters</button>}</div>
+    </details>
+    <div className="results-header"><div><h2>{countryName ? `Institutions in ${countryName}` : 'Institutions'}</h2><p data-testid="text-result-count">{searchBlocked ? 'Search paused — no budget-filtered result is available.' : results.isLoading ? 'Searching...' : results.isError ? 'Institution search is unavailable—not a zero-record result.' : `${total.toLocaleString()} matching imported records`}</p></div><label className="sort-control"><span>Sort</span><select value={sort} onChange={e => { setSort(e.target.value as SortChoice); setPage(1); }} data-testid="select-sort">
+      <option value="details">Most details first</option><option value="funding">Funding &amp; scholarships first</option><option value="name">Name (A–Z)</option></select></label>{active && <button className="clear-filters" onClick={clear} data-testid="button-clear-filters"><X size={13}/> Clear filters</button>}</div>
     {searchBlocked ? <p className="tu-warn" role="status">Correct the budget before viewing matching schools. Unfiltered schools are not presented as budget matches.</p> : results.isLoading ? <LoadingBlock/> : results.isError ? <ErrorBlock retry={() => void results.refetch()} title="Institution search couldn’t load" body="We could not apply this search. If a currency rate is unavailable, retry, choose the source currency, or clear the budget. This is not a confirmed zero-results search."/> : results.data?.items.length
       ? <div className="school-grid" aria-busy={results.isFetching}>{results.data.items.map(s => { const on = picked.some(x => x.id === s.id); return <div key={s.id} className="cmp-card-wrap"><SchoolCard school={s} saved={savedIds.has(s.id)} saving={pendingId === s.id} onSave={() => toggleSave(s)}/><button className={'cmp-pick' + (on ? ' is-on' : '')} disabled={!on && picked.length >= 4} onClick={() => togglePick(s)} aria-pressed={on} data-testid={`button-compare-${s.id}`}><Scale size={13}/> {on ? 'Selected to compare' : picked.length >= 4 ? 'Compare limit reached (4)' : 'Compare tuition'}</button></div>; })}</div>
       : <EmptyBlock testId="empty-results" title="No records match these filters" body={budgetActive ? 'No school has a source-reported tuition figure for this rate within your budget. Unknown tuition is excluded, so this does not mean no school is affordable. Try another rate or clear the budget.' : filters.language || filters.applicantStatus || filters.fundingOnly ? 'Many sources do not report language, applicant status, or funding. Those schools are unknown here, not excluded by the school itself. Try removing those filters.' : 'Try a broader search or clear your filters to browse every imported record.'} action="Clear search and filters" onAction={clear}/>}

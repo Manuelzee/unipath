@@ -14,6 +14,7 @@ import { UniversityTabs, type TabId } from './UniversityTabs';
 import { AdmissionsPanel, FieldsPanel, FundingPanel, LinksPanel, OverviewPanel } from './UniversityPanels';
 import { ReviewedEvidencePanel } from './ReviewedEvidencePanel';
 import { TuitionPanel } from './TuitionPanel';
+import { usePageMeta } from '@/lib/pageMeta';
 
 export function UniversityDetailView({ id }: { id: string }) {
   const q = useGetUniversity(id, { query: { queryKey: getGetUniversityQueryKey(id), staleTime: 30_000, refetchInterval: 60_000 } });
@@ -21,6 +22,7 @@ export function UniversityDetailView({ id }: { id: string }) {
   const saved = useListSavedUniversities({ query: { enabled: !!isSignedIn, queryKey: getListSavedUniversitiesQueryKey() } });
   const save = useSaveUniversity(); const remove = useRemoveSavedUniversity();
   const [tab, setTab] = useState<TabId>('overview');
+  usePageMeta(q.data?.name ?? null, q.data ? `${q.data.name}${q.data.city ? `, ${q.data.city}` : ''}, ${q.data.country}: official links, scholarships and the source of every detail on UniPath AI.` : undefined);
   const isSaved = (saved.data || []).some(x => x.universityId === id);
   const busy = save.isPending || remove.isPending;
   const toggle = () => {

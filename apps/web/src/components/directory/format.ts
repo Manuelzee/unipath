@@ -15,7 +15,7 @@ export function regionLabel(countryCode: string) {
 }
 export function schoolLocation(school: University) {
   const parts = [school.city, regionName(school.countryCode, school.state), school.country].filter(Boolean);
-  return school.city ? parts.join(', ') : `City not reported · ${[regionName(school.countryCode, school.state), school.country].filter(Boolean).join(', ')}`;
+  return parts.join(', ');
 }
 export function formatDate(value: string | null | undefined) {
   if (!value) return null;

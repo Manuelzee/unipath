@@ -18,7 +18,7 @@ process.env.LOG_LEVEL = "silent";
 delete process.env.EMAIL_VERIFICATION;
 
 const { default: app } = await import("../../app");
-const { authUsersTable, db, institutionDirectoryTable, pool, studentProfilesTable } = await import("@workspace/db");
+const { applicationTasksTable, applicationsTable, authUsersTable, db, institutionDirectoryTable, pool, studentProfilesTable } = await import("@workspace/db");
 const { ensureInstitutionDirectory } = await import("../../lib/bootstrapDirectory");
 const { ensureWorldDirectory, WORLD_SOURCE } = await import("../../lib/worldDirectory");
 const { setMailer } = await import("../../lib/auth/email");
@@ -99,6 +99,16 @@ test("the funding filter includes universities with their own scholarships", asy
   assert.ok(!funded.includes("ror-041kmwe10"), "a university without its own listed award is not included");
 });
 
+test("sorting puts the most useful records first", async () => {
+  const byName = (await get("/api/universities?countryCode=GB&pageSize=3")).data.items.map((u: { name: string }) => u.name);
+  assert.deepEqual(byName, [...byName].sort((a: string, b: string) => a.localeCompare(b)), "the default stays A-Z");
+  const funded = (await get("/api/universities?countryCode=GB&sort=funding&pageSize=2")).data.items.map((u: { id: string }) => u.id).sort();
+  assert.deepEqual(funded, ["ror-013meh722", "ror-052gg0110"], "Cambridge and Oxford have their own scholarships");
+  const detailed = (await get("/api/universities?sort=details&pageSize=1")).data.items[0];
+  assert.ok(detailed.degreeLevels.length > 0 || detailed.majors.length > 0, "a record with programme details leads");
+  assert.equal((await get("/api/universities?sort=random")).status, 400);
+});
+
 test("recommendations narrow to the student's study country", async () => {
   const res = await fetch(`${base}/api/auth/sign-up`, { method: "POST", headers: { "content-type": "application/json", origin: base },
     body: JSON.stringify({ email: `ada@${DOMAIN}`, password: "correct horse battery", firstName: "Ada", lastName: "Test" }) });
@@ -114,6 +124,19 @@ test("recommendations narrow to the student's study country", async () => {
   assert.ok(recs.data.items.length > 0 && recs.data.items.every((r: { university: { countryCode: string } }) => r.university.countryCode === "GB"));
 });
 
+test("notifications list the student's own upcoming deadlines and tasks", async () => {
+  assert.equal((await fetch(`${base}/api/me/notifications`)).status, 401);
+  const [user] = await db.select({ id: authUsersTable.id }).from(authUsersTable).where(eq(authUsersTable.email, `ada@${DOMAIN}`));
+  const inDays = (n: number) => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
+  const [application] = await db.insert(applicationsTable).values({ userId: user.id, universityId: "ror-052gg0110", programName: "MSc Data Science", status: "preparing_documents", deadline: inDays(5) }).returning();
+  await db.insert(applicationTasksTable).values({ userId: user.id, universityId: "ror-052gg0110", applicationId: application.id, title: "Ask for references", dueDate: inDays(-2) });
+  const items = (await get("/api/me/notifications")).data.items;
+  assert.deepEqual(items.map((i: { kind: string }) => i.kind), ["task", "deadline"]);
+  assert.equal(items[0].title, "Overdue: Ask for references");
+  assert.equal(items[1].title, "Deadline in 5 days");
+  assert.match(items[1].detail, /MSc Data Science at University of Oxford/);
+});
+
 async function main() {
   const server = app.listen(0);
   await new Promise(r => server.once("listening", r));
@@ -127,6 +150,8 @@ async function main() {
   } finally {
     const [user] = await db.select({ id: authUsersTable.id }).from(authUsersTable).where(eq(authUsersTable.email, `ada@${DOMAIN}`));
     if (user) {
+      await db.delete(applicationTasksTable).where(eq(applicationTasksTable.userId, user.id));
+      await db.delete(applicationsTable).where(eq(applicationsTable.userId, user.id));
       await db.delete(studentProfilesTable).where(eq(studentProfilesTable.userId, user.id));
       await db.delete(authUsersTable).where(eq(authUsersTable.id, user.id));
     }

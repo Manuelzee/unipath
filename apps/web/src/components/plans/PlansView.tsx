@@ -1,104 +1,56 @@
-import { useEffect, useState } from 'react';
-import { getGetBillingStatusQueryKey, useGetBillingStatus } from '@workspace/api-client-react';
-import { CurrencySelect } from '@/components/profile/PreferenceFields';
-import { RateNote, fmtMoney, usePreferredCurrency, useUsdRate } from '@/components/money/currency';
-import '@/components/money/money.css';
 import { Link } from 'wouter';
 import { useUser } from '@/lib/auth';
-import { ArrowRight, Check, CircleDashed, Clock3, Lock, ShieldCheck } from 'lucide-react';
-import { AVAILABILITY_LABEL, PACKAGES, PLANS, SUPPORT, type Availability, type Plan } from './catalog';
-import { NothingCharged, SetupDialog } from './SetupDialog';
+import { ArrowRight, Check, Clock3, Sparkles } from 'lucide-react';
+import { PACKAGES, PLANS, SUPPORT } from './catalog';
 import './plans.css';
 
-const TITLE = 'Plans | UniPath AI';
-const DESC = 'Simple, student-friendly plans from UniPath AI: Free, Student Plus ($9.99/month), Premium ($29.99/month), and one-time Application Support packages ($99–$299). Payment is not yet available; nothing is charged.';
+/** Everything that works today, all free while UniPath is in beta. */
+const INCLUDED: Array<[string, string]> = [
+  ['Search 30,000+ universities', 'In 160+ countries, by country, region and city, with the source of every detail.'],
+  ['Scholarships and sponsorships', '40 government, university and foundation programmes, each linked to its official page.'],
+  ['Matches from your profile', 'Explainable matches that show what fits and what still needs checking.'],
+  ['Shortlist and comparison', 'Save schools and compare up to four side by side.'],
+  ['Application tracker', 'Statuses, your deadlines, tasks and reminders before the dates you set.'],
+  ['Private documents', 'Keep transcripts and certificates in one place that only you can download.'],
+  ['AI assistant and essay feedback', 'Answers grounded in your profile and saved schools, within a daily limit.'],
+  ['Community and announcements', 'Chat with students heading to the same country, and news from the UniPath team.'],
+  ['Budget in your currency', 'Reference exchange rates for planning, never a price quote.'],
+];
 
-function usePageMeta() {
-  useEffect(() => {
-    const prevTitle = document.title;
-    let meta = document.querySelector<HTMLMetaElement>('meta[name="description"]');
-    const created = !meta;
-    if (!meta) { meta = document.createElement('meta'); meta.name = 'description'; document.head.appendChild(meta); }
-    const prevDesc = meta.content;
-    document.title = TITLE; meta.content = DESC;
-    return () => { document.title = prevTitle; if (created) meta?.remove(); else if (meta) meta.content = prevDesc; };
-  }, []);
-}
-
-function StatusIcon({ s }: { s: Availability }) {
-  return s === 'available' ? <Check size={14} /> : s === 'limited' ? <CircleDashed size={14} /> : <Clock3 size={14} />;
-}
-
-const FAQ = [
-  ['How do upgrades work?', 'Upgrades are not available yet because payment processing is not configured. Every tool that works today stays free while billing is unavailable, so you do not need to upgrade to use them.'],
-  ['Can I cancel?', 'There is nothing to cancel today: no subscriptions can be started. When billing launches, cancellation terms will be shown before you subscribe. There is no cancellation portal yet.'],
-  ['How will billing work?', 'Student Plus and Premium are planned monthly subscriptions. Application Support packages are planned one-time purchases. Any applicable taxes and your total would be shown before payment; tax handling is not configured yet.'],
-  ['What is included in each plan?', 'Each feature is labeled Available now, Limited, or Planned. Planned features are not built. AI guidance and essay feedback are built but work only after the site owner connects an AI provider; until then the AI assistant page shows prepared examples.'],
-  ['Are these prices tuition?', 'No. These are UniPath subscription and support prices only. Where a source reports school tuition, it appears on that school page with its year; always confirm costs with each institution.'],
+const FAQ: Array<[string, string]> = [
+  ['Is it really free?', 'Yes. Every tool on UniPath is free during beta, and there is nothing to buy. If a university charges an application fee or tuition, you pay the university directly.'],
+  ['Will it stay free?', 'Paid extras may be added later. If that happens, the price and what is included will be shown before anything changes, and nothing will ever be charged without your agreement.'],
+  ['Do you take payments or share my information?', 'No. UniPath takes no payments, and it does not send your profile or documents to universities. See the privacy page for what is stored.'],
+  ['Are these tuition prices?', 'No. The ideas below are possible UniPath extras, not school tuition. Where a source reports tuition, it appears on that school’s page with its year.'],
 ];
 
 export function PlansView() {
-  usePageMeta();
   const { isSignedIn } = useUser();
-  const [setupPlan, setSetupPlan] = useState<Plan | null>(null);
-  const [supportOpen, setSupportOpen] = useState(false);
-  const [pkg, setPkg] = useState(PACKAGES[0].id);
-  const selected = PACKAGES.find(p => p.id === pkg)!;
-  const billing = useGetBillingStatus({ query: { queryKey: getGetBillingStatusQueryKey() } });
-  const [currency, setCurrency] = usePreferredCurrency();
-  const { rate } = useUsdRate(currency);
-  const conv = (price: string) => { if (currency === 'USD' || !rate) return null; const nums = price.match(/[\d.]+/g)?.map(Number) ?? []; if (!nums.length || nums.every(n => n === 0)) return null; return 'about ' + nums.map(n => fmtMoney(n * rate, currency)).join(' – '); };
-
+  const later = PLANS.filter(p => p.id !== 'free');
   return <div className="page page-enter pp">
     <header className="pp-hero">
       <span className="eyebrow">PLANS</span>
-      <h1 data-testid="text-plans-heading">Simple, student-friendly plans</h1>
-      <p>Choose the support you need, Start free, then upgrade when you want deeper comparisons, personalized planning, or hands-on application support.</p>
+      <h1 data-testid="text-plans-heading">Free during beta.</h1>
+      <p>Everything on UniPath is free while we build it with students. No card, no trial and nothing to cancel.</p>
     </header>
 
-    <div className="plans-callout" data-testid="status-billing"><ShieldCheck size={17} /><span><strong>Nothing is charged today.</strong> Payment processing is not configured, so no checkout or subscription can be started. Every tool that works today stays free while billing is unavailable. No hidden fees: prices shown are in USD, before any applicable tax.</span></div>
+    <section className="pp-free" data-testid="card-plan-free">
+      <div className="pp-free-price"><span className="pp-free-tag"><Sparkles size={13}/> Beta</span><strong>$0</strong><small>Everything included</small>
+        <Link href={isSignedIn ? '/dashboard' : '/sign-up'} className="button button-primary" data-testid="button-plan-free">{isSignedIn ? 'Go to my plan' : 'Create a free account'} <ArrowRight size={15}/></Link>
+        <Link href="/discover" className="pp-free-link">or start searching without an account</Link>
+      </div>
+      <ul className="pp-free-list">
+        {INCLUDED.map(([title, note]) => <li key={title}><Check size={16}/><div><strong>{title}</strong><small>{note}</small></div></li>)}
+      </ul>
+    </section>
 
-    <div className="pp-currency"><label htmlFor="pp-cur">Show estimates in</label><CurrencySelect id="pp-cur" value={currency} onChange={setCurrency} testId="select-plans-currency"/><span style={{fontSize:12,color:'#5d7081'}}>Prices are set in USD. Paid checkout, receipts, refunds and subscription management: Not available yet.</span></div>
-    <RateNote currency={currency} testId="text-plans-rate"/>
-    {billing.isError ? <p className="fx-note fx-warn">Billing status could not be loaded. Payments remain unavailable.</p> : billing.data && <p className="fx-note" data-testid="text-billing-status">{billing.data.message}</p>}
-
-    <div className="pp-legend" aria-label="Availability legend">
-      {(['available', 'limited', 'planned'] as Availability[]).map(s => <span key={s} className={`pp-status pp-${s}`}><StatusIcon s={s} />{AVAILABILITY_LABEL[s]}</span>)}
-    </div>
-
-    <div className="pp-grid">
-      {PLANS.map(plan => <article key={plan.id} className={plan.popular ? 'pp-card pp-popular' : 'pp-card'} data-testid={`card-plan-${plan.id}`}>
-        {plan.popular && <span className="pp-badge" data-testid="badge-most-popular">Most Popular</span>}
-        <h2>{plan.name}</h2>
-        <div className="pp-price" data-testid={`text-price-${plan.id}`}>{plan.price}<small>{plan.period}</small>{conv(plan.price) && <span className="fx-converted">{conv(plan.price)}{plan.period.startsWith('/') ? plan.period : ''}</span>}</div>
-        <p className="pp-aud">{plan.audience}</p>
-        <ul className="pp-features">
-          {plan.features.map(f => <li key={f.label} className={`pp-f pp-f-${f.status}`}>
-            <StatusIcon s={f.status} />
-            <div><span>{f.label} <em className={`pp-status pp-${f.status}`}>{AVAILABILITY_LABEL[f.status]}</em></span><small>{f.note}</small></div>
-          </li>)}
-        </ul>
-        {plan.id === 'free'
-          ? <Link href={isSignedIn ? '/dashboard' : '/sign-up'} className="button button-outline" data-testid="button-plan-free">{plan.cta} <ArrowRight size={15} /></Link>
-           : <button className={plan.popular ? 'button button-primary' : 'button button-outline'} onClick={() => setSetupPlan(plan)} aria-haspopup="dialog" aria-expanded={setupPlan?.id === plan.id} data-testid={`button-plan-${plan.id}`}>{plan.cta}</button>}
-      </article>)}
-
-      <article className="pp-card pp-support" data-testid="card-plan-application-support">
-        <h2>{SUPPORT.name}</h2>
-        <div className="pp-price" data-testid="text-price-application-support">{SUPPORT.price}<small>{SUPPORT.period}</small>{conv(SUPPORT.price) && <span className="fx-converted">{conv(SUPPORT.price)}</span>}</div>
-        <p className="pp-aud">{SUPPORT.audience}</p>
-        <ul className="pp-features">
-          {SUPPORT.features.map(f => <li key={f} className="pp-f pp-f-planned"><StatusIcon s="planned" /><div><span>{f} <em className="pp-status pp-planned">Planned</em></span></div></li>)}
-        </ul>
-        <p className="pp-aud">Human package fulfillment is not available yet. No submissions, admission, or scholarship guarantees.</p>
-        <button className="button button-outline" onClick={() => setSupportOpen(true)} aria-haspopup="dialog" aria-expanded={supportOpen} data-testid="button-plan-application-support">{SUPPORT.cta}</button>
-      </article>
-    </div>
-
-    <section className="pp-explain" data-testid="section-billing-types">
-      <div><h3>Monthly subscriptions</h3><p>Student Plus ($9.99/month) and Premium ($29.99/month) are planned to renew each month until cancelled.</p></div>
-      <div><h3>One-time packages</h3><p>Application Support packages ($99, $199, or $299) are planned as single purchases with no renewal.</p></div>
-      <div><h3>Totals before payment</h3><p>Any applicable taxes and your full total would be shown before you pay. Tax handling is not configured yet, and nothing can be paid today.</p></div>
+    <section className="pp-later" data-testid="section-later">
+      <h2><Clock3 size={16}/> Ideas for later</h2>
+      <p>Not available, and nothing can be bought today. Planned prices are shown so there are no surprises if these launch.</p>
+      <div className="pp-later-grid">
+        {later.map(p => <div key={p.id} data-testid={`card-plan-${p.id}`}><strong>{p.name}</strong><span>Planned at {p.price}{p.period}</span><small>{p.audience}</small></div>)}
+        <div data-testid="card-plan-application-support"><strong>{SUPPORT.name}</strong><span>Planned at {PACKAGES.map(p => p.price).join(', ')} one-time</span><small>{SUPPORT.audience}</small></div>
+      </div>
     </section>
 
     <section className="pp-faq" data-testid="section-faq">
@@ -106,36 +58,6 @@ export function PlansView() {
       {FAQ.map(([q, a], i) => <details key={q} data-testid={`faq-item-${i}`}><summary>{q}</summary><p>{a}</p></details>)}
     </section>
 
-    <p className="plans-footnote">Plan and package prices are UniPath subscription or support prices, not school tuition. Directory coverage is partial: the U.S., a Canada pilot, and names, cities and websites for universities in more than 150 other countries outside Africa. UniPath AI does not submit applications or guarantee admission or scholarships.</p>
-
-    <SetupDialog open={!!setupPlan} onOpenChange={o => { if (!o) setSetupPlan(null); }} title={`${setupPlan?.name ?? ''} is not available yet`} testId="dialog-plan-setup">
-      {setupPlan && <>
-        <p><strong>{setupPlan.name}</strong> is planned at <strong>{setupPlan.price}{setupPlan.period}</strong>, billed monthly, plus any applicable tax shown before payment.</p>
-        <NothingCharged />
-         <p>The site owner must connect a payment provider and activate this plan before upgrades can open. No billing details are needed from you now.</p>
-        <p>Features that work today remain free for everyone. Planned features in this plan are not built:</p>
-        <ul className="pp-mini">{setupPlan.features.filter(f => f.status === 'planned').map(f => <li key={f.label}>{f.label}</li>)}</ul>
-        <button className="button button-primary" disabled data-testid="button-payment-disabled"><Lock size={15} /> Payment unavailable</button>
-      </>}
-    </SetupDialog>
-
-    <SetupDialog open={supportOpen} onOpenChange={setSupportOpen} title="Explore Application Support" testId="dialog-application-support">
-      <p>Choose a package to see its planned scope. These are one-time packages, not subscriptions.</p>
-      <div role="radiogroup" aria-label="Application Support packages" className="pp-pkgs">
-        {PACKAGES.map(p => <label key={p.id} className={p.id === pkg ? 'pp-pkg pp-pkg-on' : 'pp-pkg'} data-testid={`option-package-${p.id}`}>
-          <input type="radio" name="package" value={p.id} checked={p.id === pkg} onChange={() => setPkg(p.id)} data-testid={`radio-package-${p.id}`} />
-          <span>{p.name}</span><b>{p.price}{conv(p.price) && <span className="fx-converted">{conv(p.price)}</span>}</b>
-        </label>)}
-      </div>
-      <div className="pp-pkg-detail" data-testid={`detail-package-${selected.id}`}>
-        <h3>{selected.name} · {selected.price} one-time</h3>
-        <ul className="pp-mini">{selected.scope.map(s => <li key={s}>{s}</li>)}</ul>
-        <p><strong>Limits:</strong> {selected.limits}</p>
-        <p>Planned scope only. Human fulfillment is not available yet, so nothing can be booked, no receipt is issued, and UniPath AI does not submit applications or guarantee admission or scholarships.</p>
-      </div>
-      <NothingCharged />
-       <p>The site owner must configure payment processing and package fulfillment before bookings can open.</p>
-      <button className="button button-primary" disabled data-testid="button-package-payment-disabled"><Lock size={15} /> Payment unavailable</button>
-    </SetupDialog>
+    <p className="plans-footnote">UniPath AI does not submit applications or guarantee admission or scholarships. See <Link href="/about">what we do and do not do</Link>.</p>
   </div>;
 }

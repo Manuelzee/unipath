@@ -239,6 +239,10 @@ paths:
           name: fundingOnly
           schema: { type: boolean, default: false }
         - in: query
+          name: sort
+          description: "name (A-Z, the default), details (schools with the most source-reported details first) or funding (schools with funding records or their own scholarships first)"
+          schema: { type: string, enum: [name, details, funding] }
+        - in: query
           name: search
           schema: { type: string }
         - in: query
@@ -1386,6 +1390,18 @@ paths:
         "401": { description: Sign in required }
         "403": { description: Not your message }
         "404": { description: Not found }
+  /me/notifications:
+    get:
+      operationId: listMyNotifications
+      tags: [student]
+      summary: Upcoming and recently missed application deadlines and plan tasks
+      responses:
+        "200":
+          description: Date-based reminders from the student's own tracker, most urgent first
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NotificationList" }
+        "401": { description: Sign in required }
   /announcements:
     get:
       operationId: listAnnouncements
@@ -1790,6 +1806,23 @@ components:
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/UniversityScholarship" } }
         notice: { type: string }
+    Notification:
+      type: object
+      required: [id, kind, title, detail, date, daysAway, href]
+      properties:
+        id: { type: string, description: "Stable while the reminder is unchanged, for read state kept in the browser" }
+        kind: { type: string, enum: [deadline, task] }
+        title: { type: string }
+        detail: { type: string }
+        date: { type: string, description: "YYYY-MM-DD" }
+        daysAway: { type: integer, description: "Negative when the date has passed" }
+        href: { type: string }
+    NotificationList:
+      type: object
+      required: [items, generatedAt]
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/Notification" } }
+        generatedAt: { type: string }
     BillingAvailability:
       type: object
       required: [provider, providerConfigured, livePaymentsEnabled, cryptoEnabled, historyAvailable, baseCurrency, displayCurrencies, message]

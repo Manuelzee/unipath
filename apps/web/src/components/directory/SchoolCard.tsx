@@ -14,13 +14,13 @@ export function SchoolCard({ school, saved, saving, onSave }: { school: Universi
     <div className="school-content">
       <div className="school-location">{schoolLocation(school)}</div>
       <h3>{school.name}</h3>
-      <p className="school-meta">{school.institutionType || 'Institution type not reported'} · {school.ownership || 'Ownership not reported'}</p>
+      {(school.institutionType || school.ownership) && <p className="school-meta">{[school.institutionType, school.ownership].filter(Boolean).join(' · ')}</p>}
       <div className="school-tags">
         {school.degreeLevels.map(level => <span key={level}>{level}</span>)}
-        {school.languages.length ? school.languages.map(l => <span key={l} className="tag-lang">{l}</span>) : <span className="tag-unknown">Language unknown</span>}
+        {school.languages.map(l => <span key={l} className="tag-lang">{l}</span>)}
         {school.countryCode === 'CA' && !isWorldRecord(school) ? <span className="tag-scope">Source-listed · not verified</span> : isWorldRecord(school) ? <span className="tag-scope">Name, city &amp; website only</span> : school.sourceScope && <span className="tag-scope">{school.sourceScope}</span>}
       </div>
-      <div className="school-bottom"><span className="program-availability">{school.majors.length ? `${school.majors.length} source-reported fields` : 'Fields of study not in imported source'}</span><Link href={`/university/${school.id}`} className="school-view" data-testid={`link-university-${school.id}`}>Details <ArrowRight size={15}/></Link></div>
+      <div className="school-bottom"><span className="program-availability">{school.majors.length ? `${school.majors.length} fields of study` : school.website ? 'Official website listed' : ''}</span><Link href={`/university/${school.id}`} className="school-view" data-testid={`link-university-${school.id}`}>Details <ArrowRight size={15}/></Link></div>
       <button className={cn('save-chip', saved && 'save-chip-active')} onClick={onSave} disabled={saving} data-testid={`button-save-${school.id}`} aria-label={saved ? 'Remove saved university' : 'Save university'}>{saving ? <LoaderCircle className="spin" size={15}/> : saved ? <><Check size={14}/> Saved</> : <><Bookmark size={14}/> Save</>}</button>
     </div>
   </article>;

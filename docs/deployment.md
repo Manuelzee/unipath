@@ -100,6 +100,7 @@ Render and Cloudflare build from the `main` branch of the GitHub repository. Mak
    | `SKIP_DEPENDENCY_INSTALL` | `1` (the build command installs with pnpm itself) |
    | `API_ORIGIN` | the Render address from step 4, for example `https://unipath-api.onrender.com` |
    | `PROXY_SHARED_SECRET` | the value copied from Render. Choose **Encrypt** |
+   | `VITE_SUPPORT_EMAIL` | optional: the support address shown on the About, Privacy and Terms pages. Without it, those pages point students to Community chat |
 
 4. **Save and Deploy.** Pages also deploys `apps/web/functions/`, the `/api` proxy.
 

@@ -1,0 +1,32 @@
+/* About, Privacy and Terms. App palette: navy #173e62, teal #368a83, mint #87d6c6. */
+.legal { max-width:860px;margin:0 auto;padding:56px 24px 72px; }
+.legal-head h1 { margin:12px 0 14px;color:#173e62;font:800 clamp(30px,4.4vw,46px)/1.1 'Manrope',sans-serif;letter-spacing:-1.4px; }
+.legal-lede { max-width:700px;margin:0;color:#5d7081;font-size:16px;line-height:1.7; }
+.legal-updated { margin:14px 0 0;color:#7a8b96;font-size:12px; }
+.legal-section { margin-top:34px;padding-top:26px;border-top:1px solid #e3ebee; }
+.legal-section h2 { margin:0 0 12px;color:#173e62;font:700 20px 'Manrope',sans-serif;letter-spacing:-.3px; }
+.legal-section p,.legal-section li { color:#41596a;font-size:14px;line-height:1.75; }
+.legal-section p { margin:0 0 10px; }
+.legal-section ul { margin:0 0 10px;padding-left:20px; }
+.legal-section li { margin-bottom:6px; }
+.legal-section strong { color:#23435a; }
+.legal-section a,.legal-links a { color:#2c7a73;font-weight:700; }
+.legal-links { display:flex;align-items:center;gap:6px;color:#7a8b96; }
+.legal-steps { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:30px; }
+.legal-steps article { padding:18px;border:1px solid #e1ebe7;border-radius:14px;background:#fff; }
+.legal-steps span { color:#368a83;font-size:11px;font-weight:800;letter-spacing:.1em; }
+.legal-steps h3 { margin:8px 0 6px;color:#173e62;font:700 17px 'Manrope',sans-serif; }
+.legal-steps p { margin:0;color:#5d7081;font-size:13px;line-height:1.65; }
+.legal-actions { display:flex;flex-wrap:wrap;gap:10px;margin-top:18px; }
+.legal-qa { display:grid;gap:10px; }
+.legal-qa>div { display:flex;gap:12px;padding:14px 16px;border:1px solid #e6edef;border-radius:12px;background:#fbfdfd; }
+.legal-qa svg { flex:none;margin-top:2px;color:#b86a5a; }
+.legal-qa h3 { margin:0 0 3px;color:#173e62;font:700 15px 'Manrope',sans-serif; }
+.legal-qa p { margin:0; }
+.legal-summary { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:24px;padding:16px;border:1px solid #d8e8e3;border-radius:14px;background:#f0f7f4; }
+.legal-summary p { display:flex;align-items:flex-start;gap:8px;margin:0;color:#2f5a57;font-size:13px;line-height:1.55; }
+.legal-summary svg { flex:none;margin-top:2px;color:#368a83; }
+@media (max-width: 720px) {
+  .legal { padding:36px 18px 56px; }
+  .legal-steps,.legal-summary { grid-template-columns:1fr; }
+}

@@ -307,6 +307,7 @@ export const ListUniversitiesQueryParams = zod.object({
   "language": zod.string().optional(),
   "applicantStatus": zod.enum(['Domestic', 'International']).optional(),
   "fundingOnly": zod.coerce.boolean().default(listUniversitiesQueryFundingOnlyDefault),
+  "sort": zod.enum(['name', 'details', 'funding']).optional().describe('name (A-Z, the default), details (schools with the most source-reported details first) or funding (schools with funding records or their own scholarships first)'),
   "search": zod.string().optional(),
   "state": zod.string().optional(),
   "institutionType": zod.string().optional(),
@@ -3490,6 +3491,23 @@ export const DeleteChatMessageParams = zod.object({
 })
 
 export const DeleteChatMessageResponse = zod.void()
+
+
+/**
+ * @summary Upcoming and recently missed application deadlines and plan tasks
+ */
+export const ListMyNotificationsResponse = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.string().describe('Stable while the reminder is unchanged, for read state kept in the browser'),
+  "kind": zod.enum(['deadline', 'task']),
+  "title": zod.string(),
+  "detail": zod.string(),
+  "date": zod.string().describe('YYYY-MM-DD'),
+  "daysAway": zod.number().int().describe('Negative when the date has passed'),
+  "href": zod.string()
+})),
+  "generatedAt": zod.string()
+})
 
 
 /**

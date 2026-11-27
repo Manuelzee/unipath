@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { ListUniversitiesApplicantStatus } from './listUniversitiesApplicantStatus';
+import type { ListUniversitiesSort } from './listUniversitiesSort';
 import type { ListUniversitiesTuitionRate } from './listUniversitiesTuitionRate';
 
 export type ListUniversitiesParams = {
@@ -27,6 +28,10 @@ city?: string;
 language?: string;
 applicantStatus?: ListUniversitiesApplicantStatus;
 fundingOnly?: boolean;
+/**
+ * name (A-Z, the default), details (schools with the most source-reported details first) or funding (schools with funding records or their own scholarships first)
+ */
+sort?: ListUniversitiesSort;
 search?: string;
 state?: string;
 institutionType?: string;

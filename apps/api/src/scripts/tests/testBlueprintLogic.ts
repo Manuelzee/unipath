@@ -3,7 +3,7 @@
  * match classification, profile completion, AI grounding and prompts,
  * application helpers, document checks, generated request validators,
  * entitlements, the worldwide directory rules and file, the scholarship
- * list, and the burst limiter.
+ * list, deadline reminders, and the burst limiter.
  *
  * Run: pnpm test
  */
@@ -34,6 +34,7 @@ import { SCHOLARSHIPS, SCHOLARSHIP_INSTITUTION_IDS, filterScholarships, scholars
 import { directorySnapshot } from "../../lib/directorySnapshot";
 import { repoPath } from "../../lib/paths";
 import worldManifest from "../../data/world-directory-manifest.json";
+import { buildNotifications, daysBetween, when } from "../../lib/notifications";
 import { GetExchangeRateQueryParams, SearchJobListingsQueryParams, UploadStudentDocumentQueryParams } from "@workspace/api-zod";
 
 const tests: Array<[string, () => void | Promise<void>]> = [];
@@ -516,6 +517,31 @@ test("a university shows its own awards first, then awards for its country", () 
   assert.ok(oxford.some(p => p.id === "chevening" && p.scope === "country"));
   assert.ok(!oxford.some(p => p.id === "gates-cambridge"), "another university's award is not shown");
   assert.equal(scholarshipsFor("ror-000000000", "XX").length, 0);
+});
+
+// ---------- Notifications ----------
+test("reminders cover deadlines and tasks in their windows, missed ones first", () => {
+  const today = "2026-11-27";
+  assert.equal(daysBetween(today, "2026-12-01"), 4);
+  assert.equal(daysBetween(today, "2026-11-20"), -7);
+  assert.equal(when(0), "today"); assert.equal(when(1), "tomorrow"); assert.equal(when(-3), "3 days ago");
+  const app = (id: number, deadline: string | null, status = "preparing_documents") => ({ id, status, deadline, programName: "MSc Data Science", universityName: "University of Oxford" });
+  const task = (id: number, dueDate: string, completed = false, applicationId: number | null = null) => ({ id, title: `Task ${id}`, dueDate, completed, applicationId });
+  const items = buildNotifications(
+    [app(1, "2026-12-10"), app(2, "2027-02-01"), app(3, "2026-11-25"), app(4, "2026-12-01", "submitted"), app(5, null), app(6, "2026-11-10")],
+    [task(7, "2026-11-28", false, 1), task(8, "2026-11-29", true), task(9, "2026-12-20"), task(10, "2026-11-26")],
+    today);
+  assert.deepEqual(items.map(i => i.id), ["task-10-2026-11-26", "deadline-3-2026-11-25", "task-7-2026-11-28", "deadline-1-2026-12-10"]);
+  assert.equal(items[0].title, "Overdue: Task 10");
+  assert.equal(items[1].title, "Deadline passed 2 days ago");
+  assert.equal(items[2].title, "Due tomorrow: Task 7");
+  assert.equal(items[2].href, "/applications", "a task for an application opens the tracker");
+  assert.match(items[3].detail, /^MSc Data Science at University of Oxford\./);
+  assert.ok(!items.some(i => i.id.startsWith("deadline-4")), "submitted applications need no reminder");
+  assert.ok(!items.some(i => i.id.startsWith("deadline-2")), "more than 30 days away");
+  assert.ok(!items.some(i => i.id.startsWith("deadline-6")), "more than a week overdue");
+  assert.ok(!items.some(i => i.id.startsWith("task-8")), "completed tasks");
+  assert.ok(!items.some(i => i.id.startsWith("task-9")), "tasks more than 14 days away");
 });
 
 let failed = 0;
